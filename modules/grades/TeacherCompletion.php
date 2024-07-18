@@ -40,10 +40,8 @@ if (!$_REQUEST['mp'] || strpos($str = "'" . UserMP() . "','" . $sem . "','" . $f
     $_REQUEST['mp'] = UserMP();
 $QI = DBQuery('SELECT PERIOD_ID,TITLE FROM school_periods WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' ORDER BY SORT_ORDER ');
 $period_RET = DBGet($QI);
-$period_select = "<SELECT class=\"form-control\" name=period onChange='this.form.submit();'><OPTION value=''>All</OPTION>";
-foreach ($period_RET as $period)
-    $period_select .= "<OPTION value=$period[PERIOD_ID]" . (($_REQUEST['period'] == $period['PERIOD_ID']) ? ' SELECTED' : '') . ">" . $period['TITLE'] . "</OPTION>";
-$period_select .= "</SELECT>";
+$TI = DBQuery('SELECT DISTINCT STAFF_ID,CONCAT(LAST_NAME,\', \',FIRST_NAME) AS FULL_NAME,LAST_NAME,FIRST_NAME FROM staff  WHERE PROFILE_ID="2" ORDER BY LOWER(FULL_NAME) ');
+$teacher_RET= DBGet($TI);
 $mp_select = "<SELECT class=\"form-control\" name=mp onChange='this.form.submit();'>";
 if ($pros != '')
     foreach (explode(',', str_replace("'", '', $pros)) as $pro)
@@ -66,7 +64,7 @@ if ($_REQUEST['mp'])
 else
     $cur_mp = UserMP();
 echo "<FORM class=\"no-margin\" action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . " method=POST>";
-DrawHeader(_teacherCompletion, '<div class="form-inline"><div class="form-group">'.$mp_select . '<label class="control-label ml-20 mr-20">-</label>' . $period_select.'</div></div>');
+DrawHeader(_teacherCompletion, '<div class="form-inline"><div class="form-group"><label class="control-label ml-20 mr-20">-</label>' . $teacher_select.'</div></div>');
 echo '</FORM>';
 
 echo '<hr class="no-margin"/>';
@@ -83,46 +81,181 @@ else
 
 
 
-$sql = 'SELECT DISTINCT s.STAFF_ID,CONCAT(s.LAST_NAME,\', \',s.FIRST_NAME) AS FULL_NAME,sp.TITLE,cp.COURSE_PERIOD_ID,cpv.PERIOD_ID FROM staff s,school_periods sp,course_periods cp,course_period_var cpv
+$sql = 'SELECT DISTINCT s.STAFF_ID,CONCAT(s.LAST_NAME,\', \',s.FIRST_NAME) AS FULL_NAME,cp.TITLE,cp.COURSE_PERIOD_ID,cp.SHORT_NAME,cp.COURSE_ID AS COURSE_ID FROM staff s,school_periods sp,course_periods cp
 			
-WHERE sp.PERIOD_ID = cpv.PERIOD_ID AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cp.GRADE_SCALE_ID IS NOT NULL AND cp.TEACHER_ID=s.STAFF_ID 
+WHERE cp.GRADE_SCALE_ID IS NOT NULL AND cp.TEACHER_ID=s.STAFF_ID 
 
 AND cp.MARKING_PERIOD_ID IN (' . GetAllMP($mp_type, $cur_mp) . ') AND cp.SYEAR=\'' . UserSyear() . '\' AND cp.SCHOOL_ID=\'' . UserSchool() . '\' AND s.PROFILE=\'teacher\'
-			' . (($_REQUEST['period']) ? ' AND cpv.PERIOD_ID=\'' . $_REQUEST['period'] . '\'' : '') . '
+			' . (($_REQUEST['period']) ? ' AND cp.COURSE_PERIOD_ID=\'' . $_REQUEST[period] . '\'' : 'ORDER BY  LOWER(cp.SHORT_NAME)') . '
 			
 		';
- 
- $sql_gradecompleted = 'SELECT DISTINCT s.STAFF_ID,cp.COURSE_PERIOD_ID,cpv.PERIOD_ID FROM staff s,school_periods sp,course_periods cp,course_period_var cpv WHERE sp.PERIOD_ID = cpv.PERIOD_ID AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cp.GRADE_SCALE_ID IS NOT NULL AND cp.TEACHER_ID=s.STAFF_ID  AND cp.MARKING_PERIOD_ID IN (' . GetAllMP($mp_type, $cur_mp) . ') AND cp.SYEAR=' . UserSyear() . ' AND cp.SCHOOL_ID=' . UserSchool() . ' AND s.PROFILE=\'teacher\'' . (($_REQUEST['period']) ? " AND cpv.PERIOD_ID='$_REQUEST[period]'" : '') . ' AND EXISTS (SELECT \'\' FROM grades_completed ac WHERE ac.STAFF_ID=cp.TEACHER_ID AND ac.MARKING_PERIOD_ID=\'' . $_REQUEST['mp'] . '\' AND ac.PERIOD_ID=sp.PERIOD_ID)';
-
-$RET = DBGet(DBQuery($sql), array(), array('STAFF_ID', 'PERIOD_ID'));
-$RET_gradecompleted = DBGet(DBQuery($sql_gradecompleted));
-
-if (count($RET)) {
+$courses_RET = DBGet(DBQuery($sql));
+if (count($teacher_RET)) {
     unset($i);
-    foreach ($RET as $staff_id => $periods) {
-        $i++;
-        $staff_RET[$i]['FULL_NAME'] = $periods[key($periods)][1]['FULL_NAME'];
-        foreach ($periods as $period_id => $period) {
-            foreach ($RET_gradecompleted as $val) {
+    foreach ($teacher_RET as $staff_id ) {
 
-
-                if (($period[1]['PERIOD_ID'] == $val['PERIOD_ID']) && ($periods[key($periods)][1]['STAFF_ID'] == $val['STAFF_ID'] ))
-                    $staff_RET[$i][$period_id] = '<i class="fa fa-check fa-lg text-success"></i>';
+        if (count($courses_RET)) {
+            unset($j);
+            foreach ($courses_RET as $course ) {
+                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                {
+                    $i++;
+                    $staff_RET[$i]  = '<font size="4"><b><center>';
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= $staff_id['FULL_NAME'];
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= '</b></center>';
+                    break;
+                }
+                $j++;
             }
-            if (!$staff_RET[$i][$period_id])
-                $staff_RET[$i][$period_id] = '<i class="fa fa-times fa-lg text-danger"></i>';
+            
+        }
+        if (count($courses_RET)) {
+            unset($j);
+            foreach ($courses_RET as $course ) {
+                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                {
+                    $j++;
+                    $list_RET[$j][$i] = '<font size="2"><i> <u><center>';
+                    $list_RET[$j][$i] .= $course['SHORT_NAME'];
+                    $list_RET[$j][$i] .= '</i></u>';
+                    $bad_weght=check_weight($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
+                    $bad_config=check_config($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
+                    if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) != 'NAN')
+                        $bad_final = 0;
+                    else 
+                        $bad_final = 1;
+                    if($bad_config)
+                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Config</i>';
+                    if($bad_weght) 
+                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Pondé</i>';
+                    if($bad_final)
+                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Final</i>';
+                    if(! $bad_final && ! $bad_config && ! $bad_weght)
+                        $list_RET[$j][$i] .= '<i class="fa fa-check fa-lg text-success"></i>';
+                }
+            }
         }
     }
 }
-
-
-$columns = array('FULL_NAME' =>_teacher);
-
-foreach ($period_RET as $period)
-    $columns[$period['PERIOD_ID']] = $period['TITLE'];
-
-
-ListOutput($staff_RET, $columns, _teacherWhoHasnTEnteredGrades, _teachersWhoHavenTEnteredGrades);
-
+ListOutput($list_RET, $staff_RET, _teacherWhoHasnTEnteredGrades, "");
 echo '</div>';
+
+function GetGroupAverage($course_period_id,$mp,$year,$title){
+
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . $year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
+    if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
+    { 
+        if(substr( $title, 0, 3 ) === "PRE") return 100;
+        $total_group=0;
+        $students=0;
+        $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $mp . '\' ';
+        $grades_RET=DBGet(DBQuery($sql));
+        if($grades_RET){ 
+            foreach ($grades_RET as $key=> $val) {
+                if($year==2022){
+                    if($val['GRADE_PERCENT'] > 0 ){
+                        $total_group+=$val['GRADE_PERCENT'];
+                        $student++;
+                    }
+                }else
+                    if($val['GRADE_PERCENT'] > 49 ){
+                        $total_group+=$val['GRADE_PERCENT'];
+                        $student++;
+                    }
+            }
+        }
+    }
+    else{
+        if(substr( $title, 0, 3 ) === "PRE") return 100;
+        $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $mp . '\' ';
+        $grades_RET=DBGet(DBQuery($sql));
+        if(count($grades_RET))
+            return 100;
+        else
+            return 0;
+    }
+    if($student)
+        return $total_group/$student;
+    else 
+        return 0;
+}
+
+
+function check_weight($course_period_id,$staff_id,$mp,$course_id)
+{
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
+    if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
+    { 
+        $assignment_type_list_sql = 'SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
+                FROM (
+                ( SELECT gat.ASSIGNMENT_TYPE_ID, gat.TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat WHERE gat.COURSE_PERIOD_ID=\'' . $course_period_id . '\' )
+                UNION  
+                (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat, gradebook_assignments ga, course_periods cp
+                WHERE cp.course_period_id = gat.course_period_id AND gat.ASSIGNMENT_TYPE_ID = ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL AND ga.COURSE_ID = \'' . $course_id . '\' AND ga.STAFF_ID = \'' . $staff_id . '\' ) 
+                ) AS T
+                GROUP BY ASSIGNMENT_TYPE_ID';
+        $list_assignment_types = DBGet(DBQuery($assignment_type_list_sql));
+        if (count($list_assignment_types) ==1 ) return 0;
+        foreach ($list_assignment_types as $key => $type)
+        {
+            if($markingPeriod[1][MARKING_PERIOD_ID] == $mp) 
+                break;
+            if($type[TITLE] != $markingPeriod[1][TITLE])
+            {
+            $assignment_weight=DBGet(DBQuery('SELECT    ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.  $mp . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
+            foreach ($assignment_weight as $key => $weight) 
+            {
+                $total+=$weight['ASSIGNMENT_WEIGHT'];
+            }
+            if ($total != 100)
+                return 1;
+                //echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
+            }
+            $total=0;
+
+        $total_assignment_type_weightage = 0;
+        $total_assignment_type_weightage_arr = array();
+
+        if (!empty($list_assignment_types)) {
+            foreach ($list_assignment_types as $at_key => $at_val) {
+                if ($at_val['FINAL_GRADE_PERCENT'] != '' && number_format($at_val['FINAL_GRADE_PERCENT'],2) != 0)
+                    array_push($total_assignment_type_weightage_arr, $at_val['FINAL_GRADE_PERCENT']);
+            }
+
+            $total_assignment_type_weightage = array_sum($total_assignment_type_weightage_arr);
+
+            if ($total_assignment_type_weightage != 1)
+            {
+                return 1;
+                //echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . '</div>';
+            }
+        }else echo 'empty';
+        }
+    }
+    return 0;
+}
+
+function check_config($course_period_id,$staff_id,$mp,$course_id)
+{
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE = "ROUNDING"'));   
+    if($config_RET[1]['VALUE'] != "NORMAL_$course_period_id")
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE = "WEIGHT"'));   
+    if($config_RET[1]['VALUE'] != "Y_$course_period_id")
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE LIKE "' . $course_period_id . '%"'));   
+    if(count($config_RET) < 6 )
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE LIKE "FY-%"'));   
+    if(count($config_RET) != 5 )
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE LIKE "Q-%"'));   
+    if(count($config_RET) != 4 )
+        return 1;
+        
+    return 0;
+}
+
 ?>

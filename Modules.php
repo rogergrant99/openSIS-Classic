@@ -436,7 +436,7 @@ echo '</div>';
 if (User('PROFILE') == 'teacher') {
     echo "<ul class=\"breadcrumb-elements\"><li><div class=\"form-group\"><FORM name=head_frm id=head_frm action=Side.php?modfunc=update&btnn=$btn&nsc=$ns&act=subject method=POST><INPUT type=hidden name=modcat value='' id=modcat_input>";
 
-    $sub = DBQuery("SELECT DISTINCT cs.TITLE, cs.SUBJECT_ID,cs.SCHOOL_ID FROM course_subjects as cs,course_details as cd WHERE cs.SUBJECT_ID=cd.SUBJECT_ID AND cd.SYEAR='" . UserSyear() . "' AND (cd.TEACHER_ID='" . User('STAFF_ID') . "' OR cd.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cs.SCHOOL_ID='" . UserSchool() . "' AND (cd.MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (cd.MARKING_PERIOD_ID IS NULL ))"); //AND cd.BEGIN_DATE<='".date('Y-m-d')."' AND cd.END_DATE>='".date('Y-m-d')."'))");
+    $sub = DBQuery("SELECT DISTINCT cs.TITLE, cs.SUBJECT_ID,cs.SCHOOL_ID FROM course_subjects as cs,course_details as cd WHERE cs.SUBJECT_ID=cd.SUBJECT_ID AND cd.SYEAR='" . UserSyear() . "' AND (cd.TEACHER_ID='" . User('STAFF_ID') . "' OR cd.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR cd.TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cs.SCHOOL_ID='" . UserSchool() . "' AND (cd.MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (cd.MARKING_PERIOD_ID IS NULL ))"); //AND cd.BEGIN_DATE<='".date('Y-m-d')."' AND cd.END_DATE>='".date('Y-m-d')."'))");
     $RET = DBGet($sub);
 
     if (!UserSubject()) {
@@ -454,7 +454,7 @@ if (User('PROFILE') == 'teacher') {
     //===================================================================================================		
     echo "</FORM></div></li>";
     echo "<li><div class=\"form-group\"><FORM name=head_frm id=head_frm action=Side.php?modfunc=update&btnn=$btn&nsc=$ns&act=course method=POST><INPUT type=hidden name=modcat value='' id=modcat_input>";
-    $course = DBQuery("SELECT DISTINCT cd.COURSE_TITLE, cd.COURSE_ID,cd.SUBJECT_ID,cd.SCHOOL_ID FROM course_details cd WHERE (cd.TEACHER_ID='" . User('STAFF_ID') . "' OR cd.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cd.SYEAR='" . UserSyear() . "' AND cd.SCHOOL_ID='" . UserSchool() . "' AND cd.SUBJECT_ID='" . UserSubject() . "' AND (cd.MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (cd.MARKING_PERIOD_ID IS NULL ))"); //AND cd.BEGIN_DATE<='".date('Y-m-d')."' AND cd.END_DATE>='".date('Y-m-d')."'))");					
+    $course = DBQuery("SELECT DISTINCT cd.COURSE_TITLE, cd.COURSE_ID,cd.CP_TITLE,cd.SUBJECT_ID,cd.SCHOOL_ID FROM course_details cd WHERE (cd.TEACHER_ID='" . User('STAFF_ID') . "' OR cd.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR cd.TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cd.SYEAR='" . UserSyear() . "' AND cd.SCHOOL_ID='" . UserSchool() . "' AND cd.SUBJECT_ID='" . UserSubject() . "' AND (cd.MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (cd.MARKING_PERIOD_ID IS NULL ))"); //AND cd.BEGIN_DATE<='".date('Y-m-d')."' AND cd.END_DATE>='".date('Y-m-d')."'))");
     $RET_temp = DBGet($course);
     $ret_increment = 1;
     $RET = array();
@@ -472,7 +472,8 @@ if (User('PROFILE') == 'teacher') {
     echo "<SELECT class=\"select\" name=course onChange='this.form.submit();' style='width:100;'>";
     if (count($RET) > 0) {
         foreach ($RET as $course) {
-            echo "<OPTION id=$course[COURSE_ID] value=$course[COURSE_ID]" . ((UserCourse() == $course['COURSE_ID']) ? ' SELECTED' : '') . ">" . $course['COURSE_TITLE'] . "</OPTION>";
+            $grade_level=DBGet(DBQuery("SELECT TITLE from school_gradelevels where id = (SELECT grade_level from courses where course_id= '" . $course['COURSE_ID'] . "')" ));
+            echo "<OPTION id=$course[COURSE_ID] value=$course[COURSE_ID]" . ((UserCourse() == $course['COURSE_ID']) ? ' SELECTED' : '') . ">" .  $grade_level[1]['TITLE'] . "</OPTION>";
         }
     } else {
         echo '<OPTION value="">n/a</OPTION>';
@@ -484,7 +485,7 @@ if (User('PROFILE') == 'teacher') {
     echo "<li><div class=\"form-group\"><FORM name=head_frm id=head_frm action=Side.php?modfunc=update&btnn=$btn&nsc=$ns&act=period method=POST><INPUT type=hidden name=modcat value='' id=modcat_input>";
 
 
-    $QI = DBQuery("SELECT cpv.ID,cp.COURSE_PERIOD_ID,cp.MARKING_PERIOD_ID,cp.COURSE_ID,cp.TITLE,cp.SCHOOL_ID,cpv.PERIOD_ID FROM course_periods cp,course_period_var cpv WHERE cp.SYEAR='" . UserSyear() . "' AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cp.SCHOOL_ID='" . UserSchool() . "' AND cp.COURSE_ID='" . UserCourse() . "' AND (TEACHER_ID='" . User('STAFF_ID') . "' OR SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "') AND (MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (MARKING_PERIOD_ID IS NULL)) group by (cp.COURSE_PERIOD_ID)");
+    $QI = DBQuery("SELECT cpv.ID,cp.COURSE_PERIOD_ID,cp.MARKING_PERIOD_ID,cp.COURSE_ID,cp.TITLE,cp.SCHOOL_ID,cpv.PERIOD_ID FROM course_periods cp,course_period_var cpv WHERE cp.SYEAR='" . UserSyear() . "' AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cp.SCHOOL_ID='" . UserSchool() . "' AND cp.COURSE_ID='" . UserCourse() . "' AND (TEACHER_ID='" . User('STAFF_ID') . "' OR SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND (MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (MARKING_PERIOD_ID IS NULL)) group by (cp.COURSE_PERIOD_ID)");
     $RET = DBGet($QI);
     $user_profile_ret = DBGet(DBQuery(" SELECT PROFILE FROM staff WHERE STAFF_ID=" . UserID()));
 
@@ -841,8 +842,7 @@ if (User('PROFILE') == 'teacher') {
     $teacher_COMMON_FROM = " FROM students s, student_enrollment ssm, course_periods cp,
                                             schedule ss,student_address a ";
     $teacher_COMMON_WHERE = " WHERE a.STUDENT_ID=s.STUDENT_ID  AND a.TYPE='Home Address' AND s.STUDENT_ID=ssm.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID AND ssm.SYEAR=cp.SYEAR AND ssm.SYEAR=ss.SYEAR AND cp.COURSE_ID=ss.COURSE_ID AND cp.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID AND ss.MARKING_PERIOD_ID IN (" . GetAllMP('', $queryMP) . ")
-                                                                                    AND (cp.TEACHER_ID='" . User('STAFF_ID') . "' OR cp.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cp.COURSE_PERIOD_ID='" . UserCoursePeriod() . "' AND (ssm.START_DATE IS NOT NULL AND ('" . DBDate() . "'<=ssm.END_DATE OR ssm.END_DATE IS NULL)) AND ssm.SYEAR=" . UserSyear() . " AND ssm.SCHOOL_ID=" . UserSchool() . " ";
-
+                                            AND (cp.TEACHER_ID='" . User('STAFF_ID') . "' OR cp.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR cp.TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cp.COURSE_PERIOD_ID='" . UserCoursePeriod() . "' AND (ssm.START_DATE IS NOT NULL AND ('" . DBDate() . "'<=ssm.END_DATE OR ssm.END_DATE IS NULL)) AND ssm.SYEAR=" . UserSyear() . " AND ssm.SCHOOL_ID=" . UserSchool() . " ";
 
     if (optional_param('mp_comment', '', PARAM_SPCL) || $_SESSION['smc']) {
         $teacher_COMMON_FROM .= " ,student_mp_comments smc";
@@ -1079,12 +1079,12 @@ echo '</div>
                 <div class="row">
                     <div class="col-md-9">
                         <div class="navbar-text">
-                            ' . _footerText . '
+                            ' . _footerText . '  ' . _Version. '
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="version-info">
-                            Version <b>' . $get_app_details[1]['VALUE'] . '</b>
+                            Database Version <b>' . $get_app_details[1]['VALUE'] . '</b>
                         </div>
                     </div>
                 </div>

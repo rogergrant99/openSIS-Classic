@@ -370,7 +370,7 @@ echo '</div><div class="col-lg-6">';
 echo '<div class="form-group">';
 echo '<label class="control-label text-right col-lg-4">' . _password . '</label>';
 echo '<div class="col-lg-8">';
-echo TextInput(str_repeat('*', strlen($student['PASSWORD'])), 'students[PASSWORD]', '', 'onkeyup=passwordStrength(this.value)', 'AUTOCOMPLETE = off');
+echo TextInput(str_repeat('*', 8), 'students[PASSWORD]', '', 'onkeyup=passwordStrength(this.value)', 'AUTOCOMPLETE = off');
 echo '<p id="passwordStrength" class="help-block"></p>';
 echo '</div>';
 echo '</div>';

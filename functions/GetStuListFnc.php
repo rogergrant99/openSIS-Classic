@@ -381,15 +381,15 @@ function GetStuList(&$extra)
             }
             $sql .= ' ,student_enrollment ssm ';
             $allSQL .= ' ,student_enrollment ssm ';
-            $sql .= $extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
+            $sql.=$extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
 					AND ssm.SCHOOL_ID=\'' . UserSchool() . '\' AND ssm.SYEAR=\'' . UserSyear() . '\' AND ssm.SYEAR=cp.SYEAR AND ssm.SYEAR=ss.SYEAR
 					AND (ss.MARKING_PERIOD_ID IN (' . GetAllMP_Mod('', $queryMP) . ')   OR (ss.START_DATE<=\'' . date('Y-m-d') . '\'   AND (ss.END_DATE>=\'' . date('Y-m-d') . '\'  OR ss.END_DATE IS NULL))  OR (ss.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\' AND ss.MARKING_PERIOD_ID IS NULL))
-					AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
+					AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.TERTIARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
 					AND cp.COURSE_ID=ss.COURSE_ID AND cp.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID';
-            $allSQL .= $extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
+            $allSQL.=$extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
                     AND ssm.SCHOOL_ID=\'' . UserSchool() . '\' AND ssm.SYEAR=\'' . UserSyear() . '\' AND ssm.SYEAR=cp.SYEAR AND ssm.SYEAR=ss.SYEAR
                     AND (ss.MARKING_PERIOD_ID IN (' . GetAllMP_Mod('', $queryMP) . ')   OR (ss.START_DATE<=\'' . date('Y-m-d') . '\'   AND (ss.END_DATE>=\'' . date('Y-m-d') . '\'  OR ss.END_DATE IS NULL))  OR (ss.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\' AND ss.MARKING_PERIOD_ID IS NULL))
-                    AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
+                    AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.TERTIARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
                     AND cp.COURSE_ID=ss.COURSE_ID AND cp.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID';
 
             if ($_REQUEST['include_inactive'] == 'Y' && $_REQUEST['_search_all_schools'] != 'Y') {
@@ -1651,15 +1651,15 @@ function GetStuList_Absence_Summary(&$extra)
             $_SESSION['new_sql'] .= $_SESSION['newsql'];
             $sql .= ' ,student_enrollment ssm ';
             $_SESSION['new_sql'] .= ' ,student_enrollment ssm ';
-            $sql .= $extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
+            $sql.=$extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
 					AND ssm.SCHOOL_ID=\'' . UserSchool() . '\' AND ssm.SYEAR=\'' . UserSyear() . '\' AND ssm.SYEAR=cp.SYEAR AND ssm.SYEAR=ss.SYEAR
 					AND (ss.MARKING_PERIOD_ID IN (' . GetAllMP('', $queryMP) . ')  OR (ss.START_DATE<=\'' . date('Y-m-d') . '\'  AND (ss.END_DATE>=\'' . date('Y-m-d') . '\'  OR ss.END_DATE IS NULL)))
-					AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
+					AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.TERTIARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
 					AND cp.COURSE_ID=ss.COURSE_ID AND cp.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID';
-            $_SESSION['new_sql'] .= $extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
+            $_SESSION['new_sql'].=$extra['FROM'] . ' WHERE ssm.STUDENT_ID=s.STUDENT_ID AND ssm.STUDENT_ID=ss.STUDENT_ID
 					AND ssm.SCHOOL_ID=\'' . UserSchool() . '\' AND ssm.SYEAR=\'' . UserSyear() . '\' AND ssm.SYEAR=cp.SYEAR AND ssm.SYEAR=ss.SYEAR
 					AND (ss.MARKING_PERIOD_ID IN (' . GetAllMP('', $queryMP) . ')   OR (ss.START_DATE<=\'' . date('Y-m-d') . '\'  AND (ss.END_DATE>=\'' . date('Y-m-d') . '\'  OR ss.END_DATE IS NULL)))
-					AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
+					AND (cp.TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.SECONDARY_TEACHER_ID=\'' . User('STAFF_ID') . '\' OR cp.TERTIARY_TEACHER_ID=\'' . User('STAFF_ID') . '\') AND cp.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\'
 					AND cp.COURSE_ID=ss.COURSE_ID AND cp.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID';
             if ($_REQUEST['include_inactive'] == 'Y') {
                 $sql .= ' AND ssm.ID=(SELECT ID FROM student_enrollment WHERE STUDENT_ID=ssm.STUDENT_ID AND SYEAR=ssm.SYEAR ORDER BY START_DATE DESC LIMIT 1)';

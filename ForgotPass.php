@@ -26,7 +26,6 @@
 #
 #***************************************************************************************
 error_reporting(0);
-
 session_start();
 include("functions/ParamLibFnc.php");
 include("Data.php");
@@ -134,7 +133,7 @@ function DBQuery($sql) {
 
 // return next row.
 function db_fetch_row($result) {
-    global $DatabaseType;
+    //global $DatabaseType;
 
     switch ($DatabaseType) {
         case 'mysqli':
@@ -147,7 +146,7 @@ function db_fetch_row($result) {
             }
             break;
     }
-    return @array_change_key_case($return, CASE_UPPER);
+    //return @array_change_key_case($return, CASE_UPPER);
 }
 
 // returns code to go into SQL statement for accessing the next value of a sequence function db_seq_nextval($seqname)
@@ -282,9 +281,7 @@ function db_show_error($sql, $failnote, $additional = '') {
     die();
 }
 
-// $log_msg = DBGet(DBQuery("SELECT MESSAGE FROM login_message WHERE DISPLAY='Y'"));
-
-$log_msg='';
+$log_msg = DBGet(DBQuery("SELECT MESSAGE FROM login_message WHERE DISPLAY='Y'"));
 
 $dir = '';
 if(langDirection()=='rtl') { $dir="rtl"; }else{ $dir="ltr"; }
@@ -389,58 +386,32 @@ if(langDirection()=='rtl') { $dir="rtl"; }else{ $dir="ltr"; }
                     </div>
 
                     <div class="panel-inside">
-                        <div class="panel-heading">
-                            <ul class="forgot-tabs clearfix">
-                                <li class="active"><a data-toggle="tab" href="#forgot_password"><?=_forgotPassword?></a></li>
-                                <li><a data-toggle="tab" href="#forgot_username"><?=_forgotUsername?></a></li>
-                            </ul>
-                        </div>
+
                         <div class="panel-body">
 
  <div class="tab-content">
 <div id="forgot_password" class="tab-pane fade in active">
- <form name="f1" id="f1" method="post" action="ResetUserInfo.php">
+
+ <form name="f1" id="f1" method="post" action="SendpasswordResetEmail.php">
  <div class="form-group">
- <label><?=_iAmA?></label>
-    <div class="radio styled-radio">
-<label><input type="radio" name="pass_user_type" id="pass_student" value="pass_student" checked="checked" onclick="show_fields('student');
-forgotpassusername_init(this.value);" /><span></span><?=_student?></label>
 
-
- <label><input type="radio" name="pass_user_type" id="pass_staff" value="pass_staff" onclick="show_fields('staff');
- forgotpassusername_init(this.value);
- forgotpassemail_init('pass_email');" /><span></span><?=_teacher?></label>
-<label><input type="radio" name="pass_user_type" id="pass_parent" value="pass_parent" onclick="show_fields('parent');  forgotpassusername_init(this.value);
-   forgotpassemail_init('pass_email');" /><span></span><?=_parent?></label>
- </div>
  <input type="hidden" name="pass_type_form" id="pass_type_form" value="password"/>
 
     </div>
     <input type="hidden" id="valid_func" value="N"/>
-                                        <div id="divErr">
-                                            <?php
-                                                if ($_SESSION['err_msg'] != '') {
-                                            ?>
-                                                <div class="alert alert-danger" role="alert">   
-                                                    <i aria-hidden="true" class="fa fa-exclamation-triangle"></i>
-                                                    <?php echo $_SESSION['err_msg']; ?>
-                                                </div>
-                                            <?php
-                                                }
-                                                unset($_SESSION['err_msg']);
+    <div id="divErr">
+<?php
+if ($_SESSION['err_msg'] != '')
+    echo $_SESSION['err_msg'];
+ unset($_SESSION['err_msg']);
                                             ?>
                                         </div>
 
-                                        <div class="form-group" id="pass_stu_id">
-                                            <input type="text" name="password_stn_id" id="password_stn_id" placeholder="<?= _studentId ?>" class="form-control" onkeydown="return numberOnly(event);" onblur="return check_input_val(this.value, 'password_stn_id');"/>
-                                        </div>
+
                                         <div class="form-group">
                                             <input type="text" name="uname" id="uname" placeholder="<?=_username?>" class="form-control" onkeydown=" return withoutspace_forgotpass(event);" onblur="return withoutspace_forgotpass(event);"/>
                                             <span style="display: none" id="calculating"><img src="assets/ajax_loader.gif"/></span>
                                             <p id="err_msg"></p>
-                                        </div>
-                                        <div class="form-group" id="pass_stu_dob">
-                                            <?php echo DateInputAY('', 'password_dob', 3, _dateOfBirth) ?>
                                         </div>
                                         <div id="pass_stf_email" class="form-group" style="display: none">
                                             <input type="hidden" name="pass_email" id="pass_email" value=""/>

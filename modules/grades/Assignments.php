@@ -410,8 +410,8 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'delete') {
             $table = _assignmentType;
 
             //   $data=DBGet(DBQuery('select id from student_report_card_grades where course_period_id=(select course_period_id from  gradebook_assignment_types where assignment_type_id='.$_REQUEST['assignment_type_id'].')'));
-
-            $data = DBGet(DBQuery('select id from student_report_card_grades where course_period_id=(select course_period_id from  gradebook_assignments where assignment_type_id=' . $_REQUEST['assignment_type_id'] . ')'));
+            $course_period_ids=DBGet(DBQuery('SELECT * FROM gradebook_assignments WHERE assignment_type_id=' . $_REQUEST['assignment_type_id']));
+            $data = DBGet(DBQuery('select id from student_report_card_grades where course_period_id=' . $course_period_ids[1]['COURSE_PERIOD_ID'] . ''));
 
             if (count($data) > 0)
                 UnableDeletePromptMod('' . _gradebookAssignmentTypeCannotBeDeletedBecauseAssignmentsAreCreatedInThisAssignmentType . '.', '', 'modfunc=&assignment_type_id=' . $_REQUEST['assignment_type_id']);
@@ -457,7 +457,8 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'delete') {
     unset($_SESSION['_REQUEST_vars']['modfunc']);
 }
 
-if (!$_REQUEST['modfunc'] && $course_id) {
+if(!$_REQUEST['modfunc'] && $course_id)
+{
 
     ## ASSIGNMENT TYPES
     // $sql = ' SELECT ASSIGNMENT_TYPE_ID,TITLE 
@@ -469,17 +470,29 @@ if (!$_REQUEST['modfunc'] && $course_id) {
     //                 AND ga.COURSE_PERIOD_ID IS NULL AND ga.COURSE_ID=\''.UserCourse().'\' AND ga.STAFF_ID=\''.UserID().'\' ) 
     //               )as t
     //               GROUP BY ASSIGNMENT_TYPE_ID';
-
-    $sql = ' SELECT ASSIGNMENT_TYPE_ID,TITLE 
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
+    if(UserMP() != $markingPeriod[1][MARKING_PERIOD_ID]){
+    $sql = ' SELECT ASSIGNMENT_TYPE_ID,TITLE,FINAL_GRADE_PERCENT
                  FROM (
-                    ( select gat.ASSIGNMENT_TYPE_ID,gat.TITLE  FROM gradebook_assignment_types gat where gat.COURSE_PERIOD_ID=\'' . $course_period_id . '\' )
+                    ( select gat.ASSIGNMENT_TYPE_ID,gat.TITLE,gat.FINAL_GRADE_PERCENT  FROM gradebook_assignment_types gat where gat.COURSE_PERIOD_ID=\''.$course_period_id.'\' AND gat.title!=\'1ère communication\' )
                   UNION  
-                   (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE FROM gradebook_assignment_types gat , gradebook_assignments ga, course_periods cp
+                   (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE , gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat , gradebook_assignments ga, course_periods cp
                     where cp.course_period_id =gat.course_period_id and gat.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL 
-                    AND ga.COURSE_ID=\'' . UserCourse() . '\' AND ga.STAFF_ID=\'' . UserID() . '\' ) 
+                  AND ga.COURSE_ID=\''.UserCourse().'\' AND ga.STAFF_ID=\''.UserID().'\' ) 
                   )as t
                   GROUP BY ASSIGNMENT_TYPE_ID';
+    }else{
+        $sql = ' SELECT ASSIGNMENT_TYPE_ID,TITLE,FINAL_GRADE_PERCENT
+        FROM (
+           ( select gat.ASSIGNMENT_TYPE_ID,gat.TITLE,gat.FINAL_GRADE_PERCENT   FROM gradebook_assignment_types gat where gat.COURSE_PERIOD_ID=\''.$course_period_id.'\' AND gat.title=\'1ère communication\' )
+         UNION  
+          (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE,gat.FINAL_GRADE_PERCENT  FROM gradebook_assignment_types gat , gradebook_assignments ga, course_periods cp
+           where cp.course_period_id =gat.course_period_id and gat.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL 
+           AND ga.COURSE_ID=\''.UserCourse().'\' AND ga.STAFF_ID=\''.UserID().'\' ) 
+         )as t
+         GROUP BY ASSIGNMENT_TYPE_ID';
 
+    }               
     $QI = DBQuery($sql);
 
     $types_RET = DBGet($QI);
@@ -492,13 +505,14 @@ if (!$_REQUEST['modfunc'] && $course_id) {
     //            $types_RET[$counter_i]['ASSIGNMENT_TYPE_ID']=$gat[1]['ASSIGNMENT_TYPE_ID'];
     //            $types_RET[$counter_i]['TITLE']=$gat[1]['TITLE'];
     //        }
-    if ($_REQUEST['assignment_id'] != 'new' && $_REQUEST['assignment_type_id'] != 'new') {
-        $delete_button = "<INPUT type=button value=" . _delete . " class='btn btn-danger' onClick='javascript:window.location=\"Modules.php?modname=$_REQUEST[modname]&modfunc=delete&assignment_type_id=$_REQUEST[assignment_type_id]&assignment_id=$_REQUEST[assignment_id]\"'> &nbsp;";
-    }
-
+    $notify_RET_type = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'EDIT\' AND TITLE=\'type\' LIMIT 0, 1'));
+    $notify_RET_type = $notify_RET_type[1];
+    if($select == ' ') $select='';
+	if($_REQUEST['assignment_id']!='new' && $_REQUEST['assignment_type_id']!='new')
+        $delete_button = "<INPUT type=button value="._delete." class='btn btn-danger' onClick='javascript:window.location=\"Modules.php?modname=$_REQUEST[modname]&modfunc=delete&assignment_type_id=$_REQUEST[assignment_type_id]&assignment_id=$_REQUEST[assignment_id]\"'> &nbsp;";
     // ADDING & EDITING FORM
     if ($_REQUEST['assignment_id'] && $_REQUEST['assignment_id'] != 'new') {
-        $sql = 'SELECT ASSIGNMENT_TYPE_ID,TITLE,ASSIGNED_DATE,DUE_DATE,POINTS,COURSE_ID,DESCRIPTION,
+        $sql = 'SELECT ASSIGNMENT_TYPE_ID,TITLE,ASSIGNED_DATE,DUE_DATE,POINTS,ASSIGNMENT_WEIGHT,COURSE_ID,DESCRIPTION,
 				CASE WHEN DUE_DATE<ASSIGNED_DATE THEN \'Y\' ELSE NULL END AS DATE_ERROR
 				FROM gradebook_assignments
 				WHERE ASSIGNMENT_ID=\'' . $_REQUEST['assignment_id'] . '\'';
@@ -561,7 +575,12 @@ if (!$_REQUEST['modfunc'] && $course_id) {
             $extra = ' size=4 maxlength=5 onkeydown="return numberOnlyMod(event,this);" ';
         else
             $extra = ' size=4 maxlength=5 onkeydown=\"return numberOnlyMod(event,this);\"';
-        $header .= '<div class="col-md-6"><div class="form-group">' . TextInput($RET['POINTS'], 'tables[' . $_REQUEST['assignment_id'] . '][POINTS]', '' . _points . ' *', $extra) . '</div></div>';
+
+        if ($id == "new" || $_REQUEST['tab_id'] == "new" || $RET['ASSIGNMENT_WEIGHT'] == '')
+            $extraw = ' size=4 maxlength=5 onkeydown="return numberOnlyMod(event,this);" ';
+        else
+            $extraw = ' size=4 maxlength=5 onkeydown=\"return numberOnlyMod(event,this);\"';
+        $header .= '<div class="col-md-6"><div class="form-group">' . TextInput($RET['POINTS'], 'tables[' . $_REQUEST['assignment_id'] . '][POINTS]', ''._points.' *' , $extra) . '</div></div>';
         $header .= '</div>';
 
         $header .= '<div class="row">';
@@ -569,33 +588,51 @@ if (!$_REQUEST['modfunc'] && $course_id) {
             $header .= '<div class="col-md-6"><div class="form-group"><label class="control-label col-lg-4 text-right">&nbsp;</label><div class="col-lg-8">' . CheckboxInputSwitch($RET['COURSE_ID'], 'tables[' . $_REQUEST['assignment_id'] . '][COURSE_ID]', _applyToAllPeriodsForThisCourse, '', false, 'Yes', 'No', '', 'switch-success') . '</div></div></div>';
         foreach ($types_RET as $type)
             $assignment_type_options[$type['ASSIGNMENT_TYPE_ID']] = $type['TITLE'];
+            $assignment_weight[$type['ASSIGNMENT_TYPE_ID']] = $type['TITLE'];
 
         $header .= '<div class="col-md-6"><div class="form-group">' . SelectInput($RET['ASSIGNMENT_TYPE_ID'] ? $RET['ASSIGNMENT_TYPE_ID'] : $_REQUEST['assignment_type_id'], 'tables[' . $_REQUEST['assignment_id'] . '][ASSIGNMENT_TYPE_ID]', _assignmentType, $assignment_type_options, false) . '</div></div>';
+        $header .= '<div class="col-md-6"><div class="form-group">' . TextInput($RET['ASSIGNMENT_WEIGHT'], 'tables[' . $_REQUEST['assignment_id'] . '][ASSIGNMENT_WEIGHT]', ''._assignmentWeight.' *' , $extraw) . '</div></div>';
         $header .= '</div>';
-
+        $idtype= $_REQUEST['assignment_type_id'];
+        $sql='SELECT sum(ASSIGNMENT_WEIGHT) / 100 AS TOTAL_ASSIGN_PERCENT FROM gradebook_assignments WHERE assignment_type_id =\'' . $idtype. '\' AND marking_period_id = \'' .UserMP(). '\''; 
+        $QI = DBQuery($sql);
+		$RET2 = DBGet($QI,array('ASSIGNMENT_WEIGHT'=>'_makePercent'));
+        $RET2 = $RET2[1];
+        $header .= '<div class="col-md-6"><div class="form-group">' . NoInput($RET2['TOTAL_ASSIGN_PERCENT'] == 1 ? '100%' : '<FONT COLOR=red>' . (100 * $RET2['TOTAL_ASSIGN_PERCENT']) . '%</FONT>', _percentTotal) . '</div></div>';
+        $header .= '</div>';
         $header .= '<div class="row">';
-        $header .= '<div class="col-md-6"><div class="form-group"><label class="control-label col-lg-4 text-right">' . ($_REQUEST['assignment_id'] == 'new' ? '' . _assigned . ' <span class="text-danger">*</span>' : '' . _assigned . '  <span class="text-danger">*</span>') . '</label><div class="col-lg-8">' . DateInputAY($new && Preferences('DEFAULT_ASSIGNED', 'Gradebook') == 'Y' ? date('Y-m-d') : $RET['ASSIGNED_DATE'], 'tables[' . $_REQUEST['assignment_id'] . '][ASSIGNED_DATE]', 1) . '</div></div></div>';
-        $header .= '<div class="col-md-6"><div class="form-group"><label class="control-label col-lg-4 text-right">' . ($_REQUEST['assignment_id'] == 'new' ? '' . _due . '  <span class="text-danger">*</span>' : '' . _due . '  <span class="text-danger">*</span>') . '</label>' . DateInputAY($new && Preferences('DEFAULT_DUE', 'Gradebook') == 'Y' ? date('Y-m-d') : $RET['DUE_DATE'], 'tables[' . $_REQUEST['assignment_id'] . '][DUE_DATE]', 2) . '</div></div>';
+        $header .= '<div class="col-md-6"><div class="form-group"><label class="control-label col-lg-4 text-right">' . ($_REQUEST['assignment_id'] == 'new' ? ''._assigned.' <span class="text-danger">*</span>' : ''._assigned.'  <span class="text-danger">*</span>') . '</label><div class="col-lg-8">' . DateInputAY($new  ? date('Y-m-d') : $RET['ASSIGNED_DATE'], 'tables[' . $_REQUEST['assignment_id'] . '][ASSIGNED_DATE]', 1) . '</div></div></div>';
+        $header .= '<div class="col-md-6"><div class="form-group"><label class="control-label col-lg-4 text-right">' . ($_REQUEST['assignment_id'] == 'new' ? ''._due.'  <span class="text-danger">*</span>' : ''._due.'  <span class="text-danger">*</span>') . '</label>' . DateInputAY($new ? date('Y-m-d') : $RET['DUE_DATE'], 'tables[' . $_REQUEST['assignment_id'] . '][DUE_DATE]', 2) . '</div></div>';
         $header .= '</div>';
-    } elseif ($_REQUEST['assignment_type_id']) {
+    }
+    elseif ($_REQUEST['assignment_type_id']) {
 
         echo "<FORM class=form-horizontal name=F3 action=Modules.php?modname=$_REQUEST[modname]&table=gradebook_assignment_types";
         if ($_REQUEST['assignment_type_id'] != 'new')
             echo "&assignment_type_id=$_REQUEST[assignment_type_id]";
         echo " method=POST>";
         echo '<div class="panel panel-default">';
-        DrawHeader($title, $delete_button . '<INPUT type=submit id="setupAssgnTypeBtnTwo" class="btn btn-primary" value=' . _save . ' onclick="return formcheck_assignments(this);">');
+        if($notify_RET_type['VALUE']=='Y' || $_REQUEST['assignment_id'])
+            DrawHeader($title, $delete_button . '<INPUT type=submit id="setupAssgnTypeBtnTwo" class="btn btn-primary" value='._save.' onclick="return formcheck_assignments(this);">');        
         echo '<div class="panel-body">';
-
+        
         echo "<INPUT type=hidden name=type_id value='$_REQUEST[assignment_id]' id=type_id>";
         echo "<INPUT type=hidden name=assignment_type_id value='$_REQUEST[assignment_type_id]' id=assignment_type_id>";
-
+        
         $header .= '<div class="row">';
-        $header .= '<div class="col-md-6"><div class="form-group">' . TextInput($RET['TITLE'], 'tables[' . $_REQUEST['assignment_type_id'] . '][TITLE]', _title, 'size=36') . '</div></div>';
-
-        if ($programconfig['WEIGHT'] == 'Y') {
-            $header .= '<div class="col-md-6"><div class="form-group">' . TextInput(($RET['FINAL_GRADE_PERCENT'] != 0 ? $RET['FINAL_GRADE_PERCENT'] : ''), 'tables[' . $_REQUEST['assignment_type_id'] . '][FINAL_GRADE_PERCENT]', ($RET['FINAL_GRADE_PERCENT'] != 0 ? '' : '<FONT color=red>') . _weightPercent . ($RET['FINAL_GRADE_PERCENT'] != 0 ? '' : '</FONT>')) . '</div></div>';
-            $header .= '<div class="col-md-6"><div class="form-group">' . NoInput($RET['TOTAL_PERCENT'] == 1 ? '100%' : '<FONT COLOR=red>' . (100 * $RET['TOTAL_PERCENT']) . '%</FONT>', _percentTotal) . '</div></div>';
+        if($notify_RET_type['VALUE']=='Y')
+            $header .= '<div class="col-md-6"><div class="form-group">' . TextInput($RET['TITLE'], 'tables[' . $_REQUEST['assignment_type_id'] . '][TITLE]', _title, 'size=36') . '</div></div>';
+        else
+            $header .= '<div class="col-md-6"><div class="form-group">' . NoInput($RET['TITLE'], _title, 'size=36') . '</div></div>';
+        $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
+        if($RET[TITLE] != $markingPeriod[1][TITLE]){
+            if($programconfig['WEIGHT']=='Y'){
+                if($notify_RET_type['VALUE']=='Y')
+                    $header .= '<div class="col-md-6"><div class="form-group">' . TextInput(($RET['FINAL_GRADE_PERCENT'] != 0 ? $RET['FINAL_GRADE_PERCENT'] : ''), 'tables[' . $_REQUEST['assignment_type_id'] . '][FINAL_GRADE_PERCENT]', ($RET['FINAL_GRADE_PERCENT'] != 0 ? '' : '<FONT color=red>') . _weightPercent . ($RET['FINAL_GRADE_PERCENT'] != 0 ? '' : '</FONT>')) . '</div></div>';
+                else 
+                    $header .= '<div class="col-md-6"><div class="form-group">' . NoInput(($RET['FINAL_GRADE_PERCENT'] != 0 ? $RET['FINAL_GRADE_PERCENT'] : ''),  ($RET['FINAL_GRADE_PERCENT'] != 0 ? '' : '<FONT color=red>') . _weightPercent . ($RET['FINAL_GRADE_PERCENT'] != 0 ? '' : '</FONT>')) . '</div></div>';
+                $header .= '<div class="col-md-6"><div class="form-group">' . NoInput($RET['TOTAL_PERCENT'] == 1 ? '100%' : '<FONT COLOR=red>' . (100 * $RET['TOTAL_PERCENT']) . '%</FONT>', _percentTotal) . '</div></div>';
+            }
         }
         $header .= '</div>';
     } else
@@ -606,7 +643,7 @@ if (!$_REQUEST['modfunc'] && $course_id) {
             echo $header;
             echo '<div class="row">';
             echo '<div class="col-md-12"><div class="form-group">';
-            echo '<label class="control-label col-xs-2 text-right">' . _description . '</label>';
+            //echo '<label class="control-label col-xs-2 text-right">'._description.'</label>';
             echo '<div class="col-xs-10">';
 
             //            $oFCKeditor = new FCKeditor('tables[' . $_REQUEST['assignment_id'] . '][DESCRIPTION]');
@@ -618,13 +655,13 @@ if (!$_REQUEST['modfunc'] && $course_id) {
             //            echo $oFCKeditor->Create();
 
 
-            echo '<textarea name="tables[' . $_REQUEST['assignment_id'] . '][DESCRIPTION]" id="txtBody" rows="4" cols="100">' . html_entity_decode(html_entity_decode($RET['DESCRIPTION'])) . '</textarea>';
+            //echo '<textarea name="tables[' . $_REQUEST['assignment_id'] . '][DESCRIPTION]" id="txtBody" rows="4" cols="100">'.html_entity_decode(html_entity_decode($RET['DESCRIPTION'])).'</textarea>';
 
 
 
 
 
-            echo '<script type="text/javascript">$(function(){ CKEDITOR.replace(\'txtBody\', { height: \'400px\', extraPlugins: \'forms\'}); });</script>';
+            //echo '<script type="text/javascript">$(function(){ CKEDITOR.replace(\'txtBody\', { height: \'400px\', extraPlugins: \'forms\'}); });</script>';
 
 
 
@@ -643,21 +680,23 @@ if (!$_REQUEST['modfunc'] && $course_id) {
     echo '<div class="row">';
 
     if (count($types_RET)) {
-        if ($_REQUEST['assignment_type_id']) {
+ //       if ($_REQUEST['assignment_type_id']) {
             foreach ($types_RET as $key => $value) {
                 if ($value['ASSIGNMENT_TYPE_ID'] == $_REQUEST['assignment_type_id'])
                     $types_RET[$key]['row_color'] = Preferences('HIGHLIGHT');
+                    $types_RET[$key]['FINAL_GRADE_PERCENT']= $types_RET[$key]['FINAL_GRADE_PERCENT']*100 ."%";
             }
         }
-    }
+//    }
 
     echo '<div class="col-md-6">';
     echo '<div class="panel panel-default">';
-    $columns = array('TITLE' => _assignmentType);
+    $columns = array('TITLE' =>_assignmentType, 'FINAL_GRADE_PERCENT' =>_weightPercent,);
     $link = array();
     $link['TITLE']['link'] = "Modules.php?modname=$_REQUEST[modname]&modfunc=$_REQUEST[modfunc]";
     $link['TITLE']['variables'] = array('assignment_type_id' => 'ASSIGNMENT_TYPE_ID');
-    $link['add']['link'] = "Modules.php?modname=$_REQUEST[modname]&assignment_type_id=new";
+    if($notify_RET_type['VALUE']=='Y')
+        $link['add']['link'] = "Modules.php?modname=$_REQUEST[modname]&assignment_type_id=new";
     $link['add']['first'] = 50000; // number before add link moves to top
 
     ListOutput($types_RET, $columns,  _assignmentType, _assignmentTypes, $link, array(), $LO_options);
@@ -665,24 +704,25 @@ if (!$_REQUEST['modfunc'] && $course_id) {
     echo '</div>'; //.col-md-6
     // ASSIGNMENTS
     if ($_REQUEST['assignment_type_id'] && $_REQUEST['assignment_type_id'] != 'new' && count($types_RET)) {
-        $sql = 'SELECT ASSIGNMENT_ID,TITLE FROM gradebook_assignments WHERE (COURSE_ID=\'' . $course_id . '\' OR COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ASSIGNMENT_TYPE_ID=\'' . $_REQUEST['assignment_type_id'] . '\' AND (MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' OR MARKING_PERIOD_ID=' . GetMPId('FY') . ' ) ORDER BY ' . Preferences('ASSIGNMENT_SORTING', 'Gradebook') . ' DESC';
+        $sql = 'SELECT ASSIGNMENT_ID,TITLE,ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE (COURSE_ID=\'' . $course_id . '\' OR COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ASSIGNMENT_TYPE_ID=\'' . $_REQUEST['assignment_type_id'] . '\' AND (MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' OR MARKING_PERIOD_ID=' . GetMPId('FY') . ' ) ORDER BY ' . Preferences('ASSIGNMENT_SORTING', 'Gradebook') . ' DESC';
 
         $QI = DBQuery($sql);
         $assn_RET = DBGet($QI);
 
         if (count($assn_RET)) {
-            if ($_REQUEST['assignment_id'] && $_REQUEST['assignment_id'] != 'new') {
+            //if ($_REQUEST['assignment_id'] && $_REQUEST['assignment_id'] != 'new') {
                 foreach ($assn_RET as $key => $value) {
                     if ($value['ASSIGNMENT_ID'] == $_REQUEST['assignment_id'])
                         $assn_RET[$key]['row_color'] = Preferences('HIGHLIGHT');
+                        $assn_RET[$key]['ASSIGNMENT_WEIGHT']=$assn_RET[$key]['ASSIGNMENT_WEIGHT']."%";
                 }
-            }
+            //}
         }
 
 
         echo '<div class="col-md-6">';
         echo '<div class="panel panel-default">';
-        $columns = array('TITLE' => _assignment);
+        $columns = array('TITLE' =>_assignment,'ASSIGNMENT_WEIGHT' =>_assignmentWeight );
         $link = array();
         $link['TITLE']['link'] = "Modules.php?modname=$_REQUEST[modname]&assignment_type_id=$_REQUEST[assignment_type_id]";
         $link['TITLE']['variables'] = array('assignment_id' => 'ASSIGNMENT_ID');

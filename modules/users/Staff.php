@@ -248,7 +248,7 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'update') {
         }
     }
 
-    $password = md5($_REQUEST['staff']['PASSWORD']);
+    $password = GenerateNewHash($_REQUEST['staff']['PASSWORD']);
     $ins_profile = $_REQUEST['staff']['PROFILE'];
     $res_pass_chk = DBQuery('SELECT * FROM login_authentication WHERE PASSWORD = \'' . $password . '\'');
     $num_pass = $res_pass_chk->num_rows;

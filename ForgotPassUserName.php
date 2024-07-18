@@ -25,7 +25,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #***************************************************************************************
-include("functions/ParamLibFnc.php");
+/*include("functions/ParamLibFnc.php");
 include("Data.php");
 include("functions/DbGetFnc.php");
 require_once("functions/PragRepFnc.php");
@@ -292,3 +292,4 @@ if ($used_for == 'username') {
 	} else
 		echo '0~' . $_GET['form'];
 }
+*/

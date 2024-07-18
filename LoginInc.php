@@ -40,7 +40,7 @@ if(isset($_REQUEST['language'])){
 }
 
 if(!isset($langCode2)){
-    $langCode2 = 'en';
+    $langCode2 = 'fr';
 }
 
 $_SESSION['language'] = $langCode2;
@@ -179,15 +179,15 @@ require_once('functions/langFnc.php');
                                         </div>
                                     </div>
                                 </div>
+                                <?php
+                                    CSRFSecure::CreateTokenField();
+                                ?>
                                 <div class="col-md-12 text-center">
                                     <p>
                                         <a href="ForgotPass.php" id="forgotPass"><?=_forgotUsernamePassword?>?</a>
                                     </p>
                                                                     </div>
                                 </div>
-                                <?php
-                                    CSRFSecure::CreateTokenField();
-                                ?>
                                 <div class="row">
                                     <div class="col-md-12">
                                         <button name='log' type="submit" class="btn btn-success btn-lg btn-block" onMouseDown="set_ck();
@@ -221,7 +221,7 @@ require_once('functions/langFnc.php');
             </div>
             <footer>
                 <!-- openSisIsAProductOfOpenSolutionsForEducationInc. (<a href="http://www.os4ed.com">OS4ED</a>) and is licensed under the <a href="http://www.gnu.org/licenses/gpl.html" target="_blank">GPL license</a>. -->
-                <?= _footerText ?>
+                <?= _footerText ?> <?= _Version ?>
             </footer>
 
         </div>

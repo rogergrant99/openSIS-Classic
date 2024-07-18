@@ -90,7 +90,7 @@ if (User('PROFILE') == 'admin') {
     if($ERR!=''){ echo '<div class="p-15 p-b-0"><span class="text-danger">' . $ERR . '</span></DIV>'; }
 
     if ($extra['profile']) {
-        $options = array('admin' => 'Administrator', 'teacher' => 'Teacher', 'parent' => 'Parent', 'none' => 'No Access');
+        $options = array('admin' => 'Administrator', 'teacher' => _teacher, 'parent' => _parent, 'none' => 'No Access');
         $singular = $options[$extra['profile']];
         $plural = $singular . ($options[$extra['profile']] == 'none' ? 'es' : 's');
         $columns = array('FULL_NAME' => $singular, 'STAFF_ID' =>_staffId);
@@ -114,7 +114,7 @@ if (User('PROFILE') == 'admin') {
         $link['FULL_NAME']['variables'] = array('staff_id' => 'STAFF_ID');
     }
     if (count($staff_RET)) {
-        echo '<div class="p-15 p-b-0"><span class="text-danger">Following teachers have missing attendance!</span></div><hr class="no-margin"/>';
+        echo '<div class="p-15 p-b-0"><span class="text-danger"> ' . _FollowingTeachersHaveMissingAttendance . ' </span></div><hr class="no-margin"/>';
         ListOutput($staff_RET, $columns, $singular, $plural, $link, false, $extra['options']);
     } else {
         echo '<div class="p-15 p-b-0"><p class="text-danger">No missing attendance found for the selected date range!</p></div>';

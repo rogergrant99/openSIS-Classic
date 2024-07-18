@@ -30,17 +30,11 @@ include 'RedirectRootInc.php';
 include 'Warehouse.php';
 include 'Data.php';
 
-if (isset($_REQUEST['down_id']))
-    $_REQUEST['down_id'] = sqlSecurityFilter($_REQUEST['down_id']);
-if (isset($_REQUEST['filename']))
-    $_REQUEST['filename'] = sqlSecurityFilter($_REQUEST['filename']);
+$down_id = sqlSecurityFilter($_REQUEST['down_id']);
 
 if(isset($_REQUEST['down_id']) && $_REQUEST['down_id']!='')
 {
-    if ((isset($_REQUEST['studentfile']) && $_REQUEST['studentfile'] == 'Y') || (isset($_REQUEST['userfile']) && $_REQUEST['userfile'] == 'Y'))
-        $downfile_info = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE id=\'' . $_REQUEST['down_id'] . '\''));
-    else
-        $downfile_info = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE download_id=\'' . $_REQUEST['down_id'] . '\''));
+    $downfile_info= DBGet(DBQuery('SELECT * FROM user_file_upload WHERE DOWNLOAD_ID=\''.$down_id.'\''));
     header("Cache-Control: public");
     header("Pragma: ");
     header("Expires: 0"); 
@@ -50,7 +44,13 @@ if(isset($_REQUEST['down_id']) && $_REQUEST['down_id']!='')
     header("Content-Type: ".$downfile_info[1]['TYPE']."");
     // header("Content-Disposition: attachment; filename=\"".str_replace(' ','_',$downfile_info[1]['NAME'])."\";");
     // header("Content-Disposition: attachment; filename=\"".$downfile_info[1]['NAME']."\";");
-    header("Content-Disposition: attachment; filename=\"".str_replace("opensis_space_here", " ", str_replace($downfile_info[1]['USER_ID']."-","",$downfile_info[1]['NAME']))."\";");
+    $downfile_info[1]['NAME']=html_entity_decode($downfile_info[1]['NAME']);
+    $filename=str_replace("opensis_space_here", " ", str_replace($downfile_info[1]['USER_ID']."-","",$downfile_info[1]['NAME']));
+    if(isset($_REQUEST['stafffile']) && $_REQUEST['stafffile']=='Y'){
+        $filename=strstr($filename, ']');
+        $filename=trim($filename, "]");
+    }
+    header("Content-Disposition: attachment; filename=$filename");
     header("Content-Transfer-Encoding: binary");
     ob_clean();
     flush();
@@ -60,7 +60,7 @@ if(isset($_REQUEST['down_id']) && $_REQUEST['down_id']!='')
         $filedata = @file_get_contents('assets/studentfiles/'.$downfile_info[1]['NAME']);
         echo $filedata;
     }
-    else if(isset($_REQUEST['userfile']) && $_REQUEST['userfile']=='Y')
+    else if(isset($_REQUEST['userfile']) && $_REQUEST['userfile']=='Y' || isset($_REQUEST['stafffile']) && $_REQUEST['stafffile']=='Y' )
     {
         $filedata = @file_get_contents('assets/stafffiles/'.$downfile_info[1]['NAME']);
         echo $filedata;
@@ -72,9 +72,9 @@ if(isset($_REQUEST['down_id']) && $_REQUEST['down_id']!='')
     
     exit;
 }
-else
-{
-    header('Content-Disposition: attachment; filename="'.urldecode($_REQUEST['name']).'" ');
-    readfile('assets/'.urldecode($_REQUEST['filename']));
-}
+// else
+// {
+//     header('Content-Disposition: attachment; filename="'.urldecode($_REQUEST['name']).'" ');
+//     readfile('assets/'.urldecode($_REQUEST['filename']));
+// }
 ?>

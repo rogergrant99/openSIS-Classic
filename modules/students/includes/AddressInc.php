@@ -449,7 +449,7 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
 
                         if (count($num_user) == 0) {
                             /*if (count($num_pass) == 0)*/
-                            if ($countpass == 0) {
+                            if (1) {
                                 // CHECK IF ENTRY IS EXISTING IN `login_authentication` - [D: 19/12/03]
 
                                 $pri_exst_chk   =   DBQuery('SELECT * FROM login_authentication WHERE USER_ID = "' . $pri_up_pl_id . '" AND PROFILE_ID = "4"');

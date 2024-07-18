@@ -52,7 +52,7 @@ echo '<li ' . ((clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'INACT
 echo '<li ' . ((clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'MAINTENANCE') ? 'class="active"' : '') . '><a href="Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&page_display=MAINTENANCE"><i class="icon-hammer-wrench"></i> &nbsp;' . _putSystemInMaintenanceMode . '</a></li>';
 echo '<li ' . ((clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'CURRENCY') ? 'class="active"' : '') . '><a href="Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&page_display=CURRENCY"><i class="icon-coins"></i> &nbsp;' . _setCurrency . '</a></li>';
 echo '<li ' . ((clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'CLASSRANK') ? 'class="active"' : '') . '><a href="Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&page_display=CLASSRANK"><i class="icon-podium"></i> &nbsp;' . _displayClassRank . '</a></li>';
-echo '<li ' . ((clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'UPDATENOTIFY') ? 'class="active"' : '') . '><a href="Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&page_display=UPDATENOTIFY"><i class="icon-bell3"></i> &nbsp;' . _displayNotifications . '</a></li>';
+echo '<li ' . ((clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'UPDATENOTIFY') ? 'class="active"' : '') . '><a href="Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&page_display=UPDATENOTIFY"><i class="icon-hammer-wrench"></i> &nbsp;' . _displayNotifications . '</a></li>';
 echo '</ul>';
 echo '</div>'; //.panel-body
 echo '</div>'; //.panel
@@ -298,11 +298,35 @@ if (clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'UPDATENOTIFY') {
             unset($_REQUEST['display_notify']);
             unset($_SESSION['_REQUEST_vars']['display_notify']);
         }
+        if (isset($_REQUEST['edit'])) {
+            $notify_RET = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'EDIT\' AND title=\'edit\' LIMIT 0, 1'));
+            if (count($notify_RET) == 0) {
+                DBQuery('INSERT INTO program_config (SYEAR,SCHOOL_ID,PROGRAM,TITLE,VALUE) VALUES(\'' . UserSyear() . '\',\'' . UserSchool() . '\',\'EDIT\',\'edit\',\'Y\')');
+            } else {
+                DBQuery('UPDATE program_config SET VALUE=\'' . $_REQUEST['edit'] . '\' WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND PROGRAM=\'EDIT\' AND TITLE=\'edit\'');
+            }
+            unset($_REQUEST['display_notify']);
+            unset($_SESSION['_REQUEST_vars']['display_notify']);
+        }
+        if (isset($_REQUEST['type'])) {
+            $notify_RET = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'EDIT\' AND title=\'type\' LIMIT 0, 1'));
+            if (count($notify_RET) == 0) {
+                DBQuery('INSERT INTO program_config (SYEAR,SCHOOL_ID,PROGRAM,TITLE,VALUE) VALUES(\'' . UserSyear() . '\',\'' . UserSchool() . '\',\'EDIT\',\'type\',\'Y\')');
+            } else {
+                DBQuery('UPDATE program_config SET VALUE=\'' . $_REQUEST['type'] . '\' WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND PROGRAM=\'EDIT\' AND TITLE=\'type\'');
+            }
+            unset($_REQUEST['display_notify']);
+            unset($_SESSION['_REQUEST_vars']['display_notify']);
+        }
     }
     $notify_RET = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'UPDATENOTIFY\' AND TITLE=\'display\' LIMIT 0, 1'));
     $notify_RET = $notify_RET[1];
     $notify_RET_school = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'UPDATENOTIFY\' AND TITLE=\'display_school\' LIMIT 0, 1'));
     $notify_RET_school = $notify_RET_school[1];
+    $notify_RET_edit = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'EDIT\' AND TITLE=\'edit\' LIMIT 0, 1'));
+    $notify_RET_edit = $notify_RET_edit[1];
+    $notify_RET_type = DBGet(DBQuery('SELECT VALUE FROM program_config WHERE school_id=\'' . UserSchool() . '\' AND program=\'EDIT\' AND TITLE=\'type\' LIMIT 0, 1'));
+    $notify_RET_type = $notify_RET_type[1];
     echo "<FORM name=failure id=failure action=Modules.php?modname=" . strip_tags(trim($_REQUEST['modname'])) . "&modfunc=update&page_display=UPDATENOTIFY method=POST>";
 
     echo '<div class="row"><div class="col-md-12">';
@@ -311,6 +335,13 @@ if (clean_param($_REQUEST['page_display'], PARAM_ALPHAMOD) == 'UPDATENOTIFY') {
 
     echo '<div class="row"><div class="col-md-12">';
     echo '<div class="form-group">' . CheckboxInputSwitch($notify_RET_school['VALUE'], 'display_school_notify', _notifyWhenSchoolSetupIsIncomplete . '?', '', false, 'Yes', 'No', '', 'switch-success') . '</div>';
+    echo '</div></div>';
+
+    echo '<div class="row"><div class="col-md-12">';
+    echo '<div class="form-group">' . CheckboxInputSwitch($notify_RET_edit['VALUE'], 'edit', _allowEditMsg.'?', '', false, 'Yes', 'No', '', 'switch-success') . '</div>';
+    echo '</div></div>';
+    echo '<div class="row"><div class="col-md-12">';
+    echo '<div class="form-group">' . CheckboxInputSwitch($notify_RET_type['VALUE'], 'type', _allowEditTypes.'?', '', false, 'Yes', 'No', '', 'switch-success') . '</div>';
     echo '</div></div>';
 
     echo '<hr />';

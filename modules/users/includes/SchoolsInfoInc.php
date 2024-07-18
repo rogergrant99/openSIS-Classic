@@ -215,7 +215,7 @@ $select = $select_RET[1]['STAFF_ID'];
 
 //$_REQUEST['staff_school']['PASSWORD'];
 if (isset($_REQUEST['staff_school']['PASSWORD']))
-    $password = md5($_REQUEST['staff_school']['PASSWORD']);
+    $password = GenerateNewHash($_REQUEST['staff_school']['PASSWORD']);
 
 if ($_REQUEST['values']['SCHOOL']['OPENSIS_PROFILE'] == '1') {
     $school_id1 = DBGet(DBQuery("SELECT ID FROM schools"));
@@ -294,13 +294,13 @@ if ($select == '') {
                 //code for match password in login table
                 $number = 0;
                 $sqlquery = DBQuery('SELECT PASSWORD FROM login_authentication');
-                foreach ($sqlquery as $val) {
-                    $sqloldpass = $val['PASSWORD'];
-                    $login_status = VerifyHash($password, $sqloldpass);
-                    if ($login_status == 1) {
-                        $number = $number + 1;
-                    }
-                }
+                //foreach ($sqlquery as $val) {
+                //    $sqloldpass = $val['PASSWORD'];
+                //    $login_status = VerifyHash($password, $sqloldpass);
+                //    if ($login_status == 1) {
+                //        $number = $number + 1;
+                //   }
+                //}
                 //end
 
                 if ($number == 0) {
@@ -504,13 +504,13 @@ if ($select == '') {
                 //code for match password in login table
                 $number = 0;
                 $sqlquery = DBQuery('SELECT PASSWORD FROM login_authentication');
-                foreach ($sqlquery as $val) {
-                    $sqloldpass = $val['PASSWORD'];
-                    $login_status = VerifyHash($password, $sqloldpass);
-                    if ($login_status == 1) {
-                        $number = $number + 1;
-                    }
-                }
+                //foreach ($sqlquery as $val) {
+                //    $sqloldpass = $val['PASSWORD'];
+                //    $login_status = VerifyHash($password, $sqloldpass);
+                //    if ($login_status == 1) {
+                //        $number = $number + 1;
+                //    }
+                //}
                 //end
 
                 if ($number == 0) {
@@ -821,7 +821,7 @@ if (!$_REQUEST['modfunc']) {
 
                 echo '<span id="ajax_output_st"></span>';
             } else {
-                echo TextInputModHidden(array($this_school_mod['PASSWORD'], str_repeat('*', strlen($this_school_mod['PASSWORD']))), 'staff_school[PASSWORD]', '', 'size=20 maxlength=100 AUTOCOMPLETE = off onkeyup=passwordStrength(this.value);validate_password(this.value);');
+                echo TextInputModHidden(array('********', str_repeat('*',8)), 'staff_school[PASSWORD]', '', 'size=20 maxlength=100 AUTOCOMPLETE = off onkeyup=passwordStrength(this.value);validate_password(this.value);');
             }
             echo "<span id='passwordStrength'></span></div></div>";
             echo '</div>'; //.col-lg-6

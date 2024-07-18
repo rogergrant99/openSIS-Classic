@@ -714,6 +714,11 @@ function clickOnFileInput() {
     document.getElementById("upfile").click();
 }
 
+function clickOnCadoFileInput (ID) {
+    document.getElementById("MYID").value = ID;
+    document.getElementById("upfile").click();
+}
+
 function selectedFilesRail(inputFileID) {
 
     var fileobj = [];

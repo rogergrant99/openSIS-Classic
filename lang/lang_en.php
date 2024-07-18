@@ -1,5 +1,5 @@
 <?php
-define("_studentInformationSystem", "Student Information System");
+define("_studentInformationSystem", "CADO Student Information System");
 define("_systemPreferences", "System Preferences");
 define("_setHalfDayAndFullDayMinutes", "Set half-day and full-day minutes");
 define("_setLoginFailureAllowanceCount", "Set login failure allowance count");
@@ -1995,3 +1995,46 @@ define('link','link');
 define("ROOM_ID","ROOM_ID");
 define("generalInfo","generalInfo");
 define('students','Students');
+
+// CADO
+define("_assignmentWeight", "Assignment Weight");
+define("_weightedAssigment", "Weighted assignment");
+define("_schoolCode", "School code :");
+define("_assgnmentType", "Assignment type");
+define("_reportOwner", "Report recipient :");
+define("_finalResult", "Final result");
+define("_studentAverage", "Student's average");
+define("_groupAverage", "Group's average");
+define("_commentsCompetences", "COMMENTS ON SKILLS");
+define("_commentsOther", "OTHER COMMENTS");
+define("_reportcard_cat1","1. General information");
+define("_reportcard_cat2","2. Results");
+define("_reportcard_cat3","3. Comments on skills");
+define("_reportcard_cat4","4. Other comments");
+define("_reportcard_cat5","3. Commentaires généraux");
+define("_reportcard_title","SCHOOL REPORT FOR LEVEL ");
+define("_report_quart","Report quarter");
+define("_quart_start","Start");
+define("_quart_end","End");
+define("_publish_report","Publish to parents");
+define("_no_report_card_found","No report card found");
+define("_weightedType","Total assignement type");
+define("_new_password_request","New password request");
+define("_new_password_sent","The new password was sent to : ");
+define("_your_temporary_password_is","Your new password is ");
+define("_if_you_did_not_ask_this_password_reset","If you did not ask for this new password, please contact CADO");
+define("_allowEditMsg","Allow comment modification by the teachers");
+define("_allowEditType","Allow assigment types modification by the teachers");
+define("_assigncourses","Assign courses to all students");
+define("_eitherYourAccountIsInactiveOrYourAccessPermissionHasBeenRevoked._pleaseContactTheSchoolAdministration","Le compte est désactivé");
+define("_YourAccountHasNoStudentAssociated","No student is associated with the parent. Please contact the school administration.");
+define("_yourNewPassworddNotComplexEnough","Password must be minimum 8 characters long with at least one capital, one numeric and one special character");
+define("_passwordMatch","Your passwords match");
+define("_passwordMissMatch","Your passwords do not match");
+define("_teriaryTeacher","Tertiary teacher");
+define("_gradereportingover","Grade reporting ended for this marking period on ");
+define("_FollowingTeachersHaveMissingAttendance","Following teachers have missing attendance!");
+define("_GradeReportingStartsOn","Grade reporting starts on : ");
+define("_AndEndsOn"," and ends on : ");
+define("_Version"," Version 9.1");
+?>

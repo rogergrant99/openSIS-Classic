@@ -71,10 +71,10 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
             {
                 $parent_password = $val['PASSWORD'];
                 $password_status = VerifyHash($pass_new_after,$parent_password);
-                if($password_status==1) 
-                    { 
-                       $user_password_count=$user_password_count+1; 
-                    }
+                //if($password_status==1)
+                //    {
+                //       $user_password_count=$user_password_count+1;
+                //    }
             }
             //end
         }
@@ -86,7 +86,7 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
             $error = ''._yourNewPasswordsDidNotMatch.'.';
 
         elseif ($number > 0) {
-                $error = ''._thisPasswordIsAlredyTake.'n';
+            $error = ''._thisPasswordIsAlredyTaken.'';
         } else {
             if (User('PROFILE') == 'parent') {
                 $password_RET = DBGet(DBQuery('SELECT l.PASSWORD FROM people p,login_authentication l WHERE l.USER_ID=\'' . User('STAFF_ID') . '\' AND l.USER_ID=p.STAFF_ID AND l.PROFILE_ID=p.PROFILE_ID'));

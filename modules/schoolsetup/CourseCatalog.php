@@ -371,8 +371,7 @@ function CreateList($dli = '', $pli = '', $sli = '', $cli = '', $mp = '', $mp_na
 
     ########################################List Output Generation ####################################################
 
-    $columns = array('SUBJECT' => '' . _subject . '', 'COURSE' => '' . _course . '', 'MP' => '' . _markingPeriod . '', 'PERIOD_TIME' => '' . _time . '', 'PERIOD' => '' . _period . '', 'DAYS' => '' . _days . '', 'LOCATION' => '' . _location . '', 'TEACHER' => '' . _teacher . '');
-
+    $columns = array('NUMBER' => '#', 'SUBJECT' => ''._subject.'', 'COURSE' => ''._course.'', 'SHORT_NAME' => ''._shortName.'',  'TEACHER' => ''._teacher.'', 'PERIOD_TIME' => ''._time.'', 'PERIOD' => ''._period.'', 'DAYS' => ''._days.'', 'LOCATION' => ''._location.'');
     if ($_REQUEST['print'] == 'list') {
         echo '<link rel="stylesheet" type="text/css" href="assets/css/export_print.css" />';
         echo "<table width=100%  style=\" font-size:12px;\" >";

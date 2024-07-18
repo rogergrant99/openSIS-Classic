@@ -34,7 +34,7 @@ $menu['tools']['admin'] = array(
                                'tools/Backup.php'=>_backupDatabase,
                                'tools/DataImport.php'=>_dataImportUtility,
                                'tools/GenerateApi.php'=>_apiToken,
-                                1=>_reports,
+                                1=>'CADO',
                                 'tools/Reports.php?func=Basic'=>_atAGlance,
                                'tools/Reports.php?func=Ins_r'=>_instituteReports,
                                'tools/Reports.php?func=Ins_cf'=>_instituteCustomFieldReports,

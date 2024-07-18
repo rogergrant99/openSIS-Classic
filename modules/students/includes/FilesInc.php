@@ -254,6 +254,7 @@ if (!$_REQUEST['modfunc']) {
                     echo '</td>';
 
                     if (AllowEdit()) {
+                        $file_val['NAME']=html_entity_decode($file_val['NAME']);
                         echo '<td width="80"><input type="hidden" name="del" value="' . $file_val['ID'] . '"/>';
                         echo '<a href=Modules.php?modname=' . $_REQUEST[modname] . '&removefile=' . base64_encode($file_val['NAME']) . '&title=' . base64_encode(str_replace("opensis_space_here", " ", str_replace(UserStudentID()."-","",$file_val['NAME']))) . '&include=' . $_REQUEST['include'] . '&modfunc=delete&del=' . $file_val['ID'] . ' class="btn btn-danger btn-icon btn-xs" title="'._delete.'"><i class="icon-cross2"></i></a>
                               </td>';

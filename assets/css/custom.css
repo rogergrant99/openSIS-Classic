@@ -191,7 +191,7 @@ html[dir="rtl"] #navbar-mobile form {
     min-width: 80px;    
 }
 .select2-dropdown {
-    min-width: 100px;
+    min-width: 200px;
     width: auto !important;
 }
 ul[id*="select2-school-"] {
@@ -372,6 +372,9 @@ ul[id*="select2-period-"] {
     z-index: 2;
 }
 
+.myfiles{
+    border-style: hidden;
+}
 
 /* Schoolwide Schedule Reports - Start */
 .table-black-bg{

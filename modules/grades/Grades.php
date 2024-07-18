@@ -101,7 +101,7 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
         'TYPE_TITLE' => _category,
         'TITLE' => _assignment,
         'POINTS' => _points,
-        'LETTER_GRADE' => _grade,
+        //'LETTER_GRADE' => _grade,
         'COMMENT' => _comment,
     );
     $item = 'Assignment';
@@ -187,7 +187,7 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
                 //			$extra['functions'] = array('POINTS'=>'_makeExtraAssnCols','LETTER_GRADE'=>'_makeExtraAssnCols','WEIGHT_GRADE'=>'_makeWtg');
                 //			$LO_columns += array('POINTS'=>'Points','LETTER_GRADE'=>'Grade','WEIGHT_GRADE'=>'WEIGHT GRADE');
                 $extra['functions'] = array('POINTS' => '_makeExtraAssnCols', 'WEIGHT_GRADE' => '_makeWtg');
-                $LO_columns += array('POINTS' => 'Points', 'WEIGHT_GRADE' => 'Grade');
+                $LO_columns += array('POINTS' => 'Points');
             }
             // this will get the grades for all students ever enrolled in the class
             // the "group by start_date" and "distinct on" are needed in case a student is enrolled more than once (re-enrolled)
@@ -628,11 +628,12 @@ function _makeWtg($assignment_id, $column)
         } else
             $total = 0;
 
-        if ($tot_weight_grade != '' && $total_weightage != '')
-            $tot_weight_grade = ($tot_weight_grade / $total_weightage) * 100;
-        else
-            $tot_weight_grade = 0;
-
+        if($total_weightage){
+            if ($tot_weight_grade != '' && $total_weightage != '')
+                $tot_weight_grade = ($tot_weight_grade / $total_weightage) * 100;
+            else
+                $tot_weight_grade = 0;
+        }
         // return (($current_RET[$THIS_RET['STUDENT_ID']][1]['LETTERWTD_GRADE']!=-1.00 && $current_RET[$THIS_RET['STUDENT_ID']][1]['LETTERWTD_GRADE']!='' && $current_RET[$THIS_RET['STUDENT_ID']][1]['ASSIGN_TYP_WG']!='N/A') ?_makeLetterGrade($tot_weight_grade,"",User('STAFF_ID'),'%').'% <B>'._makeLetterGrade($tot_weight_grade,"",User('STAFF_ID'),'').'</B>':'N/A');
         // return (($THIS_RET['STUDENT_ID']['flag']==1) ?_makeLetterGrade($tot_weight_grade,"",User('STAFF_ID'),'%').'% <B>'._makeLetterGrade($tot_weight_grade,"",User('STAFF_ID'),'').'</B>':'N/A');
 

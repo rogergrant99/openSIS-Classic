@@ -227,13 +227,11 @@ if ($_REQUEST['modfunc'] == 'remove_stu') {
                     $staff_info = DBGet(DBQuery($staff_info_sql));
                     $staff_prof_id = $staff_info[1]['PROFILE_ID'];
                 }
-                $up_sql = 'UPDATE login_authentication SET PASSWORD=\'' . md5($_REQUEST['login_authentication']['PASSWORD']) . '\' WHERE USER_ID=' . $_REQUEST['staff_id'] . ' AND PROFILE_ID = ' . $staff_prof_id;
-                DBQuery($up_sql);
+                $up_sql = 'UPDATE login_authentication SET PASSWORD=\'' . GenerateNewHash($_REQUEST['login_authentication']['PASSWORD']) . '\' WHERE USER_ID=' . $_REQUEST['staff_id'] . ' AND PROFILE_ID = ' . $staff_prof_id;                DBQuery($up_sql);
                 unset($up_sql);
             }
             if ($_REQUEST['profile'] == 'none' && $_REQUEST['FRESH_USERNAME'] != '' && $_REQUEST['FRESH_PASSWORD'] != '') {
-                DBQuery('INSERT INTO login_authentication (USER_ID,PROFILE_ID,USERNAME,PASSWORD) VALUES (' . $_REQUEST['staff_id'] . ',4,\'' . singleQuoteReplace("", "", $_REQUEST['FRESH_USERNAME']) . '\',\'' . md5($_REQUEST['FRESH_PASSWORD']) . '\')');
-                echo "<script>window.location.href='Modules.php?modname=users/User.php&staff_id=$_REQUEST[staff_id]';</script>";
+                DBQuery('INSERT INTO login_authentication (USER_ID,PROFILE_ID,USERNAME,PASSWORD) VALUES (' . $_REQUEST['staff_id'] . ',4,\'' . singleQuoteReplace("", "", $_REQUEST['FRESH_USERNAME']) . '\',\'' . GenerateNewHash($_REQUEST['FRESH_PASSWORD']) . '\')');                echo "<script>window.location.href='Modules.php?modname=users/User.php&staff_id=$_REQUEST[staff_id]';</script>";
             }
         } else if ($_REQUEST['category_id'] == 2) {
 

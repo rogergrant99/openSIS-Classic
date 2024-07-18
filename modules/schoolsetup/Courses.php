@@ -29,14 +29,24 @@
 
 include('lang/language.php');
 include('../../RedirectModulesInc.php');
-
+//echo '<pre>';print_r($_REQUEST['tables']['course_periods']);echo '</pre>';
+foreach($_REQUEST['tables']['course_periods'] as $course_period => $values){
+    if( (isset($values['SECONDARY_TEACHER_ID']))){
+        if(!$values['SECONDARY_TEACHER_ID']) $values['SECONDARY_TEACHER_ID']='null';
+        DBQuery('UPDATE course_periods SET SECONDARY_TEACHER_ID=' . $values['SECONDARY_TEACHER_ID'] . ' WHERE COURSE_PERIOD_ID=' . $course_period);
+    }
+    if(isset($values['TERTIARY_TEACHER_ID'] )){
+        if(!$values['TERTIARY_TEACHER_ID']) $values['TERTIARY_TEACHER_ID']='null';
+        DBQuery('UPDATE course_periods SET TERTIARY_TEACHER_ID=' . $values['TERTIARY_TEACHER_ID'] . ' WHERE COURSE_PERIOD_ID=' . $course_period);
+    }
+}
 if (isset($_SESSION['language']) && $_SESSION['language'] == 'fr') {
     define("_classRoom", "Salle de cours");
     define("_period", "Période");
     define("_days", "Journées");
-    define("_takesAttendance", "La participation prend");
-    define("_room", "Chambre");
-    define("_time", "Temps");
+    define("_takesAttendance", "Prend les présences");
+    define("_room", "Salle");
+    define("_time", "Heures");
 } elseif (isset($_SESSION['language']) && $_SESSION['language'] == 'es') {
     define("_classRoom", "Salón de clases");
     define("_period", "Período");
@@ -442,6 +452,11 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
         else
             $columns['SECONDARY_TEACHER_ID'] = $values[1]['SECONDARY_TEACHER_ID'];
 
+        if ($_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['TERTIARY_TEACHER_ID'])
+            $columns['TERTIARY_TEACHER_ID'] = $_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['TERTIARY_TEACHER_ID'];
+        else
+            $columns['TERTIARY_TEACHER_ID'] = $values[1]['TERTIARY_TEACHER_ID'];
+
         if ($_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['BEGIN_DATE'])
             $columns['BEGIN_DATE'] = $_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['BEGIN_DATE'];
         else
@@ -466,7 +481,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                             $days_str .= "'" . $period['DAYS'] . "',";
                         if ($day_exits) {
 
-                            if (($period['PERIOD_ID'] && $period['PERIOD_ID'] != $day_exits[1]['PERIOD_ID']) || ($period['ROOM_ID'] && $period['ROOM_ID'] != $day_exits[1]['ROOM_ID']) || ($period['DAYS'] && $period['DAYS'] != $day_exits[1]['DAYS']) || ($columns['SECONDARY_TEACHER_ID'] != $values[1]['SECONDARY_TEACHER_ID']) || ($columns['TEACHER_ID'] != $values[1]['TEACHER_ID'])) {
+                            if (($period['PERIOD_ID'] && $period['PERIOD_ID'] != $day_exits[1]['PERIOD_ID']) || ($period['ROOM_ID'] && $period['ROOM_ID'] != $day_exits[1]['ROOM_ID']) || ($period['DAYS'] && $period['DAYS'] != $day_exits[1]['DAYS']) || ($columns['SECONDARY_TEACHER_ID'] != $values[1]['SECONDARY_TEACHER_ID']) || ($columns['TERTIARY_TEACHER_ID'] != $values[1]['TERTIARY_TEACHER_ID']) || ($columns['TEACHER_ID'] != $values[1]['TEACHER_ID'])) {
 
                                 $columns['START_TIME'] = $period['START_TIME'];
                                 $columns['END_TIME'] = $period['END_TIME'];
@@ -834,6 +849,11 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                         else
                             $col['SECONDARY_TEACHER_ID'] = $values[1]['SECONDARY_TEACHER_ID'];
 
+                        if ($columns['TERTIARY_TEACHER_ID'])
+                            $col['TERTIARY_TEACHER_ID'] = $columns['TERTIARY_TEACHER_ID'];
+                        else
+                            $col['TERTIAARY_TEACHER_ID'] = $values[1]['TERTIARY_TEACHER_ID'];
+
                         if ($columns['BEGIN_DATE'])
                             $col['BEGIN_DATE'] = $columns['BEGIN_DATE'];
                         else
@@ -908,6 +928,11 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                         else
                             $col['SECONDARY_TEACHER_ID'] = $values[1]['SECONDARY_TEACHER_ID'];
 
+                        if ($columns['TERTIARY_TEACHER_ID'])
+                            $col['TERTIARY_TEACHER_ID'] = $columns['TERTIARY_TEACHER_ID'];
+                        else
+                            $col['TERTIARY_TEACHER_ID'] = $values[1]['TERTIARY_TEACHER_ID'];
+
                         if ($columns['BEGIN_DATE'])
                             $col['BEGIN_DATE'] = $columns['BEGIN_DATE'];
                         else
@@ -979,6 +1004,11 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                             else
                                 $col_bl['SECONDARY_TEACHER_ID'] = $values[1]['SECONDARY_TEACHER_ID'];
 
+                            if ($columns['TERTIARY_TEACHER_ID'])
+                                $col_bl['TERTIARY_TEACHER_ID'] = $columns['TERTIARY_TEACHER_ID'];
+                            else
+                                $col_bl['TERTIARY_TEACHER_ID'] = $values[1]['TERTIARY_TEACHER_ID'];
+
                             if ($columns['BEGIN_DATE'])
                                 $col_bl['BEGIN_DATE'] = $columns['BEGIN_DATE'];
                             else
@@ -1043,7 +1073,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                             if (str_replace("\'", "''", $value) == '') {
                                 //                                    if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK' || $column == 'SECONDARY_TEACHER_ID') && !gradeAssociation($id)) {
 
-                                if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK' || $column == 'SECONDARY_TEACHER_ID') && !gradeAssociation($id)) {
+                                if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID') && !gradeAssociation($id)) {
                                     $sql .= $column . " = NULL,";
                                     $go = true;
                                 }
@@ -1052,7 +1082,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                                     $sql1 .= $column . " = NULL,";
                                     $go = true;
                                 }
-                                if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID'  || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
+                                if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID'  || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
                                     $flag_err = 'Y';
                                 }
                                 if ($column == 'DOES_ATTENDANCE' && !(scheduleAssociation($id))) {
@@ -1116,14 +1146,14 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                                     }
                                 } else {
                                     //                                        if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TEACHER_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
-                                    if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TEACHER_ID'  || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
+                                    if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'TEACHER_ID'  || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
                                         $sql .= $column . "='" . str_replace("'", "''", $value) . "',";
                                         if ($table_name == 'course_periods')
                                             $sql1 .= $column . "='" . str_replace("'", "''", $value) . "',";
                                         $go = true;
                                     } else {
                                         //                                            if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
-                                        if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' ||  $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
+                                        if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' ||  $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
                                             $flag_err = 'Y';
                                         }
                                         if (scheduleAssociation($id) && ($column == 'ROOM_ID' || $column == 'DAYS' || $column == 'PERIOD_ID' || $column == 'MARKING_PERIOD_ID')) {
@@ -1903,7 +1933,7 @@ if (!$_REQUEST['modfunc'] && !$_REQUEST['course_modfunc'] && !$_REQUEST['action'
     if (clean_param($_REQUEST['course_period_id'], PARAM_ALPHANUM)) {
         if ($_REQUEST['course_period_id'] != 'new') {
             $sql = "SELECT PARENT_ID,TITLE,SHORT_NAME,
-                                MP,MARKING_PERIOD_ID,TEACHER_ID,SECONDARY_TEACHER_ID,CALENDAR_ID,IF(MARKING_PERIOD_ID IS NULL,BEGIN_DATE,NULL) AS BEGIN_DATE,IF(MARKING_PERIOD_ID IS NULL,END_DATE,NULL) AS END_DATE,
+                                MP,MARKING_PERIOD_ID,TEACHER_ID,SECONDARY_TEACHER_ID,TERTIARY_TEACHER_ID,CALENDAR_ID,IF(MARKING_PERIOD_ID IS NULL,BEGIN_DATE,NULL) AS BEGIN_DATE,IF(MARKING_PERIOD_ID IS NULL,END_DATE,NULL) AS END_DATE,
                                 TOTAL_SEATS,(TOTAL_SEATS - FILLED_SEATS) AS AVAILABLE_SEATS,
                                 GRADE_SCALE_ID,DOES_HONOR_ROLL,DOES_CLASS_RANK,
                                 GENDER_RESTRICTION,HOUSE_RESTRICTION,CREDITS,
@@ -2036,6 +2066,7 @@ if (!$_REQUEST['modfunc'] && !$_REQUEST['course_modfunc'] && !$_REQUEST['action'
         $header .= '<div class="clearfix">';
         $header .= '<div class="col-sm-6 col-lg-4">';
         $header .= '<div class="form-group"><label class="col-md-4 control-label text-right">' . _secondaryTeacher . '</label><div class="col-md-8">' . SelectInput($RET['SECONDARY_TEACHER_ID'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][SECONDARY_TEACHER_ID]', '', $teachers, 'N/A', 'onchange="validate_cp_teacher_fields()"', $div) . '<input type="hidden" id="hidden_secondary_teacher_id" value="' . $RET['SECONDARY_TEACHER_ID'] . '"></div></div>';
+        $header .= '<div class="form-group"><label class="col-md-3 control-label text-right">'._teriaryTeacher.'</label><div class="col-md-8">' . SelectInput($RET['TERTIARY_TEACHER_ID'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][TERTIARY_TEACHER_ID]', '', $teachers, 'N/A', 'onchange="validate_cp_teacher_fields()"', $div) . '<input type="hidden" id="hidden_tertiary_teacher_id" value="' . $RET['TERTIARY_TEACHER_ID'] . '"></div></div>';
         $header .= '</div>'; //.col-sm-6.col-lg-4
         $header .= '<div class="col-sm-6 col-lg-4">';
         $header .= '<div class="form-group"><label class="col-md-4 control-label text-right">' . _seats . '</label><div class="col-md-8"><div class="col-md-4">' . TextInput($RET['TOTAL_SEATS'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][TOTAL_SEATS]', '', 'size=4 class=form-control', $div) . '</div>';

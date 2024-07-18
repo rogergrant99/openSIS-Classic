@@ -244,7 +244,7 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax'])) {
             $cmnt = trim($_REQUEST['comment'][$student_id]);
             $cmnt = clean_param($cmnt, PARAM_SPCL);
 
-            $sql = "INSERT INTO " . $table . " (STUDENT_ID,SCHOOL_DATE,MARKING_PERIOD_ID,PERIOD_ID,COURSE_PERIOD_ID,ATTENDANCE_CODE,ATTENDANCE_TEACHER_CODE,COMMENT" . ($table == 'lunch_period' ? ',TABLE_NAME' : '') . ") values('$student_id','$date','$mp_id','" . UserPeriod() . "','" . ($cq_cpid != '' ? $cq_cpid : UserCoursePeriod()) . "','" . substr($value, 5) . "','" . substr($value, 5) . "','" . str_replace("'", "\'", $cmnt) . "'" . ($table == 'lunch_period' ? ",'" . optional_param('table', '', PARAM_ALPHANUM) . "'" : '') . ")";
+            $sql = "INSERT INTO " . $table . " (STUDENT_ID,SCHOOL_DATE,MARKING_PERIOD_ID,PERIOD_ID,COURSE_PERIOD_ID,ATTENDANCE_CODE,ATTENDANCE_TEACHER_CODE,COMMENT" . ($table == 'lunch_period' ? ',TABLE_NAME' : '') . ") values('$student_id','$date','$mp_id','" . UserPeriod() . "','" . ($cq_cpid != '' ? $cq_cpid : UserCoursePeriod()) . "','" . substr($value, 5) . "','" . substr($value, 5) . "','" . str_replace("'", "\'", $cmnt) . "'" . ($table == 'lunch_period' ? ",'" . optional_param('table', '', PARAM_ALPHANUM ) . "'" : '') . ")  ON DUPLICATE KEY UPDATE PERIOD_ID = " . ($cq_cpid != '' ? $cq_cpid : UserCoursePeriod()) . " , ATTENDANCE_CODE= '" . substr($value, 5) . "' ,ATTENDANCE_TEACHER_CODE= '" . substr($value, 5) . "' ";
         }
         DBQuery($sql);
         if ($_REQUEST['table'] == '0')

@@ -29,6 +29,65 @@
 include '../../RedirectModulesInc.php';
 ini_set('memory_limit', '120000000000M');
 ini_set('max_execution_time', '50000000');
+
+
+$courses_count=0;
+$students_count=0;
+
+if (!$_REQUEST['modfunc']) {
+
+    $start_date = date('Y-m') . '-01';
+    $end_date = DBDate('mysql');
+    echo '<div class="row">';
+    echo '<div class="col-md-8 col-md-offset-2">';
+    echo "<FORM class=\"form-horizontal\" name=log id=log action=Modules.php?modname=$_REQUEST[modname]&modfunc=generate method=POST>";
+    PopTable('header',  'Assigné cours a tous les étudiants');
+
+    echo '<h5 class="text-center">Cette fonction est irréversible, procédez avec prudence</h5>';
+
+    $btn = '<input type="submit" class="btn btn-primary" value="Assigner tous les cours disponible à tous les étudiants éligibles" name="generate" onclick="self_disable(this);">';
+    PopTable('footer', $btn);
+    echo '</FORM>';
+    echo '</div>';
+    echo '</div>'; //.row
+}
+if ($_REQUEST['modfunc'] == 'generate') {
+    $schedule=DBGet(DBQuery('SELECT * from schedule where SYEAR = ' .UserSyear().' '));
+    if(count($schedule)){
+    echo "<FORM action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=del method=POST >";
+       if ((!isset($conv_st_date) || !isset($conv_end_date))) {
+           echo '<center><font color="red"><b><h5>Les cours ont déja été assignés</h5></b></font></center>';
+       }
+    }
+    else
+        CadoFix();
+}
+
+function CadoFix()
+{
+    $courses_count=0;
+    $students_count=0;
+    $syear=UserSyear();
+    // Auto enroll students in courses
+    $grade_levels=DBGet(DBQuery('SELECT ID from school_gradelevels'));
+    $dates=DBGet(DBQuery('SELECT SCHOOL_ID,START_DATE,END_DATE,MARKING_PERIOD_ID,SHORT_NAME from marking_periods where SYEAR = '.$syear.' and SHORT_NAME = \'FY\' '));
+    foreach($grade_levels as $individual) {
+        $students=DBGet(DBQuery('SELECT STUDENT_ID,GRADE_ID from student_enrollment where syear= ' .$syear . ' and grade_id= ' .$individual['ID']. ''));
+        foreach($students as $student) {
+            $courses=DBGet(DBQuery('SELECT COURSE_PERIOD_ID as NEW_COURSE_PERIOD_ID ,COURSE_ID as C_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .($syear-1) . ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as OLD_COURSE_PERIOD_ID, (SELECT GRADE_LEVEL from courses where syear= ' .$syear . ' and  COURSE_ID=C_ID ) as GRADE_LEVEL  from course_details where SYEAR=' .$syear . ''));
+            foreach($courses as $course) {
+                if($course['GRADE_LEVEL']==$student['GRADE_ID']){
+                    DBQuery('INSERT INTO schedule (STUDENT_ID,SYEAR,SCHOOL_ID,START_DATE,END_DATE,MODIFIED_DATE,MODIFIED_BY,UPDATED_BY,COURSE_ID,COURSE_PERIOD_ID,MP,MARKING_PERIOD_ID) values('.$student['STUDENT_ID'].','.$syear.', '.$dates[1]['SCHOOL_ID'].' ,\''.$dates[1]['START_DATE'].'\',\''. $dates[1]['END_DATE'] .'\',\'' . $now .'\',1,1,'.$course['C_ID'].','.$course['NEW_COURSE_PERIOD_ID'].',\''.$dates[1]['SHORT_NAME'].'\', '.$dates[1]['MARKING_PERIOD_ID'].')');
+                    $courses_count++;
+                }
+            }
+            $students_count++;
+        }
+    }
+    echo '<center><font color="black"><b><h5>'. $courses_count .' cours ont été attribué avec succès a ' . $students_count . ' étudiants pour une moyenne de ' . round($courses_count/$students_count)  . ' cours par étudiant.</h5></b></font></center>';
+}
+exit;
+
 if ($_REQUEST['func'] == 'Basic') {
     // $num_students = DBGet(DBQuery('SELECT COUNT(STUDENT_ID) as TOTAL_STUDENTS FROM students WHERE STUDENT_ID IN (SELECT DISTINCT STUDENT_ID FROM student_enrollment WHERE SYEAR=' . UserSyear() . ' AND SCHOOL_ID=' . UserSchool() . ')'));
     $num_schools = DBGet(DBQuery('SELECT COUNT(ID) as TOTAL_SCHOOLS FROM schools'));

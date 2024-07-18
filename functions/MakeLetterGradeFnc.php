@@ -88,10 +88,14 @@ function _makeLetterGrade($percent,$course_period_id=0,$staff_id=0,$ret='')
                 }
                 else
                 {
-		$percent = round($percent,2); // school default
+		$percent = round($percent,0); // school default
                 }
-	if($ret=='%')
-		return $percent;
+	if($ret=='%'){
+		if (is_nan($percent))
+			return'TI';
+		else
+			return $percent;
+	}
 
 	if(!$_openSIS['_makeLetterGrade']['grades'][$grade_scale_id])
 		$_openSIS['_makeLetterGrade']['grades'][$grade_scale_id] = DBGet(DBQuery('SELECT TITLE,ID,BREAK_OFF FROM report_card_grades WHERE SYEAR=\''.UserSyear().'\' AND SCHOOL_ID=\''.UserSchool().'\' AND GRADE_SCALE_ID=\''.$grade_scale_id.'\' ORDER BY BREAK_OFF IS NOT NULL DESC,BREAK_OFF DESC,SORT_ORDER'));
