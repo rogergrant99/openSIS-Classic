@@ -30,16 +30,7 @@
 include('lang/language.php');
 include('../../RedirectModulesInc.php');
 //echo '<pre>';print_r($_REQUEST['tables']['course_periods']);echo '</pre>';
-foreach($_REQUEST['tables']['course_periods'] as $course_period => $values){
-    if( (isset($values['SECONDARY_TEACHER_ID']))){
-        if(!$values['SECONDARY_TEACHER_ID']) $values['SECONDARY_TEACHER_ID']='null';
-        DBQuery('UPDATE course_periods SET SECONDARY_TEACHER_ID=' . $values['SECONDARY_TEACHER_ID'] . ' WHERE COURSE_PERIOD_ID=' . $course_period);
-    }
-    if(isset($values['TERTIARY_TEACHER_ID'] )){
-        if(!$values['TERTIARY_TEACHER_ID']) $values['TERTIARY_TEACHER_ID']='null';
-        DBQuery('UPDATE course_periods SET TERTIARY_TEACHER_ID=' . $values['TERTIARY_TEACHER_ID'] . ' WHERE COURSE_PERIOD_ID=' . $course_period);
-    }
-}
+
 if (isset($_SESSION['language']) && $_SESSION['language'] == 'fr') {
     define("_classRoom", "Salle de cours");
     define("_period", "Période");
@@ -107,6 +98,16 @@ if ($_REQUEST['course_period_id'] == 'new') {
     }
 }
 if ($_REQUEST['course_period_id'] != 'new') {
+    foreach($_REQUEST['tables']['course_periods'] as $course_period => $values){
+        if( (isset($values['SECONDARY_TEACHER_ID']))){
+            if(!$values['SECONDARY_TEACHER_ID']) $values['SECONDARY_TEACHER_ID']='null';
+            DBQuery('UPDATE course_periods SET SECONDARY_TEACHER_ID=' . $values['SECONDARY_TEACHER_ID'] . ' WHERE COURSE_PERIOD_ID=' . $course_period);
+        }
+        if(isset($values['TERTIARY_TEACHER_ID'] )){
+            if(!$values['TERTIARY_TEACHER_ID']) $values['TERTIARY_TEACHER_ID']='null';
+            DBQuery('UPDATE course_periods SET TERTIARY_TEACHER_ID=' . $values['TERTIARY_TEACHER_ID'] . ' WHERE COURSE_PERIOD_ID=' . $course_period);
+        }
+    }
     if ($_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['SCHEDULE_TYPE'] == 'FIXED') {
         if ($_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['TOTAL_SEATS'] != '')
             $total_seats = $_REQUEST['tables']['course_periods'][$_REQUEST['course_period_id']]['TOTAL_SEATS'];
