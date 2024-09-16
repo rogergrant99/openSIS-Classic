@@ -79,40 +79,44 @@ if (optional_param('modfunc', '', PARAM_NOTAGS) == 'save') {
                 foreach ($course_periods_RET as $course_periods_RET) {
                     //                                    	
                     // foreach ($_REQUEST['period'] as $period_id => $yes) {
-                    if (in_array($course_periods_RET['PERIOD_ID'], $period_key)) {
-                        $period_id = $course_periods_RET['PERIOD_ID'];
-                        $course_period_id = $course_periods_RET['COURSE_PERIOD_ID'];
-                        //                               
-                        $cp_arr[$course_periods_RET['CPV_ID']] = $course_period_id;
-                        if (!$current_RET[$student_id][$date][$period_id][$course_period_id]) {
-
-                            if ($course_period_id) {
-                                $att_dup = DBQuery('delete from attendance_period where student_id=' . $student_id . ' and school_date=' . $date . ' and period_id=' . $period_id . '');
-
-                                $check_dup_continues = DBGet(DBQuery('SELECT COUNT(*) as REC_EX FROM attendance_period WHERE STUDENT_ID=' . $student_id . ' AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . $period_id . '\' AND MARKING_PERIOD_ID=\'' . $current_mp . '\''));
-                                if ($check_dup_continues[1]['REC_EX'] == 0) {
-                                    $absence_reason = optional_param('absence_reason', '', PARAM_SPCL);
-                                    $absence_reason = singleQuoteReplace("", "", $absence_reason);
-                                    $sql = 'INSERT INTO attendance_period (STUDENT_ID,SCHOOL_DATE,PERIOD_ID,MARKING_PERIOD_ID,COURSE_PERIOD_ID,ATTENDANCE_CODE,ATTENDANCE_TEACHER_CODE,ATTENDANCE_REASON,ADMIN)values(\'' . $student_id . '\',\'' . $date . '\',\'' . $period_id . '\',\'' . $current_mp . '\',\'' . $course_period_id . '\',\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',\'' . $absence_reason . '\',\'Y\')';
+                        if(in_array($course_periods_RET['PERIOD_ID'], $period_key))
+                        {
+                            $period_id = $course_periods_RET['PERIOD_ID'];
+                            $course_period_id = $course_periods_RET['COURSE_PERIOD_ID'];
+    //                               
+                            $cp_arr[$course_periods_RET['CPV_ID']] = $course_period_id;
+                            if (!$current_RET[$student_id][$date][$period_id][$course_period_id]) {
+    
+                                if ($course_period_id) {
+                                    $att_dup = DBQuery('delete from attendance_period where student_id=' . $student_id . ' and school_date=' . $date . ' and period_id=' . $period_id . '');
+                                    
+                                    $check_dup_continues=DBGet(DBQuery('SELECT COUNT(*) as REC_EX FROM attendance_period WHERE STUDENT_ID='.$student_id.' AND SCHOOL_DATE=\''.$date.'\' AND PERIOD_ID=\''.$period_id.'\' AND MARKING_PERIOD_ID=\''.$current_mp.'\''));
+                                    if($check_dup_continues[1]['REC_EX']==0)
+                                    {
+                                    $absence_reason=optional_param('absence_reason', '', PARAM_SPCL);
+                                    $absence_reason= singleQuoteReplace("","",$absence_reason);
+                                    $sql = 'INSERT INTO attendance_period (STUDENT_ID,SCHOOL_DATE,PERIOD_ID,MARKING_PERIOD_ID,COURSE_PERIOD_ID,ATTENDANCE_CODE,ATTENDANCE_TEACHER_CODE,ATTENDANCE_REASON,ADMIN)values(\'' . $student_id . '\',\'' . $date . '\',\'' . $period_id . '\',\'' . $current_mp . '\',\'' . $course_period_id . '\',\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',\'' .$absence_reason. '\',\'Y\')';                               
+                                    }
+                                    else
+                                    {
+                                    $absence_reason=optional_param('absence_reason', '', PARAM_SPCL);
+                                    $absence_reason= singleQuoteReplace("","",$absence_reason);
+                                      $sql = 'UPDATE attendance_period SET ATTENDANCE_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_TEACHER_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_REASON=\'' . $absence_reason . '\',ADMIN=\'Y\',COURSE_PERIOD_ID=\'' . $course_period_id . '\'
+                                    WHERE STUDENT_ID=\'' . $student_id . '\' AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . $period_id . '\'';   
+                                    }
+                                     DBQuery($sql);
+                                    $taken_arr[$student_id] = $student_id;
                                 } else {
-                                    $absence_reason = optional_param('absence_reason', '', PARAM_SPCL);
-                                    $absence_reason = singleQuoteReplace("", "", $absence_reason);
-                                    $sql = 'UPDATE attendance_period SET ATTENDANCE_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_TEACHER_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_REASON=\'' . $absence_reason . '\',ADMIN=\'Y\',COURSE_PERIOD_ID=\'' . $course_period_id . '\'
-								WHERE STUDENT_ID=\'' . $student_id . '\' AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . $period_id . '\'';
+                                    $not_taken_arr[$student_id] = $student_id;
                                 }
+                            } else {
+    
+                                $sql = 'UPDATE attendance_period SET ATTENDANCE_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_TEACHER_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_REASON=\'' . optional_param('absence_reason', '', PARAM_SPCL) . '\',ADMIN=\'Y\'
+                                    WHERE STUDENT_ID=\'' . $student_id . '\' AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . $period_id . '\'';
                                 DBQuery($sql);
                                 $taken_arr[$student_id] = $student_id;
-                            } else {
-                                $not_taken_arr[$student_id] = $student_id;
                             }
-                        } else {
-
-                            $sql = 'UPDATE attendance_period SET ATTENDANCE_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_TEACHER_CODE=\'' . optional_param('absence_code', '', PARAM_NUMBER) . '\',ATTENDANCE_REASON=\'' . optional_param('absence_reason', '', PARAM_SPCL) . '\',ADMIN=\'Y\'
-								WHERE STUDENT_ID=\'' . $student_id . '\' AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . $period_id . '\'';
-                            DBQuery($sql);
-                            $taken_arr[$student_id] = $student_id;
                         }
-                    }
                     $c++;
                 }
 
@@ -235,7 +239,7 @@ if (!$_REQUEST['modfunc']) {
 
         echo '<div class="panel-body">';
 
-        $months = array("01" => 'January', "02" => 'February', "03" => 'March', "04" => 'April', "05" => 'May', "06" => 'June', "07" => 'July', "08" => 'August', "09" => 'September', "10" => 'October', "11" => 'November', "12" => 'December');
+        $months=array("01"=>_january,"02"=>_february,"03"=>_march,"04"=>_april,"05"=>_may,"06"=>_june,"07"=>_july,"08"=>_august,"09"=>_september,"10"=>_october,"11"=>_november,"12"=>_december);
         $time = mktime(0, 0, 0, $_REQUEST['month'] * 1, 1, substr($_REQUEST['year'], 2));
         //        echo '<div class="clearfix"><div class="col-md-12"><div class="form-inline">' . PrepareDate(strtoupper(date("d-M-y", $time)), '', false, array('M' => 1, 'Y' => 1, 'submit' =>true)) . '</div></div></div>';
 
