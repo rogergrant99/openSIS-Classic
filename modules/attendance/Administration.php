@@ -89,9 +89,8 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax']) && Al
                 }
 
                 $sql = substr($sql, 0, -1) . ' WHERE SCHOOL_DATE=\'' . $date . '\' AND COURSE_PERIOD_ID=\'' . $p_ids[0] . '\' AND STUDENT_ID=\'' . $student_id . '\'' . $extra_sql;
-                if (isset($_REQUEST['admin_update']) && $_REQUEST['admin_update'] == _update){
+                if (isset($_REQUEST['admin_update']) && $_REQUEST['admin_update'] == 'UPDATE')
                     DBQuery($sql);
-                }
             }
             else {
                 $period_id = $p_ids[1];
@@ -114,10 +113,10 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax']) && Al
                     }
                 }
                 $sql .= '(' . substr($fields, 0, -1) . ') values(' . substr($values, 0, -1) . ')';
-                $sql .= ' ON DUPLICATE KEY UPDATE COURSE_PERIOD_ID=' . $p_ids[0] . '';
+
                 if ($go) {
 
-                    if (isset($_REQUEST['admin_update']) && $_REQUEST['admin_update'] == _update)
+                    if (isset($_REQUEST['admin_update']) && $_REQUEST['admin_update'] == 'UPDATE')
                         DBQuery($sql);
                 }
             }
@@ -132,7 +131,6 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax']) && Al
     unset($_REQUEST['attendance']);
     unset($_SESSION['_REQUEST_vars']['attendance']);
     unset($_SESSION['_REQUEST_vars']['attendance_day']);
-    unset($_REQUEST['admin_update']);
 }
 if (!empty($_REQUEST['attendance_day'])) {
     foreach ($_REQUEST['attendance_day'] as $student_id => $comment) {
@@ -258,7 +256,7 @@ if (isset($_REQUEST['student_id']) && optional_param('student_id', '', PARAM_ALP
     foreach ($periods_RET as $period) {
         $extra['SELECT'] .= ",'' AS PERIOD_" . $period['PERIOD_ID'];
         $extra['functions']['PERIOD_' . $period['PERIOD_ID']] = '_makeCodePulldown';
-        $extra['columns_after']['PERIOD_' . $period['PERIOD_ID']] = $period['TITLE'];
+        $extra['columns_after']['PERIOD_' . $period['PERIOD_ID']] = $period['SHORT_NAME'];
     }
 
     $tmp_REQUEST = $_REQUEST;
