@@ -87,7 +87,7 @@ if (!$_REQUEST['modfunc']) {
             $fileType = $_FILES['uploadfile']['type'][$ifl];
 
             if (file_exists($target_path)) {
-				DBQuery('DELETE FROM user_file_upload WHERE USER_ID=\''  . UserStaffID() . '\'AND NAME=\'' . $fileName = str_replace($dir.'/', '', $target_path) . '\'');
+				DBQuery('DELETE FROM user_file_upload WHERE USER_ID=\''  . UserStaffID() . '\'AND NAME="' . $fileName = str_replace($dir.'/', '', $target_path) . '"');
 				unlink($target_path);
                 //$target_path = $dir . '/' . UserStaffID() . '-' . time() . '-' . $_FILES['uploadfile']['name'][$ifl];
                 //$_SESSION['dup_file_name'] = $target_path;
