@@ -936,13 +936,16 @@ function CadoStudentCommunication($mgrades_RET, $student_id, $columns,$grade_id,
         $comment_arr[$course_index]['COMMENT_TITLE'] = _comment;
         $comment_arr[$course_index]['COMMENT'] = $course['COMMENT'];
         $grade_index=0;
-        foreach ($grades_RET as $key=> $grades){
-            $results_arr[$course_index][$grade_index]['TITLE'] = $grades['TITLE'];
-            $results_arr[$course_index][$grade_index]['POINTS'] = $grades['POINTS'];
-            $grade_index++;
-        }
-        $grade_index=0;
-        $course_index++;
+        if (count($grades_RET))
+            { 
+                foreach ($grades_RET as $key=> $grades){
+                $results_arr[$course_index][$grade_index]['TITLE'] = $grades['TITLE'];
+                $results_arr[$course_index][$grade_index]['POINTS'] = $grades['POINTS'];
+                $grade_index++;
+                }
+                $grade_index=0;
+                $course_index++;
+            }
     }
     CadoHTMLcommunication(_reportcard_cat2,$course_arr,$results_arr,$grade_id,$comment_arr);
 }
