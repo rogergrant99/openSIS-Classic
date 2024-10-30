@@ -58,7 +58,7 @@ if ($_REQUEST['modfunc'] == 'save') {
 
         $RET = GetStuList($extra);
 
-        if (count($RET)) {
+        if (is_countable($RET) && count($RET)) {
             $columns = array('ASSIGN_TYP' =>_assignmentType,
              'ASSIGN_TYP_WG' => _weight. ' (%)',
              'ASSIGN_WEIGHT' => _assignmentWeight . ' (%)',
@@ -124,8 +124,6 @@ if ($_REQUEST['modfunc'] == 'save') {
                     
                         //$assignment_type_weight = DBGet(DBQuery('SELECT SUM(FINAL_GRADE_PERCENT) AS FINAL_GRADE_PERCENT FROM gradebook_assignment_types WHERE assignment_type_id IN ('.$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'].')'));
                         $assignment_type_weight = $assignment_type_weight[1]['FINAL_GRADE_PERCENT'];
-                        $assignment_weight = DBGet(DBQuery('SELECT ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE assignment_type_id IN ('.$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'].')'));
-                        $assignment_weight = $assignment_weight[1]['ASSIGNMENT_WEIGHT'];
 
                         $school_years = DBGet(DBQuery('select marking_period_id from  school_years where  syear=' . UserSyear() . ' and school_id=' . UserSchool()));
                         $fy_mp_id = $school_years[1]['MARKING_PERIOD_ID'];
@@ -335,10 +333,10 @@ function _removeSpaces($value, $column) {
 }
 
 function _makeChooseCheckbox($value, $title) {
-    return '<INPUT type=checkbox name=st_arr[] value=' . $value . '>';
+    // return '<INPUT type=checkbox name=st_arr[] value=' . $value . '>';
     
-   // global $THIS_RET;
-  //  return "<input name=unused_var[$THIS_RET[STUDENT_ID]] value=" . $THIS_RET[STUDENT_ID] . "  type='checkbox' id=$THIS_RET[STUDENT_ID] onClick='setHiddenCheckboxStudents(\"st_arr[$THIS_RET[STUDENT_ID]]\",this,$THIS_RET[STUDENT_ID]);' />";
+   global $THIS_RET;
+   return "<input name=unused_var[$THIS_RET[STUDENT_ID]] value=" . $THIS_RET['STUDENT_ID'] . "  type='checkbox' id=$THIS_RET[STUDENT_ID] onClick='setHiddenCheckboxStudents(\"st_arr[$THIS_RET[STUDENT_ID]]\",this,$THIS_RET[STUDENT_ID]);' />";
 }
 
 function _makeAssnWG($value, $column) {
