@@ -613,7 +613,7 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
                     $assignment_type_id_count=DBGet(DBQuery('SELECT distinct(assignment_type_id) AS assignment_type_ids FROM gradebook_assignments a JOIN gradebook_grades g ON (a.ASSIGNMENT_ID = g.ASSIGNMENT_ID AND g.STUDENT_ID=\''.$student_id . '\' AND g.COURSE_PERIOD_ID=\''. $course_period_id . '\') WHERE (a.COURSE_PERIOD_ID=\''. $course_period_id . '\' OR a.COURSE_ID=\''. $course_id . '\' AND a.STAFF_ID=\''. User('STAFF_ID') . '\') AND (a.MARKING_PERIOD_ID=\''. UserMP() . '\')'));
                     if ($val['WEIGHT_GRADE'] != 'N/A')
                         $total_weight[$course][$current_quart][$val['ASSIGNMENT_TYPE_ID']] += ($val['ASSIGN_WEIGHT'] * $val['ASSIGN_TYP_WG']) / 100; 
-                    if($last_index != $val['ASSIGNMENT_TYPE_ID']){
+                    if($last_index != $val['ASSIGNMENT_TYPE_ID'] && $val['ASSIGN_TYP'] !="1ère communication"){
                         $type_ids[$course][$type_index]=$val['ASSIGNMENT_TYPE_ID']; 
                         $type_weight[$course][$type_index]=$val['ASSIGN_TYP_WG']; 
                         //ROGER
