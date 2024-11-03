@@ -56,7 +56,7 @@ if ($_REQUEST['modfunc'] == 'save') {
         $extra['WHERE'] = ' AND s.STUDENT_ID IN (' . $st_list . ')';
 
 
-        $extra['SELECT'] .= ',rc_cp.COURSE_WEIGHT,rc_cp.TITLE as SHORT ,rpg.TITLE as GRADE_TITLE,sg1.GRADE_PERCENT,sg1.WEIGHTED_GP,sg1.UNWEIGHTED_GP ,sg1.CREDIT_ATTEMPTED , sg1.COMMENT as COMMENT_TITLE,sg1.STUDENT_ID,sg1.COURSE_PERIOD_ID,sg1.MARKING_PERIOD_ID,c.TITLE as COURSE_TITLE,rc_cp.TEACHER_ID AS TEACHER,rc_cp.TEACHER_ID AS TEACHER_ID2,sg1.COURSE_PERIOD_ID AS COURSE_ID,sp.SORT_ORDER';
+        $extra['SELECT'] .= ',rc_cp.COURSE_WEIGHT,sg1.REPORT_CARD_GRADE_ID,sg1.GRADE_PERCENT,rc_cp.TITLE as SHORT ,rpg.TITLE as GRADE_TITLE,sg1.GRADE_PERCENT,sg1.WEIGHTED_GP,sg1.UNWEIGHTED_GP ,sg1.CREDIT_ATTEMPTED , sg1.COMMENT as COMMENT_TITLE,sg1.STUDENT_ID,sg1.COURSE_PERIOD_ID,sg1.MARKING_PERIOD_ID,c.TITLE as COURSE_TITLE,rc_cp.TEACHER_ID AS TEACHER,rc_cp.TEACHER_ID AS TEACHER_ID2,sg1.COURSE_PERIOD_ID AS COURSE_ID,sp.SORT_ORDER';
 
         if (($_REQUEST['elements']['period_absences'] == 'Y' && !$_REQUEST['elements']['grade_type']) || ($_REQUEST['elements']['period_absences'] == 'Y' && $_REQUEST['elements']['grade_type'] && $_REQUEST['elements']['percents']))
             $extra['SELECT'] .= ',cpv.DOES_ATTENDANCE,
@@ -74,13 +74,14 @@ if ($_REQUEST['modfunc'] == 'save') {
 
 
         $extra['WHERE'] .= ' AND sg1.MARKING_PERIOD_ID IN (' . $mp_list . ')
-					AND rc_cp.COURSE_PERIOD_ID=sg1.COURSE_PERIOD_ID AND c.COURSE_ID = rc_cp.COURSE_ID AND sg1.STUDENT_ID=ssm.STUDENT_ID AND cpv.COURSE_PERIOD_ID=rc_cp.COURSE_PERIOD_ID AND sp.PERIOD_ID=cpv.PERIOD_ID
+					AND sg1.REPORT_CARD_GRADE_ID is not NULL AND sg1.GRADE_PERCENT is not NULL AND rc_cp.COURSE_PERIOD_ID=sg1.COURSE_PERIOD_ID AND c.COURSE_ID = rc_cp.COURSE_ID AND sg1.STUDENT_ID=ssm.STUDENT_ID AND cpv.COURSE_PERIOD_ID=rc_cp.COURSE_PERIOD_ID AND sp.PERIOD_ID=cpv.PERIOD_ID
                                                                                            AND sc.ID=sg1.SCHOOL_ID';
 
         $extra['ORDER'] .= ',c.TITLE';
         $extra['functions']['TEACHER'] = '_makeTeacher';
         $extra['group'] = array('STUDENT_ID', 'COURSE_PERIOD_ID', 'MARKING_PERIOD_ID');
         $RET = GetStuList($extra);
+        // '<pre>'; print_r($RET); echo '</pre>';
         if (($_REQUEST['elements']['comments'] == 'Y') || ($_REQUEST['elements']['comments'] == 'Y' && $_REQUEST['elements']['percents'])) {
             // GET THE COMMENTS
             unset($extra);
