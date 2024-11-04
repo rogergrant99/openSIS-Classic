@@ -28,6 +28,7 @@
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
 DrawBC("" . _gradebook . " > " . ProgramTitle());
+error_reporting(1);
 
 include_once 'functions/MakeLetterGradeFnc.php';
 include_once 'functions/MakePercentGradeFnc.php';
@@ -620,7 +621,8 @@ function _makeWtg($assignment_id, $column)
                     //echo $tot_weight_grade .'= '.$tot_weight_grade.' + (round((round(('.$tot_weighted_percent[$assign_key].' / '.$value.'), 2) * '.$assign_typ_wg[$assign_key].') / 100, 2))----old<br/><br/>';
                 }
             }
-            $tot_weight_grade = $tot_weight_grade / 100;
+            if($tot_weight_grade )
+                $tot_weight_grade = $tot_weight_grade / 100;
 
             //$tot_weight_grade=$tot_weight_grade/100;
             // if($total_percent!=0)

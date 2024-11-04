@@ -741,8 +741,10 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
                         $final_admim_grade=round($grade[1]['GRADE_PERCENT']);
                         $diff = $final_admim_grade - round($total_current_quart[$current_quart]*$assign_total_id_weigth[$course][$current_quart]/100);
                         $type_index=0;
-                        if (! $final_admim_grade)
-                        $final_admim_grade=round($total_current_quart[$current_quart]*$assign_total_id_weigth[$course][$current_quart]/100);
+                        if (! $final_admim_grade){
+                            $final_admim_grade=round($total_current_quart[$current_quart]*$assign_total_id_weigth[$course][$current_quart]/100);
+                            $diff=0;
+                        }
                                 foreach ($type_ids[$course] as $key=> $val) {
                                 $result_diff[$course][$current_quart]['RESULTDIFF'] = round($diff);                                
                                 $weigth = $type_weight[$course][$type_index] / 100 ;
