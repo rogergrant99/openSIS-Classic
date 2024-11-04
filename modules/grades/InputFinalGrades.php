@@ -32,6 +32,52 @@ DrawBC("" . _gradebook . " > " . ProgramTitle());
 
 echo '<div class="panel panel-default">';
 echo '<div class="panel-body">';
+    # Letting user know if they have weighted the course period but have not set any
+    # weights to the assignment types
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
+    if($markingPeriod[1][MARKING_PERIOD_ID] != $_REQUEST['mp'])
+    {
+        $assignment_type_list_sql = 'SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
+                FROM (
+                ( SELECT gat.ASSIGNMENT_TYPE_ID, gat.TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat WHERE gat.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\' )
+                UNION  
+                (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat, gradebook_assignments ga, course_periods cp
+                WHERE cp.course_period_id = gat.course_period_id AND gat.ASSIGNMENT_TYPE_ID = ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL AND ga.COURSE_ID = \'' . UserCourse() . '\' AND ga.STAFF_ID = \'' . UserID() . '\' ) 
+                ) AS T
+                GROUP BY ASSIGNMENT_TYPE_ID';
+        $list_assignment_types = DBGet(DBQuery($assignment_type_list_sql));
+        foreach ($list_assignment_types as $key => $type)
+        {
+            if($markingPeriod[1][MARKING_PERIOD_ID] == $_REQUEST['mp']) 
+                break;
+            if($type[TITLE] != $markingPeriod[1][TITLE])
+            {
+            $assignment_weight=DBGet(DBQuery('SELECT ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.   UserMP() . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
+            foreach ($assignment_weight as $key => $weight) 
+            {
+                $total+=$weight['ASSIGNMENT_WEIGHT'];
+            }
+            if ($total != 100)
+                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
+            }
+            $total=0;
+    }
+
+        $total_assignment_type_weightage = 0;
+        $total_assignment_type_weightage_arr = array();
+
+        if (!empty($list_assignment_types)) {
+            foreach ($list_assignment_types as $at_key => $at_val) {
+                if ($at_val['FINAL_GRADE_PERCENT'] != '' && number_format($at_val['FINAL_GRADE_PERCENT'],2) != 0)
+                    array_push($total_assignment_type_weightage_arr, $at_val['FINAL_GRADE_PERCENT']);
+            }
+
+            $total_assignment_type_weightage = array_sum($total_assignment_type_weightage_arr);
+
+            if ($total_assignment_type_weightage != 1)
+                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . '</div>';
+        }
+    }
 
 $mp_RET = DBGet(DBQuery('SELECT MP FROM course_periods WHERE course_period_id = \'' . UserCoursePeriod() . '\''));
 if ($mp_RET[1]['MP'] == 'SEM') {
@@ -1275,55 +1321,7 @@ if (!$_REQUEST['_openSIS_PDF']) {
         }
     }
 
-    # Letting user know if they have weighted the course period but have not set any
-    # weights to the assignment types
-    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
-    if($markingPeriod[1][MARKING_PERIOD_ID] != $_REQUEST['mp'])
-    {
-        if ($programconfig[User('STAFF_ID')]['WEIGHT'] == 'Y') {
-        $assignment_type_list_sql = 'SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
-                FROM (
-                ( SELECT gat.ASSIGNMENT_TYPE_ID, gat.TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat WHERE gat.COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\' )
-                UNION  
-                (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat, gradebook_assignments ga, course_periods cp
-                WHERE cp.course_period_id = gat.course_period_id AND gat.ASSIGNMENT_TYPE_ID = ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL AND ga.COURSE_ID = \'' . UserCourse() . '\' AND ga.STAFF_ID = \'' . UserID() . '\' ) 
-                ) AS T
-                GROUP BY ASSIGNMENT_TYPE_ID';
-        $list_assignment_types = DBGet(DBQuery($assignment_type_list_sql));
-        foreach ($list_assignment_types as $key => $type)
-        {
-            if($markingPeriod[1][MARKING_PERIOD_ID] == $_REQUEST['mp']) 
-                break;
-            if($type[TITLE] != $markingPeriod[1][TITLE])
-            {
-            $assignment_weight=DBGet(DBQuery('SELECT ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.   UserMP() . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
-            foreach ($assignment_weight as $key => $weight) 
-            {
-                $total+=$weight['ASSIGNMENT_WEIGHT'];
-            }
-            if ($total != 100)
-                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
-            }
-            $total=0;
-    }
-
-        $total_assignment_type_weightage = 0;
-        $total_assignment_type_weightage_arr = array();
-
-        if (!empty($list_assignment_types)) {
-            foreach ($list_assignment_types as $at_key => $at_val) {
-                if ($at_val['FINAL_GRADE_PERCENT'] != '' && number_format($at_val['FINAL_GRADE_PERCENT'],2) != 0)
-                    array_push($total_assignment_type_weightage_arr, $at_val['FINAL_GRADE_PERCENT']);
-            }
-
-            $total_assignment_type_weightage = array_sum($total_assignment_type_weightage_arr);
-
-            if ($total_assignment_type_weightage != 1)
-                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . '</div>';
-        }
-        }
-    }
-
+ 
     if (AllowEdit()) {
         echo '<p class="alert alert-info alert-bordered">' . ($current_completed ? '<span>'._theseGradesAreComplete.'.</span>' : '<span>'._gradeReportingIsOpenForThisMarkingPeriod.'.</span>') . (AllowEdit() ? ' <span>'._youCanEditTheseGrades.'.</span>' : ' <span class="text-danger">Grade reporting begins on : ' . date("M d, Y ", strtotime($grade_start_date[1]['POST_START_DATE'])) . '.</span>') . '</p>';
     } else if ($grade_status == 'not open yet') {
@@ -1421,6 +1419,7 @@ if (substr($_REQUEST['mp'], 0, 1) != 'E' && GetMP($_REQUEST['mp'], 'DOES_COMMENT
     $columns += array('COMMENT' =>'Commentaire de l\'enseignant');
     $columns += array('COMMENT1' =>'Commentaire de compétences');
     $columns += array('COMMENT2' =>'Commentaire générales');
+    
 }
 
 
