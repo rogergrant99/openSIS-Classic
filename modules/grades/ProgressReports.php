@@ -28,6 +28,7 @@
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
 include '_makeLetterGrade.fnc.php';
+error_reporting(1);
 
 if(isset($_SESSION['student_id']) && $_SESSION['student_id'] != '')
 {
@@ -222,7 +223,8 @@ if ($_REQUEST['modfunc'] == 'save') {
                 $count=1;
                 foreach ($grades_RET as $key => $val) {
                     if($val['ASSIGNMENT_TYPE_ID'] == $assign_ids[$student['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']][0]) {
-                            $grades_RET[$count]['WEIGHT_TYPE_GRADE']= round(($tot_id_grade[$student['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]*100) / $total_id_weight[$student['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']] / $grades_RET[$count]['ASSIGN_TYP_WG'],0) ;
+                            if($total_id_weight[$student['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']])
+                                $grades_RET[$count]['WEIGHT_TYPE_GRADE']= round(($tot_id_grade[$student['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]*100) / $total_id_weight[$student['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']] / $grades_RET[$count]['ASSIGN_TYP_WG'],0) ;
                         $count++;
                     }
                 }
