@@ -61,7 +61,7 @@ if($_REQUEST['modfunc']=='save')
 			$columns += array('DUE_DATE'=>_dueDate);
         $columns += array(
             'POINTS'=>_points,
-//            'LETTER_GRADE'=>_grade,
+            'LETTER_GRADE'=>_grade,
             'WEIGHT_GRADE'=>_weightedGrade,
             'WEIGHT_TYPE_GRADE'=>_weightedType,
             'COMMENT'=>_comment,
@@ -193,7 +193,8 @@ if($_REQUEST['modfunc']=='save')
                     
                             $assignment_type_weight = DBGet(DBQuery('SELECT SUM(FINAL_GRADE_PERCENT) AS FINAL_GRADE_PERCENT FROM gradebook_assignment_types WHERE assignment_type_id IN ('.$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'].')'));
                             $assignment_type_weight = $assignment_type_weight[1]['FINAL_GRADE_PERCENT'];
-                            $assignment_weight = DBGet(DBQuery('SELECT ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE assignment_type_id IN ('.$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'].')'));
+                            if($assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'])
+                                    $assignment_weight = DBGet(DBQuery('SELECT ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE assignment_type_id IN ('.$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'].')'));
                             $assignment_weight = $assignment_weight[1]['ASSIGNMENT_WEIGHT'];
 
 				// $sql = 'SELECT '.$course_period_id.' as COURSE_PERIOD_ID,a.TITLE,t.TITLE AS ASSIGN_TYP,a.ASSIGNED_DATE,a.DUE_DATE,      t.ASSIGNMENT_TYPE_ID, (t.FINAL_GRADE_PERCENT / (SELECT SUM(FINAL_GRADE_PERCENT) FROM gradebook_assignment_types WHERE COURSE_ID = \''.$course_id.'\')) as  FINAL_GRADE_PERCENT,(t.FINAL_GRADE_PERCENT / (SELECT SUM(FINAL_GRADE_PERCENT) FROM gradebook_assignment_types WHERE COURSE_ID = \''.$course_id.'\')) as ASSIGN_TYP_WG,t.FINAL_GRADE_PERCENT AS WEIGHT_GRADE  ,g.POINTS,a.POINTS AS TOTAL_POINTS,g.COMMENT,g.POINTS AS LETTER_GRADE,g.POINTS AS LETTERWTD_GRADE,'.$course['TEACHER_ID'].' AS CP_TEACHER_ID,CASE WHEN (a.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=a.ASSIGNED_DATE) AND (a.DUE_DATE IS NULL OR CURRENT_DATE>=a.DUE_DATE) THEN \'Y\' ELSE NULL END AS DUE FROM gradebook_assignment_types t,gradebook_assignments a 
@@ -294,7 +295,7 @@ foreach ($grades_RET as $key => $val) {
     }
 }
     if($total_asgnpoints)
-            $link['add']['html'] = array('TITLE'=>'<font style="font-size:13;font-weight:bold;"><B>Total</B></font>','POINTS'=>'<font style="font-size:13;font-weight:bold;">'.$total_stpoints.' / '.$total_asgnpoints.'</font>','LETTER_GRADE'=>'<font style="font-size:13;font-weight:bold;">'._makeLetterGrade(($total_stpoints/$total_asgnpoints),$course_period_id,  $course['TEACHER_ID'],"%").'%&nbsp;'._makeLetterGrade(($total_stpoints/$total_asgnpoints),$course_period_id,  $course['TEACHER_ID']).'</font>','WEIGHT_GRADE'=>'<font style="font-size:13;font-weight:bold;">'.($program_config[$course['TEACHER_ID']][$course_period_id]['WEIGHT']=='Y'?_makeLetterGrade($tot_weight_grade,"",$course['TEACHER_ID'],'%').'%&nbsp;'._makeLetterGrade($tot_weight_grade,$course_period_id,$course['TEACHER_ID']):'N/A').'</font>');
+            $link['add']['html'] = array('TITLE'=>'<font style="font-size:13;font-weight:bold;"><B>Total</B></font>','POINTS'=>'<font style="font-size:13;font-weight:bold;">'.$total_stpoints.' / '.$total_asgnpoints.'</font>','LETTER_GRADE'=>'<font style="font-size:13;font-weight:bold;">'._makeLetterGrade(($total_stpoints/$total_asgnpoints),$course_period_id,  $course['TEACHER_ID'],"%").'%&nbsp;'._makeLetterGrade(($total_stpoints/$total_asgnpoints),$course_period_id,  $course['OFF']).'</font>','WEIGHT_GRADE'=>'<font style="font-size:13;font-weight:bold;">'.($program_config[$course['TEACHER_ID']][$course_period_id]['WEIGHT']=='Y'?_makeLetterGrade($tot_weight_grade,"",$course['TEACHER_ID'],'%').'%&nbsp;'._makeLetterGrade($tot_weight_grade,$course_period_id,$course['OFF']):'N/A').'</font>');
                         
                         
                       
@@ -412,7 +413,7 @@ function _makeExtra($value,$column)
 		if($THIS_RET['TOTAL_POINTS']!='0')
 			if($value!='-1')
 				if($THIS_RET['DUE'] && $value=='')
-                                    return _notGraded;
+                                    return "Non coté";
                                 else if($THIS_RET['DUE'] || $value!='')
                                 {
                                     $per = $value/$THIS_RET['TOTAL_POINTS'];

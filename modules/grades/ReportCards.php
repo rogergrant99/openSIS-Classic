@@ -74,7 +74,7 @@ if ($_REQUEST['modfunc'] == 'save') {
 
 
         $extra['WHERE'] .= ' AND sg1.MARKING_PERIOD_ID IN (' . $mp_list . ')
-					AND sg1.REPORT_CARD_GRADE_ID is not NULL AND sg1.GRADE_PERCENT is not NULL AND rc_cp.COURSE_PERIOD_ID=sg1.COURSE_PERIOD_ID AND c.COURSE_ID = rc_cp.COURSE_ID AND sg1.STUDENT_ID=ssm.STUDENT_ID AND cpv.COURSE_PERIOD_ID=rc_cp.COURSE_PERIOD_ID AND sp.PERIOD_ID=cpv.PERIOD_ID
+					AND rc_cp.COURSE_PERIOD_ID=sg1.COURSE_PERIOD_ID AND c.COURSE_ID = rc_cp.COURSE_ID AND sg1.STUDENT_ID=ssm.STUDENT_ID AND cpv.COURSE_PERIOD_ID=rc_cp.COURSE_PERIOD_ID AND sp.PERIOD_ID=cpv.PERIOD_ID
                                                                                            AND sc.ID=sg1.SCHOOL_ID';
 
         $extra['ORDER'] .= ',c.TITLE';
