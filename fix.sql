@@ -30,3 +30,17 @@ ADD tertiary_teacher_id  long AFTER SECONDARY_TEACHER_ID;
 
 DROP VIEW `opensis`.`course_details`;
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `course_details` AS select `cp`.`school_id` AS `school_id`,`cp`.`syear` AS `syear`,`cp`.`marking_period_id` AS `marking_period_id`,`c`.`subject_id` AS `subject_id`,`cp`.`course_id` AS `course_id`,`cp`.`course_period_id` AS `course_period_id`,`cp`.`teacher_id` AS `teacher_id`,`cp`.`secondary_teacher_id` AS `secondary_teacher_id`,`cp`.`tertiary_teacher_id` AS `tertiary_teacher_id`,`c`.`title` AS `course_title`,`cp`.`title` AS `cp_title`,`cp`.`grade_scale_id` AS `grade_scale_id`,`cp`.`mp` AS `mp`,`cp`.`credits` AS `credits`,`cp`.`begin_date` AS `begin_date`,`cp`.`end_date` AS `end_date` from (`course_periods` `cp` join `courses` `c`) where `cp`.`course_id` = `c`.`course_id`;
+
+
+ALTER TABLE school_quarters
+ADD DAYS decimal(9,0) after post_end_date
+
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 71 WHERE `marking_period_id` = 19;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 52 WHERE `marking_period_id` = 16;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 60 WHERE `marking_period_id` = 18;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 59 WHERE `marking_period_id` = 33;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 70 WHERE `marking_period_id` = 31;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 51 WHERE `marking_period_id` = 30;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 70 WHERE `marking_period_id` = 25;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 59 WHERE `marking_period_id` = 24;
+UPDATE `opensis91`.`school_quarters` SET `DAYS` = 51 WHERE `marking_period_id` = 23;

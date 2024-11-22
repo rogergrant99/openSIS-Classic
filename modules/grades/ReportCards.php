@@ -296,8 +296,8 @@ if ($_REQUEST['modfunc'] == 'save') {
 
                         foreach ($addresses as $address) {
                             unset($_openSIS['DrawHeader']);
-                            CadoPageSetup(_reportcard_title . html_entity_decode($mps[key($mps)][1]['GRADE_ID']));
-                            CadoHeader($mps[key($mps)][1]['STUDENT_ID'],$mps[key($mps)][1]['GRADE_ID'],$attendance_day_RET,$last_mp,$columns[$mp]);                            
+                            CadoPageSetup(_reportcard_title , html_entity_decode($mps[key($mps)][1]['GRADE_ID']));
+                            CadoHeader($mps[key($mps)][1]['STUDENT_ID'],$mps[key($mps)][1]['GRADE_ID'],$attendance_day_RET,$last_mp,$columns[$mp],html_entity_decode($mps[key($mps)][1]['GRADE_ID']));                            
                             //ListOutputPrint($grades_RET, $columns, '', '', array(), array(), array('print' =>false));
                             CadoStudentGrades($grades_RET,$mps[key($mps)][1]['STUDENT_ID'],$columns,$mps[key($mps)][1]['GRADE_ID'],GetMP($mp, $mp_TITLE),$last_mp);
                             CadoStudentComments($mps[key($mps)][1]['STUDENT_ID'],$mps[key($mps)][1]['GRADE_ID'],$last_mp);
@@ -499,10 +499,6 @@ if ($modal_flag == 1) {
 function _makeChooseCheckbox($value, $title)
 {
     global $THIS_RET;
-
-
-    // return '<INPUT type=checkbox name=st_arr[] value=' . $value . '>';
-
     return "<input name=unused_var[$THIS_RET[STUDENT_ID]] value=" . $THIS_RET['STUDENT_ID'] . "  type='checkbox' id=$THIS_RET[STUDENT_ID] onClick='setHiddenCheckboxStudents(\"st_arr[$THIS_RET[STUDENT_ID]]\",this,$THIS_RET[STUDENT_ID]);' />";
 }
 
@@ -513,6 +509,35 @@ function _makeTeacher($teacher, $column)
 
     return $TEACHER_NAME[1]['NAME'];
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //#####################################################//
 //### CADO CUSTOM REPORT CARD
@@ -526,7 +551,7 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
         return;
     }
     $year=UserSyear();
-    if(strpos($grade_id,"Primaire")){
+    if(strpos($grade_id,"Primaire") || strpos($grade_id,"Secondaire 1") || strpos($grade_id,"Secondaire 2")){
          $year--;
          $cycle_count=2;
     } else $cycle_count=1;
@@ -544,14 +569,23 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
     $course=0;
     if (count($mgrades_RET)) {
         foreach ($mgrades_RET as $key=> $sgrades_RET) {
-            //echo '-------START-------------'7
+            //echo '-------START-------------'
             if($year!=UserSyear()){
-                $search = substr(html_entity_decode($sgrades_RET['SHORT']), 0, 6);
+                if(substr($grade_id, 10, 8) == 'Primaire')
+                   $search = substr(html_entity_decode($sgrades_RET['SHORT']), 0, 6);
+                else
+                    $search = substr(html_entity_decode($sgrades_RET['SHORT']), 0, 3);
                 $search .= '%';
-                $search .= substr($grade_id, 12, 2);
+                if(substr($grade_id, 10, 8) == 'Primaire')
+                    $search .= substr($grade_id, 12, 2);
+                else
+                    $search .= substr($grade_id, 10, 3);
                 $search .= '%';
-                $search .= substr($grade_id, 19, 1) -1;
-                $search .= '%';
+                if(substr($grade_id, 10, 8) == 'Primaire')
+                    $search .= substr($grade_id, 19, 1) -1 ;
+                else
+                    $search .= substr($grade_id, 21, 1) -1 ;
+                    $search .= '%';
                 $course_temp=DBGet(DBQuery('SELECT * FROM course_periods WHERE short_name like "' . $search . '" and SYEAR='. $year .''));
                 $sgrades_RET['COURSE_ID']=$course_temp[1]['COURSE_PERIOD_ID'];
             }
@@ -617,7 +651,6 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
                     if($last_index != $val['ASSIGNMENT_TYPE_ID'] && $val['ASSIGN_TYP'] !="1ère communication"){
                         $type_ids[$course][$type_index]=$val['ASSIGNMENT_TYPE_ID']; 
                         $type_weight[$course][$type_index]=$val['ASSIGN_TYP_WG']; 
-                        //ROGER
                         $type_index++;
                     }
                     $last_index=$val['ASSIGNMENT_TYPE_ID'];
@@ -647,17 +680,28 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
         foreach ($mgrades_RET as $key=> $sgrades_RET) {
             //echo'---- COURSE -----';
             if($year!=UserSyear()){
-                $search = substr(html_entity_decode($sgrades_RET['SHORT']), 0, 6);
+                if(substr($grade_id, 10, 8) == 'Primaire')
+                   $search = substr(html_entity_decode($sgrades_RET['SHORT']), 0, 6);
+                else
+                    $search = substr(html_entity_decode($sgrades_RET['SHORT']), 0, 3);
                 $search .= '%';
-                $search .= substr($grade_id, 12, 2);
+                if(substr($grade_id, 10, 8) == 'Primaire')
+                    $search .= substr($grade_id, 12, 2);
+                else
+                    $search .= substr($grade_id, 10, 3);
                 $search .= '%';
-                $search .= substr($grade_id, 19, 1) -1;
-                $search .= '%';
+                if(substr($grade_id, 10, 8) == 'Primaire')
+                    $search .= substr($grade_id, 19, 1) -1 ;
+                else
+                    $search .= substr($grade_id, 21, 1) -1 ;
+                    $search .= '%';
                 $course_temp=DBGet(DBQuery('SELECT * FROM course_periods WHERE short_name like "' . $search . '" and SYEAR='. $year .''));
                 $sgrades_RET['COURSE_ID']=$course_temp[1]['COURSE_PERIOD_ID'];
             }
             $course_arr[$course]['TITLE']= $sgrades_RET['COURSE_TITLE'];
             $course_arr[$course]['TEACHER']= _teacher . ' :' . $sgrades_RET['TEACHER'];
+            $course_arr[$course]['TEACHER_ID']= $sgrades_RET['TEACHER_ID'];
+            $course_arr[$course]['COURSE_PERIOD_ID']= $sgrades_RET['COURSE_ID'];
             $course_arr[$course]['STUDENT_GRADE']= $grade_id;
             $course_period_id=$sgrades_RET['COURSE_ID'];
             $course_id=DBGet(DBQuery('SELECT cp.COURSE_ID,  c.SHORT_NAME, c.TITLE FROM course_periods cp,courses c WHERE c.COURSE_ID=cp.COURSE_ID AND cp.COURSE_PERIOD_ID=\''. $course_period_id . '\''));
@@ -716,7 +760,6 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
             foreach ($quarters_RET as $key=> $quart) {
                 if($quart['TITLE'] > $mp && $year==UserSyear())
                     break;
-                    //echo $assign_total_id_weigth[$course][$current_quart];
                     if($assign_total_id_weigth[$course][$current_quart])
                         $total_current_quart[$current_quart]=$total_current_quart[$current_quart]*100/$assign_total_id_weigth[$course][$current_quart];
                     $current_quart++;
@@ -834,21 +877,18 @@ function CadoStudentGrades($mgrades_RET, $student_id, $columns,$grade_id,$mp,$la
             //Fin resulats moyenne groupe
 
             $course++;
-        }        
+}        
     }
     $primaire_cycle_course[$year]=$course_arr;
     $primaire_cycle_results[$year]=$results_arr;
-    /////// FOR TESTING PURPOSE SINCE WE DONT HAVE 2021 RESULTS
-    //$primaire_cycle_course[$year-1]=0;
-    //$primaire_cycle_results[$year-1]=0;
-    ///////
+    $primaire_cycle_result_diff[$year]=$result_diff;
     $year++;
     }
-    if(strpos($grade_id,"Primaire")) // Primaire
-        CadoHTMLresultatsPrimaire(_reportcard_cat2,$primaire_cycle_course,$column_arr,$primaire_cycle_results,$comment_arr,$result_diff,UserSyear(),$grade_id,$exam_value);
+    if(strpos($grade_id,"Primaire") || strpos($grade_id,"Secondaire 1") || strpos($grade_id,"Secondaire 2")) // Primaire et secondaire 1 et 2
+        CadoHTMLresultatsPrimaire(_reportcard_cat2,$primaire_cycle_course,$column_arr,$primaire_cycle_results,$comment_arr,$primaire_cycle_result_diff,UserSyear(),$grade_id,$exam_value,$student_id);
         else if(strpos($grade_id,"scolaire")) /// Préscolaire 
-        CadoHTMLresultatsPrescolaire(_reportcard_cat2,$course_arr,$column_arr,$results_arr,$comment_arr,$result_diff,$exam_value);
-        else CadoHTMLresultatsSecondaire(_reportcard_cat2,$course_arr,$column_arr,$results_arr,$comment_arr,$result_diff,$exam_value);
+        CadoHTMLresultatsPrescolaire(_reportcard_cat2,$course_arr,$column_arr,$results_arr,$comment_arr,$student_id,$course_period_id);
+        else CadoHTMLresultatsSecondaire(_reportcard_cat2,$course_arr,$column_arr,$results_arr,$comment_arr,$result_diff,$exam_value,$student_id);
 }
 
 function CadoHeader($student_id, $grade_id,$attendance_day_RET,$last_mp,$mp) {
@@ -861,21 +901,35 @@ function CadoHeader($student_id, $grade_id,$attendance_day_RET,$last_mp,$mp) {
     $PRIMARY_RET=DBGet(DBQuery('SELECT * from students_join_people where STUDENT_ID = \''. $student_id . '\'  AND EMERGENCY_TYPE = \'PRIMARY\' '));
     $PRIMARYNAME_RET=DBGet(DBQuery('SELECT * from people where STAFF_ID = \''. $PRIMARY_RET[1]['PERSON_ID'] . '\''));
     $QUART_RET=DBGet(DBQuery('SELECT * from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' AND MARKING_PERIOD_ID=\'' . $last_mp . '\''));  
+    if ($_REQUEST['elements']['ytd_absences']=='Y') {
+        $count=0;
+        foreach ($attendance_day_RET[$student_id] as $mp_abs) foreach ($mp_abs as $abs) $count+=1 - $abs['STATE_VALUE'];
+        $data['STUDENT_ABSCENCES_YEARLY']=$count;
+    }else 
+        $data['STUDENT_ABSCENCES_YEARLY']=0;
+    $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id, $grade_id);
     $column['SCHOOL_NAME']=_schoolName;
     $column['SCHOOL_CODE']=_schoolCode;
     $column['SCHOOL_PRINCIPAL']=_principal;
     $column['SCHOOL_ADDRESS']=_addresses;
     $column['SCHOOL_TEL']=_telephone;
+    $column['SCHOOL_FAX']=_fax;
+    $column['SCHOOL_EMAIL']=_email;
     $column['STUDENT_NAME']=_studentName;
     $column['STUDENT_PERM_ID']=_alternateId;
     $column['STUDENT_ID']=_studentId;
     $column['STUDENT_GRADE']=_studentGrade;
+    $column['STUDENT_AGE']=_ageAu30Sept;
     $column['STUDENT_BIRTHDATE']=_birthdate;
     $column['STUDENT_ABSCENCES_QUARTER']=_dailyAbsencesThis . $QUART_RET[1]['TITLE'];
     $column['STUDENT_ABSCENCES_YEARLY']=_yearToDateDailyAbsences;
     $column['REPORT_OWNER']=_reportOwner;
+    $column['REPORT_NAME']=_name;
     $column['REPORT_RELATION']=_relation;
     $column['REPORT_ADDRESS']=_addresses;
+    $column['REPORT_HOME_PHONE']=_homePhoneNumber;
+    $column['REPORT_WORK_PHONE']=_workPhone;
+    $column['REPORT_CELL_PHONE']=_cellMobilePhone;
     $column['COMMUNICATION_QUARTER']=_report_quart;
     $column['COMMUNICATION_STAR_DATE']=_quart_start;
     $column['COMMUNICATION_END_DATE']=_quart_end;
@@ -887,21 +941,14 @@ function CadoHeader($student_id, $grade_id,$attendance_day_RET,$last_mp,$mp) {
     $data['SCHOOL_STATE']=$SCHOOL_RET[1]['STATE'];
     $data['SCHOOL_ZIPCODE']=$SCHOOL_RET[1]['ZIPCODE'];
     $data['SCHOOL_TEL']= $SCHOOL_RET[1]['AREA_CODE'] . '-'. $SCHOOL_RET[1]['PHONE'];
+    $data['SCHOOL_FAX']= '819-893-2237';
+    $data['SCHOOL_EMAIL']= $SCHOOL_RET[1]['E_MAIL'];
     $data['STUDENT_NAME']=$USER_RET[1]['FIRST_NAME'] .' '. $USER_RET[1]['LAST_NAME'];
     $data['STUDENT_PERM_ID']=$USER_RET[1]['ALT_ID'];
     $data['STUDENT_ID']=$student_id;
     $data['STUDENT_GRADE']=$grade_id;
     $data['STUDENT_BIRTHDATE']=$USER_RET[1]['BIRTHDATE'];
-    if ($_REQUEST['elements']['mp_absences']=='Y') {
-        $count=0;
-        foreach ($attendance_day_RET[$student_id][$last_mp] as $abs) $count+=1 - $abs['STATE_VALUE'];
-        $data['STUDENT_ABSCENCES_QUARTER']=$count;
-    }else $data['STUDENT_ABSCENCES_QUARTER']=0;
-    if ($_REQUEST['elements']['ytd_absences']=='Y') {
-        $count=0;
-        foreach ($attendance_day_RET[$student_id] as $mp_abs) foreach ($mp_abs as $abs) $count+=1 - $abs['STATE_VALUE'];
-        $data['STUDENT_ABSCENCES_YEARLY']=$count;
-    }else $data['STUDENT_ABSCENCES_YEARLY']=0;
+    $data['STUDENT_AGE']=_getage30sept($data['STUDENT_BIRTHDATE']);
     $data['REPORT_OWNER']=$PRIMARYNAME_RET[1]['FIRST_NAME'] .' '. $PRIMARYNAME_RET[1]['LAST_NAME'];
     $translate=array('Father' => _father,
     'Mother' => _mother,
@@ -912,23 +959,65 @@ function CadoHeader($student_id, $grade_id,$attendance_day_RET,$last_mp,$mp) {
     'Grandfather' => _grandfather,
     'Legal Guardian' => _legalGuardian,
     'Other Family Member' => _otherFamilyMember,
+    'Soeur' => 'Soeur',
+    'Père' => 'Père',
+    'Mère' => 'Mère'
     );
     $data['REPORT_RELATION']=$translate[$PRIMARY_RET[1]['RELATIONSHIP']];
     $data['REPORT_ADDRESS']=html_entity_decode($ADDRESS_RET[1]['STREET_ADDRESS_1']);
     $data['REPORT_CITY']=$ADDRESS_RET[1]['CITY'];
     $data['REPORT_STATE']=$ADDRESS_RET[1]['STATE'];
     $data['REPORT_ZIPCODE']=$ADDRESS_RET[1]['ZIPCODE'];
+    $data['REPORT_HOME_PHONE']=$PRIMARYNAME_RET[1]['HOME_PHONE'];
+    $data['REPORT_WORK_PHONE']=$PRIMARYNAME_RET[1]['WORK_PHONE'];
+    $data['REPORT_CELL_PHONE']=$$PRIMARYNAME_RET[1]['CELL_PHONE'];
     $data['COMMUNICATION_QUARTER']=$QUART_RET[1]['TITLE'];
     $data['COMMUNICATION_STAR_DATE']=$QUART_RET[1]['START_DATE'];
     $data['COMMUNICATION_END_DATE']=$QUART_RET[1]['END_DATE'];
-    CadoHTMLHeader(_reportcard_cat1,$column,$data);
+    if(strpos($grade_id,'Secondaire'))
+        CadoHTMLHeaderSecondaire(_reportcard_cat1,$column,$data);
+    else 
+        if(strpos($grade_id,'Primaire'))
+            CadoHTMLHeaderPrimaire(_reportcard_cat1,$column,$data);
+    else
+        if(strpos($grade_id,'Préscolaire'))
+            CadoHTMLHeaderPrescolaire(_reportcard_cat1,$column,$data);
+
 }
 
+function CadoAssiduite($student_id, $grade_id){
+
+    if(strpos($grade_id,"Primaire 1") || strpos($grade_id,"Primaire 3")  || strpos($grade_id,"Primaire 5")  || strpos($grade_id,"Secondaire 1") ){
+        $cycle1year=UserSyear();
+        $cycle2year='';
+    }else{
+        $cycle1year=UserSyear()-1;
+        $cycle2year=UserSyear();
+    }
+    $year=$cycle1year;
+    for($i = 0; $i <2; $i++){
+        $ALL_QUART=DBGet(DBQuery('SELECT MARKING_PERIOD_ID,SORT_ORDER from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . $year . '\' AND TITLE LIKE \'Étape%\' ORDER BY sort_order')); 
+        if ($_REQUEST['elements']['mp_absences']=='Y') {
+            $mpcount=1;
+            foreach ($ALL_QUART as $key=> $quart) {
+                $count=0;
+                $ATT_RET=DBGet(DBQuery('SELECT SCHOOL_DATE,MARKING_PERIOD_ID,STATE_VALUE,student_id from attendance_day WHERE STATE_VALUE=0 AND STUDENT_ID=\'' .  $student_id . '\'  AND MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\'')); 
+                $MAXDAYS_RET=DBGet(DBQuery('SELECT DAYS FROM school_quarters WHERE MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\'')); 
+                foreach ($ATT_RET as $abs) $count+=1 - $abs['STATE_VALUE'];
+                $data['STUDENT_ABSCENCES_QUARTER'][$i][$mpcount][$mpcount]=$count;
+                $data['STUDENT_ABSCENCES_QUARTER'][$i][$mpcount]['MAXDAYS_QUARTER']=$MAXDAYS_RET[1]['DAYS'];
+                $mpcount+=1;
+            }
+        }else $data['STUDENT_ABSCENCES_QUARTER']=0;
+        $year=$cycle2year;
+    }
+    //echo '<pre>';  print_r($data); echo '</pre>';
+    return $data['STUDENT_ABSCENCES_QUARTER'];
+}
 
 function CadoStudentCommunication($mgrades_RET, $student_id, $columns,$grade_id,$mp,$last_mp) {
 
     $course_index=0;
-    //print_r($mgrades_RET);
     foreach ($mgrades_RET as $key=> $course){
         $course_id=DBGet(DBQuery('select course_id from course_periods where course_period_id=\''. $course['COURSE_ID'] . '\''));
         $course_name=DBGet(DBQuery('select title,short_name from courses where course_id=\''. $course_id[1]['COURSE_ID'] . '\''));
@@ -957,33 +1046,52 @@ function CadoStudentComments($student_id, $grade_id,$marking_period) {
 
     $column=array();
     $data=array();
-    //$USER_RET=DBGet(DBQuery('SELECT COMMENT1,COMMENT2 from student_report_card_grades where STUDENT_ID = \''. $student_id . '\' AND MARKING_PERIOD_ID=\''.  $marking_period . '\'  '));
-    /* convert comments */
-    //DBQuery('INSERT CADO_report_card_comments SET MARKING_PERIOD = \''. $marking_period . '\' , STUDENT_ID = \''. $student_id . '\' , com_competences= "'. html_entity_decode($USER_RET[1]['COMMENT1']) . '" , com_general= "'. html_entity_decode($USER_RET[1]['COMMENT2']) . '" '); 
     $USER_RET2=DBGet(DBQuery('SELECT com_competences,com_general from CADO_report_card_comments where STUDENT_ID = \''. $student_id . '\' AND MARKING_PERIOD=\''.  $marking_period . '\'  '));
+    if(strpos($grade_id,"Primaire 1") || strpos($grade_id,"Primaire 3")  || strpos($grade_id,"Primaire 5")  || strpos($grade_id,"Secondaire 1") ){
+        $cycle1year=UserSyear();
+        $cycle2year='';
+    }else{
+        $cycle1year=UserSyear()-1;
+        $cycle2year=UserSyear();
+    }
+    $mpC1_E1=DBGet(DBQuery('SELECT marking_period_id FROM  marking_periods WHERE SYEAR=\'' . $cycle1year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 1"'));
+    $mpC1_E3=DBGet(DBQuery('SELECT marking_period_id FROM  marking_periods WHERE SYEAR=\'' . $cycle1year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 3"'));
+    $mpC2_E1=DBGet(DBQuery('SELECT marking_period_id FROM  marking_periods WHERE SYEAR=\'' . $cycle2year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 1"'));
+    $mpC2_E3=DBGet(DBQuery('SELECT marking_period_id FROM  marking_periods WHERE SYEAR=\'' . $cycle2year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 3"'));
+    $USER_RETC1_E1=DBGet(DBQuery('SELECT com_competences,com_general from CADO_report_card_comments where STUDENT_ID = \''. $student_id . '\' AND MARKING_PERIOD=\''.  $mpC1_E1[1]['MARKING_PERIOD_ID'] . '\'  '));
+    $USER_RETC1_E3=DBGet(DBQuery('SELECT com_competences,com_general from CADO_report_card_comments where STUDENT_ID = \''. $student_id . '\' AND MARKING_PERIOD=\''.  $mpC1_E3[1]['MARKING_PERIOD_ID'] . '\'  '));
+    $USER_RETC2_E1=DBGet(DBQuery('SELECT com_competences,com_general from CADO_report_card_comments where STUDENT_ID = \''. $student_id . '\' AND MARKING_PERIOD=\''.  $mpC2_E1[1]['MARKING_PERIOD_ID'] . '\'  '));
+    $USER_RETC2_E3=DBGet(DBQuery('SELECT com_competences,com_general from CADO_report_card_comments where STUDENT_ID = \''. $student_id . '\' AND MARKING_PERIOD=\''.  $mpC2_E3[1]['MARKING_PERIOD_ID'] . '\'  '));
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
-    ##### ROGER ###
     if($markingPeriod[1]['MARKING_PERIOD_ID'] == $marking_period)
     {
         $column['COMMENTAIRE']=_commentsOther;
-        //$data['COMMENTAIRE']=$USER_RET[1]['COMMENT2'];
         $data['COMMENTAIRE']=$USER_RET2[1]['COM_GENERAL'];
         CadoHTMLcommentairesGeneral(_reportcard_cat5,$column,$data);
         return;
-    }      
-    $column['COMMENTAIRE']=_commentsCompetences;
-    //$data['COMMENTAIRE']=$USER_RET[1]['COMMENT1'];
-    $data['COMMENTAIRE']=$USER_RET2[1]['COM_COMPETENCES'];
-    CadoHTMLcommentairesCompetence(_reportcard_cat3,$column,$data);
-
+    } 
+    $data['C1_E1']=$USER_RETC1_E1[1]['COM_COMPETENCES'];
+    $data['C1_E3']=$USER_RETC1_E3[1]['COM_COMPETENCES'];
+    $data['C2_E1']=$USER_RETC2_E1[1]['COM_COMPETENCES'];
+    $data['C2_E3']=$USER_RETC2_E3[1]['COM_COMPETENCES'];
+    if(strpos($grade_id,"Préscolaire"))
+        CadoHTMLcommentairesPrescolaire(_reportcard_cat3,$data,$grade_id);
+    else
+        CadoHTMLcommentairesCompetence(_reportcard_cat3,$data,$grade_id);
     $column['COMMENTAIRE']=_commentsOther;
-    //$data['COMMENTAIRE']=$USER_RET[1]['COMMENT2'];
     $data['COMMENTAIRE']=$USER_RET2[1]['COM_GENERAL'];
-    CadoHTMLcommentairesGeneral(_reportcard_cat4,$column,$data);
+    if(! strpos($grade_id,"Préscolaire"))
+        CadoHTMLcommentairesGeneral(_reportcard_cat4,$column,$data);
+    $column['COMMENTAIRE']=_reportcard_higher;
+    $data['item1']='checked';
+    $data['item2']='checked';
+    if(! strpos($grade_id,"Préscolaire"))
+        CadoHTMLcommentairesCheminement(_reportcard_cat5a,$column,$data,$mp,$grade_id);
+    else
+        CadoHTMLcommentairesCheminement("4. Cheminement scolaire",$column,$data,$mp,$grade_id);
 }
 
 function GetGroupAverage($course_id,$course_period_id,$marking_period,$year){
-
     $total_group=0;
     $students=0;
     $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $marking_period . '\' ';
@@ -1007,9 +1115,189 @@ function GetGroupAverage($course_id,$course_period_id,$marking_period,$year){
     }
 }
 
+function CadoHTMLHeaderPrescolaire($title,$items,$data){
+    $teacher_name=DBGet(DBQuery('select first_name,last_name from staff where staff_id=(select teacher_id from course_periods where title like "PRE 1%" and syear=\'' . UserSyear() . '\')'));
+    $sch_img_info= DBGet(DBQuery('SELECT * FROM user_file_upload WHERE SCHOOL_ID='. UserSchool().' AND FILE_INFO=\'schlogo\''));
+    echo '<h2 class="section-prescolaire-title"><span>1</span> RENSEIGNEMENTS GÉNÉRAUX</h2></pre>
+    <table class="class-prescolaire_table">
+    <tr>
+        <td rowspan="2" colspan="4" class="bggrey">' . $data['STUDENT_NAME'] . '</td> 
+        <td rowspan="3" colspan="4"> 
+    ';
+    echo "<img src='data:image/jpeg;base64,".base64_encode($sch_img_info[1]['CONTENT'])."' width='100' class='m-r-15 img-responsive' alt='Logo'/>";
+    echo '
+    </td> 
+    </tr>
+    <tr>
+    </tr>
+    <tr>
+        <td colspan="4">' . $items['STUDENT_ID'] . ' : <b>' . $data['STUDENT_ID'] . '</b> &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp' . $items['STUDENT_PERM_ID'] . ' : <b>' . $data['STUDENT_PERM_ID'] . '</td> 
+    </tr>
+    <tr>
+        <td colspan="3">' . $items['STUDENT_BIRTHDATE'] . ' : <b>' . $data['STUDENT_BIRTHDATE'] . '</td> 
+        <td>' . $items['STUDENT_AGE'] . ' : <b>' . $data['STUDENT_AGE'] . '</td> 
+        <td rowspan="2" colspan="4" class="bggrey">' . $data['SCHOOL_NAME'] . '</td> 
+    </tr>
+    <tr>
+        <td colspan="4" class="bggrey">Destinataire du bulletin </td> 
+    </tr><tr>
+        <td  colspan="4"">Relation du destinataire: <b>' . $data['REPORT_RELATION'] . '</b></td> 
+        <td colspan="4">' . $items['SCHOOL_ADDRESS'] . ' : <b> ' . $data['SCHOOL_ADDRESS'] . ' , ' . $data['SCHOOL_CITY'] . ', ' . $data['SCHOOL_STATE'] . ' , '. $data['SCHOOL_ZIPCODE'] . '</td> 
+    </tr>
+    <tr>
+        <td  colspan="4">' . $items['REPORT_NAME'] . ' : <b>' . $data['REPORT_OWNER'] . '</td> 
+        <td colspan="3">' . $items['SCHOOL_TEL'] . ' : &nbsp&nbsp<b>' . $data['SCHOOL_TEL'] . '</b>  ' . $items['SCHOOL_FAX'] . ' : <b>' . $data['SCHOOL_FAX'] . '</td> 
+        <td>' . $items['SCHOOL_CODE'] . ' : <b>' . $data['SCHOOL_CODE'] . '</td> 
+    </tr>
+    <tr>
+        <td colspan="4">' . $items['REPORT_ADDRESS'] . ' : <b>' . $data['REPORT_ADDRESS'] . ' , ' . $data['REPORT_CITY'] . ', ' . $data['REPORT_STATE'] . ' , ' . $data['REPORT_ZIPCODE'] . '</td> 
+        <td colspan="4">' . $items['SCHOOL_EMAIL'] . ' : <b>' . $data['SCHOOL_EMAIL'] . '</td> 
+    </tr>
+    <tr>
+        <td colspan="3">' . $items['REPORT_HOME_PHONE'] . ' : <b>' . $data['REPORT_HOME_PHONE'] . '</td> 
+        <td>' . $items['REPORT_WORK_PHONE'] . ' : <b>' . $data['REPORT_WORK_PHONE'] . '</td> 
+        <td rowspan="2" colspan="4" class="bggrey">' . $items['SCHOOL_PRINCIPAL'] . ' : <b>' . $data['SCHOOL_PRINCIPAL'] . '</td> 
+    </tr>
+    <tr>
+        <td colspan="4">' . $items['REPORT_CELL_PHONE'] . ' : <b>' . $data['REPORT_CELL_PHONE'] . '</td> 
+    </tr>
+    <tr>
+        <td  rowspan="2" colspan="4"></td> 
+        <td colspan="4">' . _signature . ': <b class="signature-ts">Danielle Grant</b></td> 
+    </tr>
+    <tr>
+        <td colspan="4">Enseignant(e) : <b>' . $teacher_name[1]['FIRST_NAME'] . ' ' . $teacher_name[1]['LAST_NAME'] . '</b></td> 
+    </tr>
+    <tr>
+        <td rowspan="2" class="bggrey">Étape de communication : ' . $data['COMMUNICATION_QUARTER'] . '</td>
+        <td  colspan="3">' . $items['COMMUNICATION_STAR_DATE'] . ' <b>: ' . $data['COMMUNICATION_STAR_DATE'] . '</td>
+        <td colspan="4" class=bggrey>ASSIDUITÉ</td>
+    </tr>
+    <tr>
+        <td colspan="3">' . $items['COMMUNICATION_END_DATE'] . ' <b>: ' . $data['COMMUNICATION_END_DATE'] . '</td>
+        <td class="bgetapes">Étape</td>
+        <td class="bgetapes">1</td>
+        <td class="bgetapes">2</td>
+        <td class="bgetapes">3</td>
+    </tr>
+    <tr>
+        <td colspan="4"></td>
+        <td>Jours d’absence</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .'</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][1] .'</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][1] .'</td>
+    </tr>
+        <tr>
+        <td colspan="4"></td>
+        <td>Jours de classe</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'</td>
+    </tr>
+    </table>
+    '; 
+    echo'<div class="bggrey border"><b>Réservé à l’administration</b><div  class="bggrey">&nbsp<div  class="bggrey">&nbsp</div></div></div>';
+}
 
 
-function CadoHTMLHeader($title,$items,$data){
+function CadoHTMLHeaderPrimaire($title,$items,$data){
+
+    echo '<pre class="section-title">'; echo $title; echo'</pre>';    
+    echo '<table class="section-1">
+    <tr>
+       <td class="section-1-block">
+        <div class="section-1-item">' . $items['SCHOOL_NAME'] . ' : <b>' . $data['SCHOOL_NAME'] . '</b></div>
+        <div class="section-1-item">' . $items['SCHOOL_CODE'] . ' : <b>' . $data['SCHOOL_CODE'] . '</b></div>
+        <div class="section-1-item">' . $items['SCHOOL_PRINCIPAL'] . ' : <b>' . $data['SCHOOL_PRINCIPAL'] . '</b></div>
+        <div class="section-1-item">' . _signature . ': <b class="signature-ts">Danielle Grant</b></div>
+        </div></td> 
+
+       <td class="section-1-block">
+        <div class="section-1-item">' . $items['SCHOOL_ADDRESS'] . ' : <b>' . $data['SCHOOL_ADDRESS'] . '</b></div>
+        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['SCHOOL_CITY'] . ', ' . $data['SCHOOL_STATE'] . '</b></div>
+        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>'. $data['SCHOOL_ZIPCODE'] . '</b></div>
+        <div class="section-1-item">' . $items['SCHOOL_TEL'] . ' : &nbsp&nbsp<b>' . $data['SCHOOL_TEL'] . '</b></div>                
+        <div class="section-1-item">' . $items['SCHOOL_FAX'] . ' : <b>' . $data['SCHOOL_FAX'] . '</b></div>                
+        </div>
+       </td>
+     </tr> 
+
+     <tr>
+       <td class="section-1-block"> 
+        <div class="section-1-item">' . $items['STUDENT_NAME'] . ' : <b>' . $data['STUDENT_NAME'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_PERM_ID'] . ' : <b>' . $data['STUDENT_PERM_ID'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_BIRTHDATE'] . ' : <b>' . $data['STUDENT_BIRTHDATE'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_AGE'] . ' : <b>' . $data['STUDENT_AGE'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_ID'] . ' : <b>' . $data['STUDENT_ID'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_GRADE'] . ' : <b>' . $data['STUDENT_GRADE'] . '</b></div>
+       </td>
+       <td class="section-1-block">
+        <div class="section-1-item">' . $items['REPORT_OWNER'] . ' : <b>' . $data['REPORT_RELATION'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_NAME'] . ' : <b>' . $data['REPORT_OWNER'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_ADDRESS'] . ' : <b>' . $data['REPORT_ADDRESS'] . '</b></div>
+        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['REPORT_CITY'] . ', ' . $data['REPORT_STATE'] . '</b></div>
+        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['REPORT_ZIPCODE'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_HOME_PHONE'] . ' : <b>' . $data['REPORT_HOME_PHONE'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_WORK_PHONE'] . ' : <b>' . $data['REPORT_WORK_PHONE'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_CELL_PHONE'] . ' : <b>' . $data['REPORT_CELL_PHONE'] . '</b></div>
+       </td>
+    </tr>
+    <tr>   
+        <td class="section-1-block">
+        <div class="section-1-item">' . $items['COMMUNICATION_QUARTER'] . ' : <b>' . $data['COMMUNICATION_QUARTER'] . '</b></div>
+        <div class="section-1-item">' . $items['COMMUNICATION_STAR_DATE'] . ' <b>: ' . $data['COMMUNICATION_STAR_DATE'] . '</b></div>
+        <div class="section-1-item">' . $items['COMMUNICATION_END_DATE'] . ' <b>: ' . $data['COMMUNICATION_END_DATE'] . '</b></div>
+
+        </td>
+        <td class="section-1-block">';
+
+        echo'
+        <table class="class-assiduite_table">
+          <tr>
+            <th colspan="9" class="class-assiduite__top_col">Assiduité</th>
+          </tr>
+          <tr>
+            <th class="class-assiduite__first_col">&#32</th>
+            <th colspan="3" class="class-assiduite__first_col">Année 1</th>
+            <th colspan="3" class="class-assiduite__last_col">Année 2</th>
+          </tr
+           <tr>
+            <th class="class-assiduite__col">Étape</th>
+            <th class="class-assiduite__item1">1</th>
+            <th class="class-assiduite__item1">2</th>
+            <th class="class-assiduite__item1">3</th>
+            <th class="class-assiduite__item1">1</th>
+            <th class="class-assiduite__item1">2</th>
+            <th class="class-assiduite__last_item1">3</th>
+          </tr>
+         <tr>
+            <th class="class-assiduite__col" >Jours d’absence</th>
+            <th class="class-assiduite__item2">' . $data['STUDENT_ABSCENCES_QUARTER'][0][1][1] .'</th>
+            <th class="class-assiduite__item2">' . $data['STUDENT_ABSCENCES_QUARTER'][0][2][2] .'</th>
+            <th class="class-assiduite__item2">' . $data['STUDENT_ABSCENCES_QUARTER'][0][3][3] .'</th>
+            <th class="class-assiduite__item2">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .'</th>
+            <th class="class-assiduite__item2">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .'</th>
+            <th class="class-assiduite__last_item2">' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .'</th>
+          </tr>
+          <tr>
+            <th class="class-assiduite__last_row_item">Jours de classe</th>
+            <th class="class-assiduite__last_row">' . $data['STUDENT_ABSCENCES_QUARTER'][0][1]['MAXDAYS_QUARTER'] .'</th>
+            <th class="class-assiduite__last_row">' . $data['STUDENT_ABSCENCES_QUARTER'][0][2]['MAXDAYS_QUARTER'] .'</th>
+            <th class="class-assiduite__last_row">' . $data['STUDENT_ABSCENCES_QUARTER'][0][3]['MAXDAYS_QUARTER'] .'</th>
+            <th class="class-assiduite__last_row">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</th>
+            <th class="class-assiduite__last_row">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</th>
+            <th class="class-assiduite__last_row_item_last">' . $data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'</th>
+          </tr>
+        </table>
+                ';
+    
+    
+        echo '</td>
+    </tr>
+    </table>';
+}
+
+function CadoHTMLHeaderSecondaire($title,$items,$data){
 
     echo '<pre class="section-title">'; echo $title; echo'</pre>';    
     echo '<table class="section-1">
@@ -1017,40 +1305,15 @@ function CadoHTMLHeader($title,$items,$data){
         <td class="section-1-block">
         <div class="section-1-item">' . $items['SCHOOL_NAME'] . ' : <b>' . $data['SCHOOL_NAME'] . '</b></div>
         <div class="section-1-item">' . $items['SCHOOL_CODE'] . ' : <b>' . $data['SCHOOL_CODE'] . '</b></div>
-        <div class="section-1-item">' . $items['SCHOOL_TEL'] . ' : <b>' . $data['SCHOOL_TEL'] . '</b></div>
-        <div class="section-1-item">' . $items['SCHOOL_PRINCIPAL'] . ' : <b>' . $data['SCHOOL_PRINCIPAL'] . '</b></div>
-        <div class="section-1-item">' . $items['SCHOOL_ADDRESS'] . ' : <b>' . $data['SCHOOL_ADDRESS'] . '</div>
+        <div class="section-1-item">' . $items['SCHOOL_ADDRESS'] . ' : <b>' . $data['SCHOOL_ADDRESS'] . '</b></div>
         <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['SCHOOL_CITY'] . ', ' . $data['SCHOOL_STATE'] . '</b></div>
         <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>'. $data['SCHOOL_ZIPCODE'] . '</b></div>
-        </td>
+        <div class="section-1-item">' . $items['SCHOOL_TEL'] . ' : &nbsp&nbsp<b>' . $data['SCHOOL_TEL'] . '</b></div>                
+        <div class="section-1-item">' . $items['SCHOOL_FAX'] . ' : <b>' . $data['SCHOOL_FAX'] . '</b></div>                
+        <div class="section-1-item">' . $items['SCHOOL_PRINCIPAL'] . ' : <b>' . $data['SCHOOL_PRINCIPAL'] . '</b></div>
+        <div class="section-1-item">' . _signature . ': <b class="signature-ts">Danielle Grant</b></div>
 
-        <td class="section-1-block"> 
-        <div class="section-1-item">' . $items['STUDENT_NAME'] . ' : <b>' . $data['STUDENT_NAME'] . '</b></div>
-        <div class="section-1-item">' . $items['STUDENT_PERM_ID'] . ' : <b>' . $data['STUDENT_PERM_ID'] . '</b></div>
-        <div class="section-1-item">' . $items['STUDENT_ID'] . ' : <b>' . $data['STUDENT_ID'] . '</b></div>
-        <div class="section-1-item">' . $items['STUDENT_GRADE'] . ' : <b>' . $data['STUDENT_GRADE'] . '</b></div>
-        <div class="section-1-item">' . $items['STUDENT_BIRTHDATE'] . ' : <b>' . $data['STUDENT_BIRTHDATE'] . '</b></div>';
-        $temp='';
-        if ($_REQUEST['elements']['mp_absences'] == 'Y') {
-            echo '
-            <div class="section-1-item">' . $items['STUDENT_ABSCENCES_QUARTER'] . ' : <b>' . $data['STUDENT_ABSCENCES_QUARTER'] . '</b></div> ' ;
-        }
-        else $temp='<div class="section-1-item">&nbsp</div>';
-        if ($_REQUEST['elements']['ytd_absences'] == 'Y') {
-            echo '
-            <div class="section-1-item">' . $items['STUDENT_ABSCENCES_YEARLY'] . ' : <b>' . $data['STUDENT_ABSCENCES_YEARLY'] . '</b></div>';
-        }
-        else $temp = $temp . '<div class="section-1-item">&nbsp</div>';
-        if ($temp) echo $temp;
-        echo '</td></tr>
-    <tr>
-        <td class="section-1-block">
-        <div class="section-1-item">' . $items['REPORT_OWNER'] . ' : <b>' . $data['REPORT_OWNER'] . '</b></div>
-        <div class="section-1-item">' . $items['REPORT_RELATION'] . ' : <b>' . $data['REPORT_RELATION'] . '</b></div>
-        <div class="section-1-item">' . $items['REPORT_ADDRESS'] . ' : <b>' . $data['REPORT_ADDRESS'] . '</b></div>
-        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['REPORT_CITY'] . ', ' . $data['REPORT_STATE'] . '</b></div>
-        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['REPORT_ZIPCODE'] . '</b></div>
-        </td>
+        </div></td>
 
         <td class="section-1-block">
         <div class="section-1-item">' . $items['COMMUNICATION_QUARTER'] . ' : <b>' . $data['COMMUNICATION_QUARTER'] . '</b></div>
@@ -1060,17 +1323,32 @@ function CadoHTMLHeader($title,$items,$data){
         <div class="section-1-item">&nbsp</div>
         </td>
     </tr>
+    <tr>
+       <td class="section-1-block"> 
+        <div class="section-1-item">' . $items['STUDENT_NAME'] . ' : <b>' . $data['STUDENT_NAME'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_PERM_ID'] . ' : <b>' . $data['STUDENT_PERM_ID'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_BIRTHDATE'] . ' : <b>' . $data['STUDENT_BIRTHDATE'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_AGE'] . ' : <b>' . $data['STUDENT_AGE'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_ID'] . ' : <b>' . $data['STUDENT_ID'] . '</b></div>
+        <div class="section-1-item">' . $items['STUDENT_GRADE'] . ' : <b>' . $data['STUDENT_GRADE'] . '</b></div>
+        </td>
+        <td class="section-1-block">
+        <div class="section-1-item">' . $items['REPORT_OWNER'] . ' : <b>' . $data['REPORT_RELATION'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_NAME'] . ' : <b>' . $data['REPORT_OWNER'] . '</b></div>
+            <div class="section-1-item">' . $items['REPORT_ADDRESS'] . ' : <b>' . $data['REPORT_ADDRESS'] . '</b></div>
+        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['REPORT_CITY'] . ', ' . $data['REPORT_STATE'] . '</b></div>
+        <div class="section-1-item">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp<b>' . $data['REPORT_ZIPCODE'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_HOME_PHONE'] . ' : <b>' . $data['REPORT_HOME_PHONE'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_WORK_PHONE'] . ' : <b>' . $data['REPORT_WORK_PHONE'] . '</b></div>
+        <div class="section-1-item">' . $items['REPORT_CELL_PHONE'] . ' : <b>' . $data['REPORT_CELL_PHONE'] . '</b></div>
+        </td>
+        </tr>
     </table>';
-    //echo "<pre>";print_r($items);echo "</pre>";
-    //echo "<pre>";print_r($data);echo "</pre>";
 }
 
 
 function CadoHTMLcommunication($title,$course,$results,$grade_id,$comments){
     global $publish_parents;
-    //print_r($course);
-    //echo '+++++++++++++++++++++++++++++++++++';
-    //print_r($results);
     $percent=1;
     if (isset($_REQUEST['elements']['percents']))$percent=0;
     $numquart=3;
@@ -1158,99 +1436,146 @@ function CadoHTMLcommunication($title,$course,$results,$grade_id,$comments){
     }
     echo '<tr> <i> 
     <p style="text-align:right;">A : Très satisfaisant<br>B : Satisfaisant<br>C : Insatisfaisant<br>D : Très insatisfaisant</p>
-  </i></tr>';    //echo "<pre>";print_r($column);echo "</pre>";
-    //echo "<pre>";print_r($quarts);echo "</pre>";
-    //echo "<pre>";print_r($results);echo "</pre>";
-    //echo "<pre>";print_r($comments);echo "</pre>";
+  </i></tr>';    
 }
 
 
 
-function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,$result_diff,$exam_value){
+function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,$student_id,$course_period_id){
     global $publish_parents;
 
+    usort($course, function ($a, $b) {return $a['COURSE_#'] > $b['COURSE_#'];});
+    //echo '<pre>' ;print_r($course); echo '</pre>';
     $numquart=count($quarts[0])-2;
     $colspan=$numquart+1;
     $commentspan=$colspan+1;
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
-    ##### ROGER ###
     if($markingPeriod[1]['SORT_ORDER'] == 255) $numquart--;
-    echo '<pre class="section-title">'; echo $title; echo'</pre>';    
     $courseloop=0;
-    foreach ($course as $key=> $col) {
-        
-    echo'
-    <table class="class-results__table">
-      <tr>
-        <th
-          rowspan="2"
-          class="class-results--align-left class-results__th--left-header"
-        >
-          <h1>' . $course[$courseloop]['TITLE']  . '</h1>
-          ' . $course[$courseloop]['COURSE_#']  . ' <br />
-          '; 
-          if ($_REQUEST['elements']['teacher'] == 'Y') {
-            echo $course[$courseloop]['TEACHER'];
-          } 
-          echo ' </th>
 
-      </tr>
-      <tr>';
-
-      echo'
- 
-      </tr>
-    ';
-    $resloop=0;
-
-    if(! $publish_parents){
-        if($result_diff[$courseloop][0]['RESULTDIFF'] || $result_diff[$courseloop][1]['RESULTDIFF'] || $result_diff[$courseloop][2]['RESULTDIFF']){
-        echo '<td></td>';
-        if($result_diff[$courseloop][0]['RESULTDIFF']){
-          echo '<td class="class-results--align-center  highligth">' . $result_diff[$courseloop][0]['RESULTDIFF'] .'</td>';
-        }
-        else echo '<td></td>';
-        if($result_diff[$courseloop][1]['RESULTDIFF']){
-          echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][1]['RESULTDIFF'] .'</td>';
-        }
-        else echo '<td></td>';
-        if($result_diff[$courseloop][2]['RESULTDIFF']){
-          echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][2]['RESULTDIFF'] .'</td>';
-        }  
-        else echo '<td></td>';   
-        echo '<td></td>';
-      }   
-      if($exam_value[$courseloop]){
-        echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
-    }
-}
-    echo '  
-      <tr>
-      <tr>
-      </tr>';
-      if ($_REQUEST['elements']['comments'] == 'Y') {
-      echo '<tr>
-        <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
-      </tr>';
-      }
-    echo '</table>';
+    echo '<table class="page-prescolaire-table">
+        <p style="page-break-after: always;">&nbsp;</p>
+        <p style="page-break-before: always;">&nbsp;</p>
+        <h2 class="section-prescolaire-title"><span>2</span> Constats</h2>
+   ';
+   echo'
+    <table class="class-results__table noborder class-border-right">
+        <thead>
+        <tr>
+            <td>Domaines et compétences</td>
+            <td>Étape</td>
+            <td colspan="2">État de développement des compétences</td>
+        </tr>
+        </thead>
+        ';
+        foreach ($course as $key=> $col) {
+            $mp_E1=DBGet(DBQuery('SELECT MARKING_PERIOD_ID FROM  school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 1"'));
+            $mp_E2=DBGet(DBQuery('SELECT MARKING_PERIOD_ID FROM  school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 2"'));
+            $mp_E3=DBGet(DBQuery('SELECT MARKING_PERIOD_ID FROM  school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND title="Étape 3"'));
+            $USER_RET_E1=DBGet(DBQuery('SELECT comment from student_report_card_grades where SYEAR=\'' . UserSyear() . '\'  AND STUDENT_ID = \''. $student_id . '\' AND COURSE_PERIOD_ID=\''.  $course[$courseloop]['COURSE_PERIOD_ID'] . '\' AND marking_period_id=\''.  $mp_E1[1]['MARKING_PERIOD_ID'] . '\' '));
+            $USER_RET_E2=DBGet(DBQuery('SELECT comment from student_report_card_grades where SYEAR=\'' . UserSyear() . '\'  AND STUDENT_ID = \''. $student_id . '\' AND COURSE_PERIOD_ID=\''.  $course[$courseloop]['COURSE_PERIOD_ID'] . '\' AND marking_period_id=\''.  $mp_E2[1]['MARKING_PERIOD_ID'] . '\' '));
+            $USER_RET_E3=DBGet(DBQuery('SELECT comment from student_report_card_grades where SYEAR=\'' . UserSyear() . '\'  AND STUDENT_ID = \''. $student_id . '\' AND COURSE_PERIOD_ID=\''.  $course[$courseloop]['COURSE_PERIOD_ID'] . '\' AND marking_period_id=\''.  $mp_E3[1]['MARKING_PERIOD_ID'] . '\' '));
+            $progress_ret_E1 = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and marking_period_id=\'' .$mp_E1[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Progrès" )'));
+            $progress_ret_E2 = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and marking_period_id=\'' . $mp_E2[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Progrès" )'));
+            $progress_ret_E3 = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and marking_period_id=\'' . $mp_E3[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Progrès" )'));
+            $defis_ret_E1 = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and marking_period_id=\'' . $mp_E1[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Défi(s)" )'));
+            $defis_ret_E2 = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and marking_period_id=\'' . $mp_E2[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Défi(s)" )'));
+            $defis_ret_E3 = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\' and marking_period_id=\'' . $mp_E3[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Défi(s)" )'));
+            echo '
+        <tr>
+        <td colspan="6"">&nbsp</td>
+        </tr>
+        <tr>
+        <td rowspan="10" class="border-left">' . $course[$courseloop]['TITLE']  . '</td>
+        </tr>
+        <tr>
+          <td rowspan="3" class="center border-left bkgnd1"><b>1</b></td>';
+        //echo  $progress_ret_E1[1]['POINTS'];
+        if($progress_ret_E1[1]['POINTS']==1)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd1"><b>L’élève se développe très bien au regard de la compétence visée.</b>';
+        elseif($progress_ret_E1[1]['POINTS']==2)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd1"><b>L’élève se développe adéquatement au regard de la compétence visée.</b>';
+        elseif($progress_ret_E1[1]['POINTS']==3)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd1"><b>L’élève se développe avec certaines difficultés au regard de la compétence visée.</b>';
+        elseif($progress_ret_E1[1]['POINTS']==4)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd1"><b>L’élève se développe avec des difficultés importantes au regard de la compétence visée.</b>';    
+        else 
+            echo '<td colspan=2 class="class-prescolaire-checkbox bkgnd1">&nbsp';
+        echo '</td>
+        </tr>
+        <tr>
+        <td colspan="2" class="bkgnd1"><b>Commentaires: </b>' . $USER_RET_E1[1]['COMMENT'] . '</td>
+        </tr>
+        <tr>
+        <td class="bkgnd1"><b>PROGRÉS: </b>' . $progress_ret_E1[1]['COMMENT'] . '</td>
+        <td class="bkgnd1"><b>DÉFI(S): </b>' . $defis_ret_E1[1]['COMMENT'] . '</td>
+        </tr>
+        <tr>
+          <td rowspan="3" class="center border-left bkgnd2"><b>2</b></td>';
+        //echo  $progress_ret_E2[1]['POINTS'];
+        if($progress_ret_E2[1]['POINTS']==1)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd2"><b>L’élève se développe très bien au regard de la compétence visée.</b>';
+        elseif($progress_ret_E2[1]['POINTS']==2)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd2"><b>L’élève se développe adéquatement au regard de la compétence visée.</b>';
+        elseif($progress_ret_E2[1]['POINTS']==3)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd2"><b>L’élève se développe avec certaines difficultés au regard de la compétence visée.</b>';
+        elseif($progress_ret_E2[1]['POINTS']==4)
+            echo '<td colspan=2" class="class-prescolaire-checkbox bkgnd2"><b>L’élève se développe avec des difficultés importantes au regard de la compétence visée.</b>';    
+        else 
+            echo '<td colspan=2 class="class-prescolaire-checkbox bkgnd2">&nbsp';
+        echo '</td>
+        </tr>
+        <tr> 
+        <td colspan="2" class="bkgnd2"><b>Commentaires: </b>' . $USER_RET_E2[1]['COMMENT'] . '</td>
+        </tr>
+        <tr>
+        <td  class="bkgnd2"><b>PROGRÉS: </b>' . $progress_ret_E2[1]['COMMENT'] . '</td>
+        <td class="bkgnd2"><b>DÉFI(S): </b>' . $defis_ret_E2[1]['COMMENT'] . '</td>
+        </tr>
+        <tr>
+          <td rowspan="3" class="bilan  bkgnd3 border-left"><b>&nbsp&nbsp&nbsp3&nbsp&nbsp&nbsp Bilan</td>';
+        //echo  $progress_ret_E3[1]['POINTS'];
+        if($progress_ret_E3[1]['POINTS']==1)
+            echo '<td colspan=2" class="class-prescolaire-checkbox  bkgnd3"><b>L’élève se développe très bien au regard de la compétence visée.</b>';
+        elseif($progress_ret_E3[1]['POINTS']==2)
+            echo '<td colspan=2" class="class-prescolaire-checkbox  bkgnd3"><b>L’élève se développe adéquatement au regard de la compétence visée.</b>';
+        elseif($progress_ret_E3[1]['POINTS']==3)
+            echo '<td colspan=2" class="class-prescolaire-checkbox  bkgnd3"><b>L’élève se développe avec certaines difficultés au regard de la compétence visée.</b>';
+        elseif($progress_ret_E3[1]['POINTS']==4)
+            echo '<td colspan=2" class="class-prescolaire-checkbox  bkgnd3"><b>L’élève se développe avec des difficultés importantes au regard de la compétence visée.</b>';    
+        else 
+            echo '<td colspan=2 class="class-prescolaire-checkbox bkgnd3">&nbsp';
+        echo' </tr>
+        <tr>
+        <td colspan="2" class="bkgnd3"><b>Commentaires: </b>' . $USER_RET_E3[1]['COMMENT'] . '</td>
+        </tr>
+        <tr>
+        <td class="bkgnd3"><b>PROGRÉS: </b>' . $progress_ret_E3[1]['COMMENT'] . '</td>
+        <td class="bkgnd3"><b>DÉFI(S): </b>' . $defis_ret_E3[1]['COMMENT'] . '</td>
+        </tr>
+      ';
     $courseloop++;
-    }
-    //echo "<pre>";print_r($column);echo "</pre>";
-    //echo "<pre>";print_r($quarts);echo "</pre>";
-    //echo "<pre>";print_r($results);echo "</pre>";
-    //echo "<pre>";print_r($comments);echo "</pre>";
+}
+    echo '</table>';
 }
 
-function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$result_diff,$year,$grade_id,$exam_value){
+function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$result_diff,$year,$grade_id,$exam_value,$student_id){
     global $publish_parents;
     $numquart=count($quarts[0])-2;
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
-    ##### ROGER ###
+    if(strpos($grade_id,"Primaire")){
+        $year1='Année 1';
+        $year2='Année 2';
+        $abscences=false;
+    }
+    else{
+        $year1='1re secondaire';
+        $year2='2e secondaire';       
+        $abscences=true;
+    }
     if($markingPeriod[1]['SORT_ORDER'] == 255) $numquart--;
     $colspan=$numquart+1;
     $commentspan=$colspan*2+1;
-    $right=0;
     $SCHOOL_GRADELEVELS=DBGet(DBQuery('SELECT * from schools where ID = \''. UserSchool() . '\''));
     $courseloop=0;
     $course[$year][$courseloop]['STUDENT_GRADE']='Primaire 2';
@@ -1258,11 +1583,13 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
             $cycle='Cycle 1';
             if (strpos($grade_id , "1")) {
                 $row1=$results[$year];
+                $diffyear1=$result_diff[$year];
             }
             else{
                 $row1=$results[$year-1];
                 $row2=$results[$year];
-                $right=1;
+                $diffyear1=$result_diff[$year-1];
+                $diffyear2=$result_diff[$year];
             }
     }
     else    
@@ -1270,10 +1597,13 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
             $cycle='Cycle 2';
             if (strpos($grade_id , "3")) {
                 $row1=$results[$year];
+                $diffyear1=$result_diff[$year];
             }
             else{
                 $row1=$results[$year-1];
                 $row2=$results[$year];
+                $diffyear1=$result_diff[$year-1];
+                $diffyear2=$result_diff[$year];
                 $right=1;
             }
         }
@@ -1291,7 +1621,8 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
     }
     echo '<pre class="section-title">'; echo $title; echo'</pre>';    
     foreach ($course[$year] as $key=> $col) {
-
+    if(strpos($grade_id,"Primaire"))
+    $course[$year][$courseloop]['COURSE_#']='';
     echo'
     <table class="class-results__table">
       <tr>
@@ -1300,7 +1631,7 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
           class="class-results--align-left class-results__th--left-header"
         >
           <h1>' . $course[$year][$courseloop]['TITLE']  . '</h1>
-          <br />
+          ' . $course[$year][$courseloop]['COURSE_#']  . ' <br />
           '; 
           if ($_REQUEST['elements']['teacher'] == 'Y') {
             echo $course[$year][$courseloop]['TEACHER'];
@@ -1309,8 +1640,8 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
           <th colspan="' . $colspan *2  . '" class="class-results__3col-right">' . $cycle  . '</th>
           </tr>
           <tr>
-              <th colspan="' . $colspan  . '" class="class-results__3col-right">Année 1</th>
-              <th colspan="' . $colspan  . '" class="class-results__3col-right">Année 2</th>
+              <th colspan="' . $colspan  . '" class="class-results__3col-right">' . $year1 .'</th>
+              <th colspan="' . $colspan  . '" class="class-results__3col-right">' . $year2 . '</th>
           </tr>
       <tr>';
       for($quartloop=0; $quartloop < $numquart ; $quartloop++){
@@ -1352,86 +1683,87 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
         $resloop++;
     }
     if(! $publish_parents){
-    //if($right)
-    //    echo '<td></td><td></td><td></td><td>';
-   
       if(! $publish_parents){
-        if($right){
-            if($result_diff[$courseloop][0]['RESULTDIFF'] || $result_diff[$courseloop][1]['RESULTDIFF'] || $result_diff[$courseloop][2]['RESULTDIFF']){
-                echo '<td></td><td></td><td></td><td></td><td></td>';
-            if($result_diff[$courseloop][0]['RESULTDIFF']){
-                echo '<td class="class-results--align-center  highligth">' . $result_diff[$courseloop][0]['RESULTDIFF'] .'</td>';
-            }
-            else echo '<td></td>';
-            if($result_diff[$courseloop][1]['RESULTDIFF']){
-                echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][1]['RESULTDIFF'] .'</td>';
-            }
-            else echo '<td></td>';
-            if($result_diff[$courseloop][2]['RESULTDIFF']){
-                echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][2]['RESULTDIFF'] .'</td>';
-            }  
-            else echo '<td></td>';   
-            echo '<td></td>';
-            }     
-            if($exam_value[$courseloop]){
-                echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
-            }
-        }
-        else {
-            if($result_diff[$courseloop][0]['RESULTDIFF'] || $result_diff[$courseloop][1]['RESULTDIFF'] || $result_diff[$courseloop][2]['RESULTDIFF']){
+            if($diffyear1[$courseloop][0]['RESULTDIFF'] || $diffyear1[$courseloop][1]['RESULTDIFF'] || $diffyear1[$courseloop][2]['RESULTDIFF'] || $diffyear2[$courseloop][0]['RESULTDIFF'] || $diffyear2[$courseloop][1]['RESULTDIFF'] || $diffyear2[$courseloop][2]['RESULTDIFF']){
                 echo '<td></td>';
-            if($result_diff[$courseloop][0]['RESULTDIFF']){
-                echo '<td class="class-results--align-center  highligth">' . $result_diff[$courseloop][0]['RESULTDIFF'] .'</td>';
-            }
-            else echo '<td></td>';
-            if($result_diff[$courseloop][1]['RESULTDIFF']){
-                echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][1]['RESULTDIFF'] .'</td>';
-            }
-            else echo '<td></td>';
-            if($result_diff[$courseloop][2]['RESULTDIFF']){
-                echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][2]['RESULTDIFF'] .'</td>';
-            }  
-            else echo '<td></td>';   
-            echo '<td></td><td></td><td></td><td></td><td></td>';
-            }              
-            if($exam_value[$courseloop]){
-                echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
-            }
+                if($diffyear1[$courseloop][0]['RESULTDIFF'])
+                    echo '<td class="class-results--align-center  highligth">' . $diffyear1[$courseloop][0]['RESULTDIFF'] .'</td>';
+                else 
+                    echo '<td></td>';
+                if($diffyear1[$courseloop][1]['RESULTDIFF'])
+                    echo '<td class="class-results--align-center highligth">' . $diffyear1[$courseloop][1]['RESULTDIFF'] .'</td>';
+                else 
+                    echo '<td></td>';
+                if($diffyear1[$courseloop][2]['RESULTDIFF'])
+                    echo '<td class="class-results--align-center highligth">' . $diffyear1[$courseloop][2]['RESULTDIFF'] .'</td>';
+                else 
+                    echo '<td></td>'; 
+                echo '<td></td>';  
+                if($diffyear2[$courseloop][0]['RESULTDIFF'])
+                    echo '<td class="class-results--align-center  highligth">' . $diffyear2[$courseloop][0]['RESULTDIFF'] .'</td>';
+                else 
+                    echo '<td></td>';
+                if($diffyear2[$courseloop][1]['RESULTDIFF'])
+                    echo '<td class="class-results--align-center highligth">' . $diffyear2[$courseloop][1]['RESULTDIFF'] .'</td>';
+                else 
+                    echo '<td></td>';
+                if($diffyear2[$courseloop][2]['RESULTDIFF'])
+                    echo '<td class="class-results--align-center highligth">' . $diffyear2[$courseloop][2]['RESULTDIFF'] .'</td>';
+                else 
+                    echo '<td></td>';   
+                echo '<td></td>';             
+                if($exam_value[$courseloop]){
+                    echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
+                }
         }
     }
 
   }
-
     echo '  
-      <tr>
-      <tr>
-      </tr>';
-      if ($_REQUEST['elements']['comments'] == 'Y') {
-      echo '<tr>
-        <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
-      </tr>';
-      }
-    echo '</table>';
-    //echo "<pre>";echo $course[$year-1][$courseloop]['STUDENT_GRADE']  ;echo "</pre>";
-    //echo "<pre>";echo $year-1 ;echo "</pre>";
-    $courseloop++;
-}
-    //echo "<pre>";echo $course[$year][$courseloop]['STUDENT_GRADE']  ;echo "</pre>";
-    //echo "<pre>";print_r($column);echo "</pre>";
-    //echo "<pre>";print_r($type);echo "</pre>";
-    //echo "<pre>";print_r($results);echo "</pre>";
-    //echo "<pre>";print_r($comments);echo "</pre>";
+    <tr>
+    <tr>
+    </tr>';
+    if($abscences){
+            $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id,$grade_id);
+        echo '
+        </tr><td class="class-results--align-right"">Unités</td>
+        <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
+        <td colspan=1 style="background-color:grey"></td><td colspan=1 class="class-results--align-center">  </td>
+        <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
+        <td colspan=1 style="background-color:grey"></td><td colspan=1 class="class-results--align-center">  </td>
+        
+        ';     
+        echo '
+        </tr><td class="class-results--align-right"">Absences / Jours de classe</td>
+        <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][0][1][1] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][0][1]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][0][2][2] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][0][2]['MAXDAYS_QUARTER'] .'</td>
+        <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][0][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][0][3]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="class-results--align-center">
+        ' . $data['STUDENT_ABSCENCES_QUARTER'][0][1][1]+$data['STUDENT_ABSCENCES_QUARTER'][0][2][2]+$data['STUDENT_ABSCENCES_QUARTER'][0][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][0][1]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][0][2]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][0][3]['MAXDAYS_QUARTER'] .'
+        </td>
+        <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</td>
+        <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="class-results--align-center">
+        ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1]+$data['STUDENT_ABSCENCES_QUARTER'][1][2][2]+$data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'
+        </td>
+        ';     
+
+    }
+            if ($_REQUEST['elements']['comments'] == 'Y') {
+        echo '<tr>
+            <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
+        </tr>';
+        }
+        echo '</table>';
+        $courseloop++;
+    }
 }
 
 
-function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$result_diff,$exam_value){
+function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$result_diff,$exam_value,$student_id){
     global $publish_parents;
 
     $numquart=count($quarts[0])-2;
     $colspan=$numquart+1;
     $commentspan=$colspan+1;
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
-    ##### ROGER ###
     if($markingPeriod[1]['SORT_ORDER'] == 255) $numquart--;
     echo '<pre class="section-title">'; echo $title; echo'</pre>';    
     $courseloop=0;
@@ -1457,9 +1789,8 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
       </tr>
       <tr>';
       for($quartloop=0; $quartloop < $numquart ; $quartloop++){
-        ##### ROGER ###
         if($quarts[$courseloop][$quartloop+1] == $markingPeriod[1][TITLE]) $quartloop++;
-      echo'<th class="class-results__3col__th">' . $quarts[$courseloop][$quartloop+1]  .'</th>';
+        echo'<th class="class-results__3col__th">' . $quarts[$courseloop][$quartloop+1]  .'</th>';
       }
       echo'
         <th class="class-results__3col__th">' . $quarts[$courseloop]['FINAL']  .'</th>
@@ -1504,7 +1835,21 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
       <tr>
       <tr>
       </tr>';
-      if ($_REQUEST['elements']['comments'] == 'Y') {
+      echo '
+      </tr><td class="class-results--align-right"">Unités</td>
+      <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
+      <td colspan=1 style="background-color:grey"></td><td colspan=1 class="class-results--align-center"> </td>
+      '; 
+
+    $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id,$grade_id);
+    echo '
+    </tr><td class="class-results--align-right"">Absences / Jours de classe</td>
+    <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</td>
+    <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="class-results--align-center">
+    ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1]+$data['STUDENT_ABSCENCES_QUARTER'][1][2][2]+$data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'
+    </td>
+    ';     
+if ($_REQUEST['elements']['comments'] == 'Y') {
       echo '<tr>
         <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
       </tr>';
@@ -1512,51 +1857,153 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
     echo '</table>';
     $courseloop++;
     }
-    //echo "<pre>";print_r($column);echo "</pre>";
-    //echo "<pre>";print_r($quarts);echo "</pre>";
-    //echo "<pre>";print_r($results);echo "</pre>";
-    //echo "<pre>";print_r($comments);echo "</pre>";
 }
 
 
-function CadoHTMLcommentairesCompetence($title,$items,$data){
+function CadoHTMLcommentairesCompetence($title,$data,$grade_id){
 
+    //print_r($data);
+    $cycle=false;
+    if(strpos($grade_id,"Secondaire 1") || strpos($grade_id,"Secondaire 2")){
+        $etape1='1re secondaire';
+        $etape2='2e secondaire';
+        $cycle=true;
+    }
+    if(strpos($grade_id,"Primaire")){
+        $etape1='Année 1';
+        $etape2='Année 2';
+        $cycle=true;
+    }
     if (! $_REQUEST['elements']['comments'] == 'Y') return;
     echo '<pre class="section-title">'; echo $title; echo'</pre>';    
-    echo '<table class="section-1">
-    <tr>
-        <td class="section-2-header"> ' . $items['COMMENTAIRE'] . '</td>
-    </tr>
-    <td>
-    <div class="section-2-item">' . $data['COMMENTAIRE'] . '&nbsp</div>
-    </td>
-    </table>';
+    if($cycle){
+    echo '
+        <table class="class-results__table print-friendly" class-results--align-center">
+        <tr>
+        <td colspan="7" class=class-results--align-center>Commentaires sur deux des quatre compétences suivantes : exercer son jugement critique, organiser son travail, savoir communiquer et travailler en équipe</td>
+        </tr><tr>
+        <td colspan="3"> </td> 
+        <th colspan="3">Étape 1</th> 
+        <th colspan="3">Étape 3</th> 
+        </tr><tr>
+        </tr><tr>
+        <th colspan="3"> ' . $etape1 . ' </th> 
+        <td colspan="3"><b> ' . $data["C1_E1"] .  '</b> </td> 
+        <td colspan="3"><b>  ' . $data["C1_E3"] .  '</b> </td> 
+        </tr><tr>
+        <th colspan="3"> ' . $etape2 . ' </th> 
+        <td colspan="3"><b>  ' . $data["C2_E1"] .  '</b> </td> 
+        <td colspan="3"><b>  ' . $data["C2_E3"] .  '</b> </td> 
+        </tr>
+        </table>
+        ';
+    }
+    else{
+        echo '
+        <table class="class-results__table" class-results--align-center">
+        <tr>
+        <td colspan="7" class=class-results--align-center>Commentaires sur deux des quatre compétences suivantes : exercer son jugement critique, organiser son travail, savoir communiquer et travailler en équipe</td>
+        </tr><tr>
+        <th colspan="2">Étape 1</th> 
+        <th colspan="2">Étape 3</th> 
+        </tr><tr>
+        </tr><tr>
+        <td colspan="2"><b> ' . $data["C2_E1"] .  '</b></td> 
+        <td colspan="2"><b> ' . $data["C2_E3"] .  '</b></td> 
+        </tr>
+        </table>
+        ';
+    
+    }
+}
 
-    //echo "<pre>";print_r($column);echo "</pre>";
-    //echo "<pre>";print_r($data);echo "</pre>";
+function CadoHTMLcommentairesPrescolaire($title,$data,$grade_id){
+
+    if (! $_REQUEST['elements']['comments'] == 'Y') return;
+    echo'<h2 class="section-prescolaire-title"><span>3</span> Autres commentaires</h2>';
+        echo '
+        <table class="class-results__table" class-results--align-center">
+        <tr>
+        <td colspan="7" class=class-results--align-center>Commentaires divers, notamment sur d’autres apprentissages prévus dans les projets de l’école ou de la classe</td>
+        </tr><tr>
+        <td><b>&nbsp' . $data["C2_E1"] .  '</b></td> 
+        </tr>
+        </table>
+        ';
+    
 }
 
 function CadoHTMLcommentairesGeneral($title,$items,$data){
 
    if (! $_REQUEST['elements']['comments'] == 'Y') return;
    echo '<pre class="section-title">'; echo $title; echo'</pre>';    
-    echo '<table class="section-1">
+    echo '<table class="section-1  print-friendly">
     <tr>
         <td class="section-2-header"> ' . $items['COMMENTAIRE'] . '</td>
     </tr>
     <td>
-    <div class="section-2-item">' . $data['COMMENTAIRE'] . '&nbsp</div>
+    <div class="section-2-item"><b>' . $data['COMMENTAIRE'] . '&nbsp</b></div>
     </td>
     </table>';
-
-    //echo "<pre>";print_r($column);echo "</pre>";
-    //echo "<pre>";print_r($data);echo "</pre>";
 }
 
-function CadoPageSetup($title){
-    echo '<table class="logo">';
-    echo '<tr><td width=105>' . DrawLogo() . '<div class="logo-title">' . $title  . '</div>';
-    echo '<div class="logo-title">' . _schoolYear . ' ' . UserSyear() . '-' . (UserSyear()+1) .  '</div></table>';
+function CadoHTMLcommentairesCheminement($title,$items,$data,$mp,$grade_id){
+    if(GetMP(UserMP()) != 'Étape 3')
+        return;
+    if (! $_REQUEST['elements']['comments'] == 'Y') return;
+    $date = date("d-m-Y ");
+    if(strpos($grade_id,"Préscolaire")){
+        echo'<h2 class="section-prescolaire-title"><span>4</span> Cheminement scolaire</h2>';
+        echo '<table class="section-1  print-friendly">
+        <tr>
+        <td class="section-2-header"> ' . $items['COMMENTAIRE'] . '</td>
+        </tr><td>
+        <div><input type="checkbox" onclick="return false"' . $data["item1"] . '>L’élève poursuivra ses apprentissages à l’éducation préscolaire, car il n’aura pas atteint l’âge de 6 ans avant le 1er octobre prochain.</div>
+        <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>L’élève poursuivra ses apprentissages à l’éducation préscolaire, selon les modalités prévues dans son plan d’intervention.</div>
+        <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>L’élève poursuivra ses apprentissages à l’enseignement primaire.</div>
+        <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>Autre : <u>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</u></div>
+        <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
+        <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
+        <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbspDanielle Grant&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
+        <div class=class-results--align-center>Signature de la directrice &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Date</div>
+        </td>     
+        </table>';
+    }else{
+         echo '<pre class="section-title">'; 
+         echo $title; echo'</pre>';
+         echo '<table class="section-1  print-friendly">
+         <tr>
+         <td class="section-2-header"> ' . $items['COMMENTAIRE'] . '</td>
+         </tr><td>
+         <div><input type="checkbox" onclick="return false"' . $data["item1"] . '>L’élève poursuivra ses apprentissages dans la classe supérieure.</div>
+         <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>L’élève poursuivra ses apprentissages dans la même classe, selon les modalités prévues dans son plan d’intervention.</div>
+         <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
+         <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
+         <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbspDanielle Grant&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
+         <div class=class-results--align-center>Signature de la directrice &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Date</div>
+         </td>     
+         </table>';
+         }
+}
+ 
+function CadoPageSetup($title,$grade){
+
+    if(strpos($grade,'Secondaire 1') || strpos($grade,'Secondaire 2'))
+        $extra = 'Premier cycle';
+    if(strpos($grade,"Préscolaire")){
+        echo '<table class="page-prescolaire-table">';
+        echo '<tr><td>';
+        echo '<div>&nbsp</div>';
+        echo '<div class="page-prescolaire-title textwhite">BULLETIN DE L’ÉDUCATION PRÉSCOLAIRE</div>';
+        echo '<div class="page-prescolaire-title textwhite">' . _schoolYear . ' ' . UserSyear() . '-' . (UserSyear()+1) .  '</div></td></tr></table>';
+    }else{
+        echo '<table class="logo">';
+        echo '<tr><td width=105 style=justify-right>' . DrawLogo() . '';
+        echo '<div class="logo-td">' . $title  . ' ' .$grade . '</div>';
+        echo '<div class="logo-td">' . $extra .  '</div>';
+        echo '<div class="logo-td">' . _schoolYear . ' ' . UserSyear() . '-' . (UserSyear()+1) .  '</div></td></tr></table>';
+    }
+    
     echo '<!-- MEDIA SIZE 8.5x11in -->';
     echo'
     <style>
@@ -1583,7 +2030,8 @@ function CadoPageSetup($title){
       }
       th,
       td {
-        border: 1px solid #000000;
+        border-right: 2px solid black;
+        border-bottom: 2px solid black;
         padding: 5px;
       }
       .logo {
@@ -1593,6 +2041,8 @@ function CadoPageSetup($title){
       .logo td, .logo tr{
        text-align:center;
         border: none;
+        font-size:20px; 
+        font-weight:bold; 
       }
       .logo-title{
         font-size:20px; 
@@ -1609,12 +2059,197 @@ function CadoPageSetup($title){
       .section-1{
         width: 100%;
         margin-bottom: 20px;
-        border: 2px solid black;  
+        border-top: 2px solid black;
+        border-left: 2px solid black;
+        border-bottom: 0px solid black;
+        border-right: 0px solid black;
       }
+      .bilan{
+        line-height: 1.5em;
+        height: 3em;       /* height is 2x line-height, so two lines will display */
+        overflow: hidden;  /* prevents extra lines from being visible */
+        text-align: center;
+        background-color: lightgrey;
+       }
+      .class-prescolaire_table {
+        width: 100%;
+        margin-bottom: 40px;
+        page-break-inside: avoid;
+      }
+      .class-prescolaire_table{
+        border: 1px solid grey;
+      }
+      .class-prescolaire_table tr td{
+        padding-top : 10px;
+        padding-bottom : 5px;
+        border-top: 1px solid grey;
+        border-left:  1px solid grey;
+        border-right:  1px solid grey;
+        border-bottom: 1px solid grey;
+      }
+      .section-prescolaire-title{
+        font-size:20px; 
+        font-weight:bold; 
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .section-prescolaire-title span {
+        display: inline-block;
+        background-color: #585858;
+        padding: 5px 10px;
+        border-radius: 20px;
+      }
+      .page-prescolaire-title{
+        font-size:25px; 
+        font-weight:bold; 
+        font-family: Arial, Helvetica, sans-serif;
+        text-color: white;
+        margin-left: 20px;
+       }
+       .page-prescolaire-table{
+        font-size: 40px; 
+        font-weight:bold; 
+        font-family: Arial, Helvetica, sans-serif;
+        width: 100%;
+        height: 100px;
+        padding-right: 0px; 
+        padding-top:0px;
+        padding-bottom:0px;
+        margin-left: 0px;
+        margin-bottom: 0px;
+        margin-right: 0px;
+        page-break-inside: avoid;
+        background-color: #585858;
+      }
+     .class-assiduite_table {
+        width: 100%;
+        padding-right: 0px; 
+        padding-top:0px;
+        padding-bottom:0px;
+        margin-left: 0px;
+        margin-bottom: 0px;
+        margin-right: 0px;
+        border: 0px solid black;
+        page-break-inside: avoid;
+      }
+      .class-assiduite__first_col {
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+        border-right: none;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+      }
+      .class-assiduite__first_col1 {
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+      }
+       .class-assiduite__last_col {
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+        border-right: 1px solid black;;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+      }
+      .class-assiduite__top_col {
+        border-top: 1px solid black;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-bottom: 0px solid black;
+        font-weight: bold; 
+      }
+      .class-assiduite__col {
+        border-top: none;
+        border-left: 1px solid black;
+        border-right: none;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+      }
+      .class-assiduite__item1 {
+        border-top: none;
+        border-left: 1px solid black;
+        border-right: 0px solid black;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+      }
+      .class-assiduite__last_item1 {
+        border-top: none;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+
+      }
+      .class-assiduite__item2 {
+        border-top: none;
+        font-size:13px; 
+        font-weight:bold;
+        border-left: 1px solid black;
+        border-right: 0px solid black;
+        border-bottom: 1px solid black;
+        font-weight: normal; 
+      }
+      .class-assiduite__last_item2 {
+        border-top: none;
+        font-size:13px; 
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        font-weight: normal; 
+      }
+      .class-assiduite__last_row_item {
+        border-top: none;
+        border-left: 1px solid black;
+        border-right: 0px solid black;
+        border-bottom: 1px solid black;
+        font-weight: bold; 
+      }
+      .class-assiduite__last_row_item_last {
+        border-top: none;
+        border-left: 1px solid black;
+        border-right: 1px solid black;
+        border-bottom: 1px solid black;
+        font-weight: normal; 
+        font-size:13px; 
+      }
+      .class-assiduite__last_row {
+        border-top: none;
+        font-size:13px; 
+        border-left: 1px solid black;
+        border-right: 0px solid black;
+        border-bottom: 1px solid black;
+        font-weight: normal; 
+      }
+      .border{
+        border 1px solid black;
+      }
+      .border-left{
+        border-left: 1px solid black;
+      }
+      .class-border-right{
+        border-right: 1px solid black;
+      }
+      .class-prescolaire-checkbox{
+        font-size:16px; 
+        text-align: center;
+      }
+      .bkgnd1{
+            background-color: #d0d0d0;
+       }
+      .bkgnd2{
+            background-color: #f2f2f2;
+       }
+      .bkgnd3{
+            background-color: #bfbfbf;
+       }
       .class-results__table {
         width: 100%;
         margin-bottom: 20px;
-        border: 2px solid black;
+        border-top: 2px solid black;
+        border-left: 2px solid black;
+        border-bottom: 0px solid black;
+        border-right: 0px solid black;
         page-break-inside: avoid;
       }
       .class-results__th--left-header {
@@ -1650,9 +2285,11 @@ function CadoPageSetup($title){
       .section-2-header{
         text-align: center;
         font-size:1 5px; 
+        page-break-inside: avoid;
         font-family: Arial, Helvetica, sans-serif;
       }
       .section-2-item{
+        page-break-inside: avoid;
         font-weight:bold; 
         font-style: italic;
       }
@@ -1682,7 +2319,7 @@ function CadoPageSetup($title){
       .signature-ts{
         text-align: left;
         font-family: "Lucida Handwriting Std",  sans-serif;
-        font-size:25px; 
+        font-size:12px; 
         padding 10px;
         border: none;
         alignv: bottom;
@@ -1696,9 +2333,53 @@ function CadoPageSetup($title){
         color:white;
         background-color:red;
     }
-    </style>
-    
-    ';
+    .noborder{
+        border-top: 0px solid black;
+        border-left: 0px solid black;
+        border-bottom: 0px solid black;
+        border-right: 1px solid black;
+    }
+    .border{
+        border: 1px solid black;
+    }
+    .textwhite{
+        color:white;
+    }
+    .center{
+        align: center;
+        text-align: center;
+    }
+    .bggrey{
+        font-size:20px; 
+        font-weight:bold; 
+        color:black;
+        text-align:center;
+        background-color:lightgrey;
+    }
+    .bgetapes{
+        background-color:lightgrey;
+        boder: none;
+    }
+    table.noborder tr td:last-child {
+      border-right: none;
+    }
+
+    table td:has(table),
+    table td.section-1-block:has(table) {
+        padding-top: 0;
+        padding-left: 0;
+        padding-bottom: 0;
+        padding-right: 0;
+        vertical-align: top;
+    }
+    .class-results__table thead tr td {
+        color: white;
+        font-size: 20px; 
+        font-weight: bold; 
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: #585858;
+    }
+</style>';
 }
 
 function _removeSpaces($value, $column) {
@@ -1722,4 +2403,11 @@ function _makeWtg($value, $column) {
 function _makeAssgnmtWtg($value, $column) {
     global $THIS_RET, $student_points, $total_points, $percent_weights;
     return ($THIS_RET['ASSIGN_WEIGHT'] != 'N/A' ? $value . ' %' : $THIS_RET['ASSIGN_WEIGHT']);
+}
+
+function _getage30sept($dateOfBirth){
+    $today = date("Y");
+    $today .= '-09-30'; 
+    $diff = date_diff(date_create($dateOfBirth), date_create($today));
+    return ($diff->format('%y'));
 }

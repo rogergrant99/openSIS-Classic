@@ -268,8 +268,13 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                 }
                 if ($error != true) {
                     $sql = 'UPDATE ' . $table . ' SET ';
+//                    echo '<pre>'; print_r($columns); echo '</pre>';
                     foreach ($columns as $column => $value) {
+                        $days=$value;
                         $value = paramlib_validation($column, trim($value));
+                        if ($column == 'DAYS' ) {
+                            $sql_ex = 'update ' . $table . ' set DAYS=\'' . $days . '\' where marking_period_id=\'' . $_REQUEST['marking_period_id'] . '\'';
+                        }
                         if ($column == 'DOES_GRADES' && $value == '') {
                             $sql_ex = 'update ' . $table . ' set DOES_EXAM=\'\' where marking_period_id=\'' . $_REQUEST['marking_period_id'] . '\'';
                         }
@@ -923,8 +928,7 @@ if (!$_REQUEST['modfunc']) {
 
     // ADDING & EDITING FORM
     if ($_REQUEST['marking_period_id'] && $_REQUEST['marking_period_id'] != 'new') {
-        $sql = 'SELECT TITLE,SHORT_NAME,SORT_ORDER,DOES_GRADES,DOES_EXAM,DOES_COMMENTS,
-						START_DATE,END_DATE,POST_START_DATE,POST_END_DATE
+        $sql = 'SELECT *
 				FROM ' . $table . '
 				WHERE MARKING_PERIOD_ID=\'' . paramlib_validation($column = 'MARKING_PERIOD_ID', $_REQUEST['marking_period_id']) . '\'';
         $QI = DBQuery($sql);
@@ -980,6 +984,8 @@ if (!$_REQUEST['modfunc']) {
         $header .= '</div><div class="col-md-6">';
         //        if ($f == 1){
         $header .= '<div class="form-group"><label class="col-md-4 control-label text-right">' . _exam . '</label><div class="col-md-8">' . CheckboxInput_exam($RET['DOES_EXAM'], 'tables[' . $_REQUEST['marking_period_id'] . '][DOES_EXAM]', '', $checked, $_REQUEST['marking_period_id'] == 'new', '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', true, '' . ($RET['DOES_GRADES'] == "Y" ? '' : 'disabled') . '') . '</div></div>';
+        if($_REQUEST['mp_term']=='QTR')
+            $header .= '<div class="form-group"><label class="col-md-4 control-label text-right">Nombre de jours de classe</label><div class="col-md-8"></div>' . TextInput($RET['DAYS'], 'tables[' . $_REQUEST['marking_period_id'] . '][DAYS]', '', 'class=form-control' , 'size', 'size-3') . '</div>';
         //        }
         $header .= '</div>'; //.col-md-6
         $header .= '</div>'; //.row

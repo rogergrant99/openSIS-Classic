@@ -287,6 +287,7 @@ switch (User('PROFILE')) {
             echo '</div>'; //.panel
         }
             if (Preferences('HIDE_ALERTS') != 'Y') {
+            do_cado_teacher_comlpetion();
             $RET = DBGet(DBQuery('SELECT mi.SCHOOL_ID,mi.SCHOOL_DATE,mi.COURSE_PERIOD_ID,mi.TEACHER_ID,mi.SECONDARY_TEACHER_ID FROM missing_attendance mi,course_periods cp,schools s,course_period_var cpv WHERE mi.COURSE_PERIOD_ID=cp.COURSE_PERIOD_ID AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cpv.PERIOD_ID=mi.PERIOD_ID AND s.ID=mi.SCHOOL_ID and mi.SCHOOL_ID=\'' . UserSchool() . '\' AND mi.SYEAR=\'' . UserSyear() . '\' AND mi.SCHOOL_DATE<\'' . date('Y-m-d') . '\'  AND (mi.SCHOOL_DATE=cpv.COURSE_PERIOD_DATE OR POSITION(IF(DATE_FORMAT(mi.SCHOOL_DATE,\'%a\') LIKE \'Thu\',\'H\',(IF(DATE_FORMAT(mi.SCHOOL_DATE,\'%a\') LIKE \'Sun\',\'U\',SUBSTR(DATE_FORMAT(mi.SCHOOL_DATE,\'%a\'),1,1)))) IN cpv.DAYS)>0)'));
 
             if (count($RET)) {
@@ -676,4 +677,119 @@ function do_cado_bulletins(){
         echo '</td></tr></table>';
     }
 }
+
+function do_cado_teacher_comlpetion(){
+    echo '<div class="panel panel-default">';
+$sem = GetParentMP('SEM', UserMP());
+$fy = GetParentMP('FY', $sem);
+$pros = GetChildrenMP('PRO', UserMP());
+// if the UserMP has been changed, the REQUESTed MP may not work
+if (!$_REQUEST['mp'] || strpos($str = "'" . UserMP() . "','" . $sem . "','" . $fy . "'," . $pros, "'" . ltrim($_REQUEST['mp'], 'E') . "'") === false)
+    $_REQUEST['mp'] = UserMP();
+$QI = DBQuery('SELECT PERIOD_ID,TITLE FROM school_periods WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' ORDER BY SORT_ORDER ');
+$period_RET = DBGet($QI);
+$TI = DBQuery('SELECT DISTINCT STAFF_ID,CONCAT(LAST_NAME,\', \',FIRST_NAME) AS FULL_NAME,LAST_NAME,FIRST_NAME FROM staff  WHERE PROFILE_ID="2" ORDER BY LOWER(FULL_NAME) ');
+$teacher_RET= DBGet($TI);
+$mp_select = "<SELECT class=\"form-control\" name=mp onChange='this.form.submit();'>";
+if ($pros != '')
+    foreach (explode(',', str_replace("'", '', $pros)) as $pro)
+        if (GetMP($pro, 'DOES_GRADES') == 'Y')
+            $mp_select .= "<OPTION value=" . $pro . (($pro == $_REQUEST['mp']) ? ' SELECTED' : '') . ">" . GetMP($pro) . "</OPTION>";
+
+$mp_select .= "<OPTION value=" . UserMP() . ((UserMP() == $_REQUEST['mp']) ? ' SELECTED' : '') . ">" . GetMP(UserMP()) . "</OPTION>";
+if (GetMP($sem, 'DOES_GRADES') == 'Y')
+    $mp_select .= "<OPTION value=$sem" . (($sem == $_REQUEST['mp']) ? ' SELECTED' : '') . ">" . GetMP($sem) . "</OPTION>";
+if (GetMP($sem, 'DOES_EXAM') == 'Y')
+    $mp_select .= "<OPTION value=E$sem" . (('E' . $sem == $_REQUEST['mp']) ? ' SELECTED' : '') . ">" . GetMP($sem) . " Exam</OPTION>";
+
+if (GetMP($fy, 'DOES_GRADES') == 'Y')
+    $mp_select .= "<OPTION value=" . $fy . (($fy == $_REQUEST['mp']) ? ' SELECTED' : '') . ">" . GetMP($fy) . "</OPTION>";
+if (GetMP($fy, 'DOES_EXAM') == 'Y')
+    $mp_select .= "<OPTION value=E" . $fy . (('E' . $fy == $_REQUEST['mp']) ? ' SELECTED' : '') . ">" . GetMP($fy) . " Exam</OPTION>";
+$mp_select .= '</SELECT>';
+if ($_REQUEST['mp'])
+    $cur_mp = $_REQUEST['mp'];
+else
+    $cur_mp = UserMP();
+echo "<FORM class=\"no-margin\" action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . " method=POST>";
+DrawHeader(_teacherCompletion, '<div class="form-inline"><div class="form-group"><label class="control-label ml-20 mr-20">-</label>' . $teacher_select.'</div></div>');
+echo '</FORM>';
+
+echo '<hr class="no-margin"/>';
+
+$mp_type = DBGet(DBQuery('SELECT MP_TYPE FROM marking_periods WHERE marking_period_id=\'' . $cur_mp . '\' '));
+if ($mp_type[1]['MP_TYPE'] == 'year')
+    $mp_type = 'FY';
+elseif ($mp_type[1]['MP_TYPE'] == 'semester')
+    $mp_type = 'SEM';
+elseif ($mp_type[1]['MP_TYPE'] == 'quarter')
+    $mp_type = 'QTR';
+else
+    $mp_type = 'PRO';
+
+
+
+$sql = 'SELECT DISTINCT s.STAFF_ID,CONCAT(s.LAST_NAME,\', \',s.FIRST_NAME) AS FULL_NAME,cp.TITLE,cp.COURSE_PERIOD_ID,cp.SHORT_NAME,cp.COURSE_ID AS COURSE_ID FROM staff s,school_periods sp,course_periods cp
+			
+WHERE cp.GRADE_SCALE_ID IS NOT NULL AND cp.TEACHER_ID=s.STAFF_ID 
+
+AND cp.MARKING_PERIOD_ID IN (' . GetAllMP($mp_type, $cur_mp) . ') AND cp.SYEAR=\'' . UserSyear() . '\' AND cp.SCHOOL_ID=\'' . UserSchool() . '\' AND s.PROFILE=\'teacher\'
+			' . (($_REQUEST['period']) ? ' AND cp.COURSE_PERIOD_ID=\'' . $_REQUEST[period] . '\'' : 'ORDER BY  LOWER(cp.SHORT_NAME)') . '
+			
+		';
+$courses_RET = DBGet(DBQuery($sql));
+if (count($teacher_RET)) {
+    unset($i);
+    foreach ($teacher_RET as $staff_id ) {
+
+        if (count($courses_RET)) {
+            unset($j);
+            foreach ($courses_RET as $course ) {
+                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                {
+                    $i++;
+                    $staff_RET[$i]  = '<font size="4"><b><center>';
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= $staff_id['FULL_NAME'];
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= '</b></center>';
+                    break;
+                }
+                $j++;
+            }
+            
+        }
+        if (count($courses_RET)) {
+            unset($j);
+            foreach ($courses_RET as $course ) {
+                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                {
+                    $j++;
+                    $list_RET[$j][$i] = '<font size="2"><i> <u><center>';
+                    $list_RET[$j][$i] .= $course['SHORT_NAME'];
+                    $list_RET[$j][$i] .= '</i></u>';
+                    $bad_weght=check_weight($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
+                    $bad_config=check_config($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
+                    if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) != 'NAN')
+                        $bad_final = 0;
+                    else 
+                        $bad_final = 1;
+                    if($bad_config)
+                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Config</i>';
+                    if($bad_weght) 
+                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Pondé</i>';
+                    if($bad_final)
+                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Final</i>';
+                    if(! $bad_final && ! $bad_config && ! $bad_weght)
+                        $list_RET[$j][$i] .= '<i class="fa fa-check fa-lg text-success"></i>';
+                }
+            }
+        }
+    }
+}
+ListOutput($list_RET, $staff_RET, _teacherWhoHasnTEnteredGrades, "");
+echo '</div>';
+}
+
+
 ?>

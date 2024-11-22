@@ -48,7 +48,7 @@ if (is_countable($config_RET) && count($config_RET))
 else
     $programconfig[User('STAFF_ID')] = true;
 $course_period_id = UserCoursePeriod();
-$course_id = DBGet(DBQuery('SELECT COURSE_ID FROM course_periods WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\''));
+$course_id1 = DBGet(DBQuery('SELECT COURSE_ID,TITLE FROM course_periods WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\''));
 $course_id = $course_id[1]['COURSE_ID'];
 //echo 'SELECT ga.ASSIGNMENT_ID,ga.TITLE,ga.POINTS,ga.DUE_DATE,gt.TITLE AS TYPE_TITLE,CASE WHEN (ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) THEN \'Y\' ELSE NULL END AS DUE FROM gradebook_assignments ga,gradebook_assignment_types gt WHERE ((ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') OR ga.COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' AND gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID ORDER BY ga.' . Preferences('ASSIGNMENT_SORTING', 'Gradebook') . ' DESC';
 $assignments_RET = DBGet(DBQuery('SELECT ga.ASSIGNMENT_ID,ga.TITLE,ga.POINTS,ga.DUE_DATE,gt.TITLE AS TYPE_TITLE,CASE WHEN (ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) THEN \'Y\' ELSE NULL END AS DUE FROM gradebook_assignments ga,gradebook_assignment_types gt WHERE ((ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') OR ga.COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' AND gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID ORDER BY ga.' . Preferences('ASSIGNMENT_SORTING', 'Gradebook') . ' DESC'), array(), array('ASSIGNMENT_ID'));
@@ -327,6 +327,13 @@ if (!$_REQUEST['student_id'] && $_REQUEST['assignment_id'] == 'all')
     $options = array('yscroll' => true);
 
 // echo '<hr class="no-margin-bottom"/>';
+
+if(str_contains($course_id1[1]['TITLE'],"PRE ")){
+    echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 1 -> L’élève se développe très bien au regard de la compétence visée.</b></div></div>';
+    echo '<div><b>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 2 -> L’élève se développe adéquatement au regard de la compétence visée.</b></div>';
+    echo '<div><b>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 3 -> L’élève se développe avec certaines difficultés au regard de la compétence visée.</b></div>';
+    echo '<div><b>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 4 -> L’élève se développe avec des difficultés importantes au regard de la compétence visée.</b></div>';
+}
 ListOutput($stu_RET, $LO_columns, $item, $items, $link, array(), $options);
 
 if (is_countable($assignments_RET) && count($assignments_RET) != 0)
