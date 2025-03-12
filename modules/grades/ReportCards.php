@@ -1000,6 +1000,8 @@ function CadoAssiduite($student_id, $grade_id){
         if ($_REQUEST['elements']['mp_absences']=='Y') {
             $mpcount=1;
             foreach ($ALL_QUART as $key=> $quart) {
+                if ( $quart['MARKING_PERIOD_ID'] > UserMP())
+                    break;
                 $count=0;
                 $ATT_RET=DBGet(DBQuery('SELECT SCHOOL_DATE,MARKING_PERIOD_ID,STATE_VALUE,student_id from attendance_day WHERE STATE_VALUE=0 AND STUDENT_ID=\'' .  $student_id . '\'  AND MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\'')); 
                 $MAXDAYS_RET=DBGet(DBQuery('SELECT DAYS FROM school_quarters WHERE MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\'')); 
@@ -1184,8 +1186,8 @@ function CadoHTMLHeaderPrescolaire($title,$items,$data){
         <td colspan="4"></td>
         <td>Jours d’absence</td>
         <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .'</td>
-        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][1] .'</td>
-        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][1] .'</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .'</td>
+        <td>' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .'</td>
     </tr>
         <tr>
         <td colspan="4"></td>
@@ -1507,7 +1509,7 @@ function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,
         <td colspan="2" class="bkgnd1"><b>Commentaires: </b>' . $USER_RET_E1[1]['COMMENT'] . '</td>
         </tr>
         <tr>
-        <td class="bkgnd1"><b>PROGRÉS: </b>' . $progress_ret_E1[1]['COMMENT'] . '</td>
+        <td class="bkgnd1"><b>PROGRÈS: </b>' . $progress_ret_E1[1]['COMMENT'] . '</td>
         <td class="bkgnd1"><b>DÉFI(S): </b>' . $defis_ret_E1[1]['COMMENT'] . '</td>
         </tr>
         <tr>
@@ -1529,7 +1531,7 @@ function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,
         <td colspan="2" class="bkgnd2"><b>Commentaires: </b>' . $USER_RET_E2[1]['COMMENT'] . '</td>
         </tr>
         <tr>
-        <td  class="bkgnd2"><b>PROGRÉS: </b>' . $progress_ret_E2[1]['COMMENT'] . '</td>
+        <td  class="bkgnd2"><b>PROGRÈS: </b>' . $progress_ret_E2[1]['COMMENT'] . '</td>
         <td class="bkgnd2"><b>DÉFI(S): </b>' . $defis_ret_E2[1]['COMMENT'] . '</td>
         </tr>
         <tr>
@@ -1550,7 +1552,7 @@ function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,
         <td colspan="2" class="bkgnd3"><b>Commentaires: </b>' . $USER_RET_E3[1]['COMMENT'] . '</td>
         </tr>
         <tr>
-        <td class="bkgnd3"><b>PROGRÉS: </b>' . $progress_ret_E3[1]['COMMENT'] . '</td>
+        <td class="bkgnd3"><b>PROGRÈS: </b>' . $progress_ret_E3[1]['COMMENT'] . '</td>
         <td class="bkgnd3"><b>DÉFI(S): </b>' . $defis_ret_E3[1]['COMMENT'] . '</td>
         </tr>
       ';
