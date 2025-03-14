@@ -1832,7 +1832,6 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
         echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
     }
 }
-    }
     echo '  
       <tr>
       <tr>
@@ -1856,6 +1855,7 @@ if ($_REQUEST['elements']['comments'] == 'Y') {
         <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
       </tr>';
       }
+    }
     echo '</table>';
     $courseloop++;
     }
