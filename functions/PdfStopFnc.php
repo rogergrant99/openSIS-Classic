@@ -26,7 +26,7 @@
 #
 #***************************************************************************************
 function PDFStop($handle)
-{	global $OutputType,$htmldocAssetsPath,$filename,$publish_parents,$items;
+{	global $OutputType,$htmldocAssetsPath,$filename,$publish_parents,$items,$publish_parents_grade;
 	$dir = 'assets/studentfiles';
 
 	if($publish_parents || $OutputType=='PDF')
@@ -41,7 +41,11 @@ function PDFStop($handle)
 		$myfile = fopen($html_file, "w") or die("Unable to open file!");
 		fwrite($myfile, $html);
 		fclose($myfile);
-		$command="/usr/local/bin/wkhtmltopdf -B 10 -L 10 -R 10 -T 10 -s letter --enable-forms     --encoding utf8 " . $html_file . ' ' . $pdf_file;
+		// One page PDF
+		if($publish_parents_grade == 'Prescolaire')
+			$command="/usr/local/bin/wkhtmltopdf --page-height 90cm   --page-width 21cm   --encoding utf8 " . $html_file . ' ' . $pdf_file;
+		else
+			$command="/usr/local/bin/wkhtmltopdf -B 10 -L 10 -R 10 -T 10 -s letter --enable-forms     --encoding utf8 " . $html_file . ' ' . $pdf_file;
 		shell_exec($command);
 
 		// Header content type

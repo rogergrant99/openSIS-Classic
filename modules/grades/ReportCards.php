@@ -1445,7 +1445,9 @@ function CadoHTMLcommunication($title,$course,$results,$grade_id,$comments){
 
 function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,$student_id,$course_period_id){
     global $publish_parents;
+    global $publish_parents_grade;
 
+    $publish_parents_grade='Prescolaire';
     usort($course, function ($a, $b) {return $a['COURSE_#'] > $b['COURSE_#'];});
     //echo '<pre>' ;print_r($course); echo '</pre>';
     $numquart=count($quarts[0])-2;
@@ -1455,12 +1457,15 @@ function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,
     if($markingPeriod[1]['SORT_ORDER'] == 255) $numquart--;
     $courseloop=0;
 
-    echo '<table class="page-prescolaire-table">
-        <p style="page-break-after: always;">&nbsp;</p>
-        <p style="page-break-before: always;">&nbsp;</p>
-        <h2 class="section-prescolaire-title"><span>2</span> Constats</h2>
-   ';
+//     echo '<table class="page-prescolaire-table">
+//         <p style="page-break-after: always;">&nbsp;</p>
+//         <p style="page-break-before: always;">&nbsp;</p>
+//         <h2 class="section-prescolaire-title"><span>2</span> Constats</h2>
+//    ';
    echo'
+   <br> </br>
+   <br> </br>
+   <br> </br>
     <table class="class-results__table noborder class-border-right">
         <thead>
         <tr>
@@ -1563,6 +1568,9 @@ function CadoHTMLresultatsPrescolaire($title,$course,$quarts,$results,$comments,
 
 function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$result_diff,$year,$grade_id,$exam_value,$student_id){
     global $publish_parents;
+    global $publish_parents_grade;
+
+    $publish_parents_grade='Primaire';
     $numquart=count($quarts[0])-2;
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
     if(strpos($grade_id,"Primaire")){
@@ -1761,6 +1769,9 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
 
 function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$result_diff,$exam_value,$student_id){
     global $publish_parents;
+    global $publish_parents_grade;
+
+    $publish_parents_grade='Secondaire';
 
     $numquart=count($quarts[0])-2;
     $colspan=$numquart+1;
@@ -2029,12 +2040,14 @@ function CadoPageSetup($title,$grade){
         padding: 0;
         border: none;
         border-spacing: 0;
+        page-break-inside: avoid;
       }
       th,
       td {
         border-right: 2px solid black;
         border-bottom: 2px solid black;
         padding: 5px;
+        page-break-inside: avoid;
       }
       .logo {
         border: none;
@@ -2080,6 +2093,7 @@ function CadoPageSetup($title,$grade){
       }
       .class-prescolaire_table{
         border: 1px solid grey;
+        page-break-inside: avoid;
       }
       .class-prescolaire_table tr td{
         padding-top : 10px;
@@ -2088,6 +2102,7 @@ function CadoPageSetup($title,$grade){
         border-left:  1px solid grey;
         border-right:  1px solid grey;
         border-bottom: 1px solid grey;
+        page-break-inside: avoid;
       }
       .section-prescolaire-title{
         font-size:20px; 
@@ -2121,6 +2136,7 @@ function CadoPageSetup($title,$grade){
         margin-right: 0px;
         page-break-inside: avoid;
         background-color: #585858;
+        page-break-inside: avoid;
       }
      .class-assiduite_table {
         width: 100%;
@@ -2131,6 +2147,7 @@ function CadoPageSetup($title,$grade){
         margin-bottom: 0px;
         margin-right: 0px;
         border: 0px solid black;
+        page-break-inside: avoid;
         page-break-inside: avoid;
       }
       .class-assiduite__first_col {
@@ -2364,6 +2381,7 @@ function CadoPageSetup($title,$grade){
     }
     table.noborder tr td:last-child {
       border-right: none;
+        page-break-inside: avoid;
     }
 
     table td:has(table),
@@ -2373,6 +2391,7 @@ function CadoPageSetup($title,$grade){
         padding-bottom: 0;
         padding-right: 0;
         vertical-align: top;
+        page-break-inside: avoid;
     }
     .class-results__table thead tr td {
         color: white;
@@ -2380,6 +2399,7 @@ function CadoPageSetup($title,$grade){
         font-weight: bold; 
         font-family: Arial, Helvetica, sans-serif;
         background-color: #585858;
+        page-break-inside: avoid;
     }
 </style>';
 }
