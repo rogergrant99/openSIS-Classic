@@ -28,7 +28,7 @@
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
 DrawBC("" . _gradebook . " > " . ProgramTitle());
-error_reporting(1);
+error_reporting(0);
 
 include_once 'functions/MakeLetterGradeFnc.php';
 include_once 'functions/MakePercentGradeFnc.php';
@@ -335,6 +335,13 @@ if(str_contains($course_id1[1]['TITLE'],"PRE ")){
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 2 -> L’élève se développe adéquatement au regard de la compétence visée.</b></div>';
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 3 -> L’élève se développe avec certaines difficultés au regard de la compétence visée.</b></div>';
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 4 -> L’élève se développe avec des difficultés importantes au regard de la compétence visée.</b></div>';
+    if(str_contains($course_id1[1]['TITLE'],"couvrir ")){
+        echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspLa note attribué a la compétence (Cheminement scolaire) sera noté comme suit:</b></div></div>';
+        echo '<div>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 1 -> L’élève poursuivra ses apprentissages à l’éducation préscolaire, car il n’aura pas atteint l’âge de 6 ans avant le 1er octobre prochain.</b></div></div>';
+        echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 2 -> L’élève poursuivra ses apprentissages à l’éducation préscolaire, selon les modalités prévues dans son plan d’intervention.</b></div>';
+        echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 3 -> L’élève poursuivra ses apprentissages à l’enseignement primaire.</b></div>';
+        echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 4 -> Autre : (Ajouter note dans commentaire de la compétence Final)</b></div>';
+    }
 }
 ListOutput($stu_RET, $LO_columns, $item, $items, $link, array(), $options);
 

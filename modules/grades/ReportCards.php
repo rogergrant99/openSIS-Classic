@@ -1076,8 +1076,19 @@ function CadoStudentComments($student_id, $grade_id,$marking_period) {
     $data['C1_E3']=$USER_RETC1_E3[1]['COM_COMPETENCES'];
     $data['C2_E1']=$USER_RETC2_E1[1]['COM_COMPETENCES'];
     $data['C2_E3']=$USER_RETC2_E3[1]['COM_COMPETENCES'];
-    if(strpos($grade_id,"Préscolaire"))
+    if(strpos($grade_id,"Préscolaire")){
+        $data['1']='unchecked';
+        $data['2']='unchecked';
+        $data['3']='unchecked';
+        $data['4']='unchecked';
+        if(GetMP(UserMP()) == 'Étape 3'){
+            $cheminenment = DBGet(DBQuery('SELECT POINTS,COMMENT FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND ASSIGNMENT_ID=(select assignment_id from gradebook_assignments where marking_period_id=\'' . $mpC2_E3[1]['MARKING_PERIOD_ID'] . '\' and TITLE="Cheminement scolaire" )'));
+            $data[(int)$cheminenment[1]['POINTS']]='checked';
+            if($data['4'] == 'checked')
+                $data['5']=$cheminenment[1]['COMMENT'];
+        }
         CadoHTMLcommentairesPrescolaire(_reportcard_cat3,$data,$grade_id);
+    }
     else
         CadoHTMLcommentairesCompetence(_reportcard_cat3,$data,$grade_id);
     $column['COMMENTAIRE']=_commentsOther;
@@ -1085,8 +1096,6 @@ function CadoStudentComments($student_id, $grade_id,$marking_period) {
     if(! strpos($grade_id,"Préscolaire"))
         CadoHTMLcommentairesGeneral(_reportcard_cat4,$column,$data);
     $column['COMMENTAIRE']=_reportcard_higher;
-    $data['item1']='checked';
-    $data['item2']='checked';
     if(! strpos($grade_id,"Préscolaire"))
         CadoHTMLcommentairesCheminement(_reportcard_cat5a,$column,$data,$mp,$grade_id);
     else
@@ -1971,10 +1980,10 @@ function CadoHTMLcommentairesCheminement($title,$items,$data,$mp,$grade_id){
         <tr>
         <td class="section-2-header"> ' . $items['COMMENTAIRE'] . '</td>
         </tr><td>
-        <div><input type="checkbox" onclick="return false"' . $data["item1"] . '>L’élève poursuivra ses apprentissages à l’éducation préscolaire, car il n’aura pas atteint l’âge de 6 ans avant le 1er octobre prochain.</div>
-        <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>L’élève poursuivra ses apprentissages à l’éducation préscolaire, selon les modalités prévues dans son plan d’intervention.</div>
-        <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>L’élève poursuivra ses apprentissages à l’enseignement primaire.</div>
-        <div><input type="checkbox" onclick="return false"' . $data["item2"] . '>Autre : <u>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</u></div>
+        <div><input type="checkbox" onclick="return false"' . $data["1"] . '>L’élève poursuivra ses apprentissages à l’éducation préscolaire, car il n’aura pas atteint l’âge de 6 ans avant le 1er octobre prochain.</div>
+        <div><input type="checkbox" onclick="return false"' . $data["2"] . '>L’élève poursuivra ses apprentissages à l’éducation préscolaire, selon les modalités prévues dans son plan d’intervention.</div>
+        <div><input type="checkbox" onclick="return false"' . $data["3"] . '>L’élève poursuivra ses apprentissages à l’enseignement primaire.</div>
+        <div><input type="checkbox" onclick="return false"' . $data["4"] . '>Autre : <u><b> ' . $data["5"] . ' </b></u></div>
         <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
         <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
         <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbspDanielle Grant&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
