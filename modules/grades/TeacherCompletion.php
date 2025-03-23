@@ -147,14 +147,14 @@ function GetGroupAverage($course_period_id,$mp,$year,$title){
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . $year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
     if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
     { 
-        if(substr( $title, 0, 3 ) === "PRE") return 100;
+        //if(substr( $title, 0, 3 ) === "PRE") return 100;
         $total_group=0;
         $students=0;
         $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $mp . '\' ';
         $grades_RET=DBGet(DBQuery($sql));
         if($grades_RET){ 
             foreach ($grades_RET as $key=> $val) {
-                if($year==2022){
+                if($year==2022 || substr( $title, 0, 3 ) === "PRE"){
                     if($val['GRADE_PERCENT'] > 0 ){
                         $total_group+=$val['GRADE_PERCENT'];
                         $student++;
@@ -168,7 +168,7 @@ function GetGroupAverage($course_period_id,$mp,$year,$title){
         }
     }
     else{
-        if(substr( $title, 0, 3 ) === "PRE") return 100;
+        //if(substr( $title, 0, 3 ) === "PRE") return 100;
         $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $mp . '\' ';
         $grades_RET=DBGet(DBQuery($sql));
         if(count($grades_RET))

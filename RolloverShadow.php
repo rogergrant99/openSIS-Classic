@@ -364,61 +364,9 @@ $calendars_RET = DBGet(DBQuery('SELECT CALENDAR_ID,ROLLOVER_ID FROM school_calen
                         echo '<div style="padding-top:90px; text-align:center;"><span style="font-size:14px; font-weight:bold;">The school year has been rolled.</span><br/><br/><input type=button onclick=document.location.href="index.php?modfunc=logout" value="Please login again" class=btn_large ></div>';
 						
                         unset($_SESSION['_REQUEST_vars']['tables']);
-                        unset($_SESSION['_REQUEST_vars']['delete_ok']);
-            CadoFix($next_syear);
-                        
+                        unset($_SESSION['_REQUEST_vars']['delete_ok']);                        
 }
 
-function CadoFix($next_syear)
-{
-    $get_dates=DBGet(DBQuery('SELECT *  FROM school_quarters WHERE  TITLE= \'1ère communication\' AND SYEAR = \''.$next_syear.'\''));
-    $start=$get_dates[1]['POST_START_DATE'];
-    $end=$get_dates[1]['POST_END_DATE'];
-    $now=date('Y-m-d');
-    echo 'CADO - Assigner valeurs par défault aux enseignants ainsi que les compétances des cours';
-    // General options
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'ROUNDING\' as title, CONCAT("NORMAL_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'ASSIGNMENT_SORTING\' as title, CONCAT("ASSIGNMENT_ID_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'WEIGHT\' as title, CONCAT("Y_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'ANOMALOUS_MAX\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'LATENCY\' as title, CONCAT("0_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'COMMENT_A\' as title, NULL as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    //DBQuery('INSERT INTO program_user_config (user_id,program,title,value,last_updated,updated_by) SELECT staff_id as user_id,\'Preferences\' as program,\'HIDE_ALERTS\' as title,\'N\' as value,last_updated as last_updated,staff_id as updated_by FROM staff WHERE  profile_id =\'2\'');
-    // Scale
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-45") as title, CONCAT("90_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-46") as title, CONCAT("80_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-47") as title, CONCAT("70_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-48") as title, CONCAT("60_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-49") as title, CONCAT("50_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-50") as title, CONCAT("40_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    // Quarter weigth
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'Q-30\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'Q-31\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'Q-32\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'Q-33\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    // Full year quarter weigth
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'FY-30\' as title, CONCAT("20_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'FY-31\' as title, CONCAT("20_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'FY-32\' as title, CONCAT("0_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'FY-33\' as title, CONCAT("60_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'FY-E27\' as title, CONCAT("0_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    // Assignment type 1ere communication
-    $syear=$this_year=$next_syear;
-    $last_year=$this_year-1;
-    $oldcourses=DBGet(DBQuery('SELECT TEACHER_ID,COURSE_ID,COURSE_PERIOD_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .$this_year. ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as NEW_COURSE_PERIOD_ID from course_details where SYEAR=' .$last_year. ''));
-    foreach($oldcourses as $individual) {
-        $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
-        foreach($types as $type){
-        if (!$type['FINAL_GRADE_PERCENT'])  $type['FINAL_GRADE_PERCENT']='null';
-        DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$individual['TEACHER_ID'].','.$individual['NEW_COURSE_PERIOD_ID'].','.$type['COURSE_ID'].',"'. html_entity_decode($type['TITLE']).'",'.$type['FINAL_GRADE_PERCENT'].')');
-        }
-    }
-    // DBQuery('INSERT INTO gradebook_assignment_types (title,final_grade_percent,staff_id,course_period_id,course_id) SELECT \'1ère communication\' as title, NULL as final_grade_percent, teacher_id as staff_id, course_period_id as course_period_id, course_id as course_id FROM course_periods WHERE  syear =  \''.$next_syear.'\'');
-    // Assigments 1ere communicatio
-    DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,course_period_id,assignment_type_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) SELECT staff_id as staff_id, 32 as marking_period_id, course_period_id as course_period_id, assignment_type_id as assignment_type_id, \'En voie de réussite\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 33 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_updated FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
-    DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,course_period_id,assignment_type_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) SELECT staff_id as staff_id, 32 as marking_period_id, course_period_id as course_period_id, assignment_type_id as assignment_type_id, \'Complète et remet ses travaux\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 33 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_updated FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
-    DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,course_period_id,assignment_type_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) SELECT staff_id as staff_id, 32 as marking_period_id, course_period_id as course_period_id, assignment_type_id as assignment_type_id, \'Attitude et comportement\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 34 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_update FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
-}
 
 function roll_calendar($calendar_id,$rollover_id)
 {

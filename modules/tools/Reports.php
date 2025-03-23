@@ -38,32 +38,135 @@ if (!$_REQUEST['modfunc']) {
 
     $start_date = date('Y-m') . '-01';
     $end_date = DBDate('mysql');
-    echo '<div class="row">';
-    echo '<div class="col-md-8 col-md-offset-2">';
-    echo "<FORM class=\"form-horizontal\" name=log id=log action=Modules.php?modname=$_REQUEST[modname]&modfunc=generate method=POST>";
-    PopTable('header',  'Assigné cours a tous les étudiants');
-
-    echo '<h5 class="text-center">Cette fonction est irréversible, procédez avec prudence</h5>';
-
-    $btn = '<input type="submit" class="btn btn-primary" value="Assigner tous les cours disponible à tous les étudiants éligibles" name="generate" onclick="self_disable(this);">';
-    PopTable('footer', $btn);
-    echo '</FORM>';
-    echo '</div>';
-    echo '</div>'; //.row
-}
-if ($_REQUEST['modfunc'] == 'generate') {
-    $schedule=DBGet(DBQuery('SELECT * from schedule where SYEAR = ' .UserSyear().' '));
-    if(count($schedule)){
-    echo "<FORM action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=del method=POST >";
-       if ((!isset($conv_st_date) || !isset($conv_end_date))) {
-           echo '<center><font color="red"><b><h5>Les cours ont déja été assignés</h5></b></font></center>';
-       }
+    $YearMP = DBGet(DBQuery('SELECT MARKING_PERIOD_ID from school_quarters where SYEAR = '  .UserSyear(). ' and title = \'1ère communication\' '));
+    if($YearMP[1]['MARKING_PERIOD_ID']){
+        $courses=DBGet(DBQuery('SELECT * from gradebook_assignments where MARKING_PERIOD_ID = '  .$YearMP[1]['MARKING_PERIOD_ID']. ' '));
+     }
+     if(count($courses)){
+        if ((!isset($conv_st_date) || !isset($conv_end_date))) {
+            echo '<center><font color="red"><b><h5>Les types de devoir ont déja été attribués</h5></b></font></center>';
+        }
     }
-    else
-        CadoFix();
+     else{
+        echo "<FORM action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=teachers method=POST >";
+        echo '<div class="row">';
+        echo '<div class="col-md-8 col-md-offset-2">';
+        echo "<FORM class=\"form-horizontal\" name=log id=log action=Modules.php?modname=$_REQUEST[modname]&modfunc=teachers method=POST>";
+        PopTable('header',  'Attribuer les types de devoirs a tous les professeurs');
+        echo '<h5 class="text-center">Cette fonction est irréversible, procédez avec prudence</h5>';
+        $btn = '<input type="submit" class="btn btn-primary" value="Atribuer les types de devoirs de l\'an passé aux professeurs" name="generate2" onclick="self_disable(this);">';
+        PopTable('footer', $btn);
+        echo '</FORM>';
+        echo '</div>';
+        echo '</div>'; //.row
+     }
+
+     $schedule=DBGet(DBQuery('SELECT * from schedule where SYEAR = ' .UserSyear().' '));
+     if(count($schedule)){
+        if ((!isset($conv_st_date) || !isset($conv_end_date))) {
+            echo '<center><font color="red"><b><h5>Les cours ont déja été assignés </h5></b></font></center>';
+        }
+     }
+     else{
+        echo "<FORM action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=students method=POST >";
+        echo '<div class="row">';
+        echo '<div class="col-md-8 col-md-offset-2">';
+        echo "<FORM class=\"form-horizontal\" name=log id=log action=Modules.php?modname=$_REQUEST[modname]&modfunc=students method=POST>";
+        PopTable('header',  'Assigner cours a tous les étudiants');
+        echo '<h5 class="text-center">Cette fonction est irréversible, procédez avec prudence</h5>';
+        $btn = '<input type="submit" class="btn btn-primary" value="Assigner tous les cours disponible à tous les étudiants éligibles" name="generate" onclick="self_disable(this);">';
+        PopTable('footer', $btn);
+        echo '</FORM>';
+        echo '</div>';
+        echo '</div>'; //.row
+     }
+}
+if ($_REQUEST['modfunc'] == 'students') {
+    CadoStudentFix();
 }
 
-function CadoFix()
+if ($_REQUEST['modfunc'] == 'teachers') {
+    CadoTeacherFix(UserSyear());
+}
+
+function CadoTeacherFix($next_syear)
+{
+    echo 'CADO - Assigner valeurs par défault aux enseignants ainsi que les compétances des cours';
+    $YearMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_YEARS WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $E1MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 1\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $E2MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 2\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $E3MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 3\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $ECMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'1ère communication\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $FY = $FY1 = $FY2 = $FY3 = $FYC = 'FY-';
+    $E1 = $E2 = $E3 = $EC = 'Q-';
+    $FY .='E';
+    $FY .= $YearMP[1]['MARKING_PERIOD_ID'];
+    $E1 .= $E1MP[1]['MARKING_PERIOD_ID'];
+    $FY1 .= $E1MP[1]['MARKING_PERIOD_ID'];
+    $E2 .= $E2MP[1]['MARKING_PERIOD_ID'];
+    $FY2 .= $E2MP[1]['MARKING_PERIOD_ID'];
+    $E3 .= $E3MP[1]['MARKING_PERIOD_ID'];
+    $FY3 .= $E3MP[1]['MARKING_PERIOD_ID'];
+    $EC .= $ECMP[1]['MARKING_PERIOD_ID'];
+    $FYC .= $ECMP[1]['MARKING_PERIOD_ID'];
+    // General options
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'ROUNDING\' as title, CONCAT("NORMAL_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'ASSIGNMENT_SORTING\' as title, CONCAT("ASSIGNMENT_ID_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'WEIGHT\' as title, CONCAT("Y_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'ANOMALOUS_MAX\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'LATENCY\' as title, CONCAT("0_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'COMMENT_A\' as title, NULL as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    //DBQuery('INSERT INTO program_user_config (user_id,program,title,value,last_updated,updated_by) SELECT staff_id as user_id,\'Preferences\' as program,\'HIDE_ALERTS\' as title,\'N\' as value,last_updated as last_updated,staff_id as updated_by FROM staff WHERE  profile_id =\'2\'');
+    // Scale
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-65") as title, CONCAT("90_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-66") as title, CONCAT("80_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-67") as title, CONCAT("70_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-68") as title, CONCAT("60_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-69") as title, CONCAT("50_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-70") as title, CONCAT("40_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    // Quarter weigth
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$E1.'\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$E2.'\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$EC.'\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$E3.'\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    // Full year quarter weigth
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$FY1.'\' as title, CONCAT("20_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$FY2.'\'  as title, CONCAT("20_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$FYC.'\' as title, CONCAT("0_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$FY3.'\' as title, CONCAT("60_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$FY.'\' as title, CONCAT("0_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    // Assignment type 1ere communication
+    $syear=$this_year=$next_syear;
+    $last_year=$this_year-1;
+    $get_dates=DBGet(DBQuery('SELECT *  FROM school_quarters WHERE  TITLE= \'1ère communication\' AND SYEAR = \''.$next_syear.'\''));
+    $start=$get_dates[1]['POST_START_DATE'];
+    $end=$get_dates[1]['POST_END_DATE'];
+    $now=date('Y-m-d');
+    $oldcourses=DBGet(DBQuery('SELECT TEACHER_ID,COURSE_ID,COURSE_PERIOD_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .$this_year. ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as NEW_COURSE_PERIOD_ID from course_details where SYEAR=' .$last_year. ''));
+    foreach($oldcourses as $individual) {
+        $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
+        foreach($types as $type){
+            if (!$type['FINAL_GRADE_PERCENT'])  
+                $type['FINAL_GRADE_PERCENT']='null';
+            DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$individual['TEACHER_ID'].','.$individual['NEW_COURSE_PERIOD_ID'].','.$type['COURSE_ID'].',"'. html_entity_decode($type['TITLE']).'",'.$type['FINAL_GRADE_PERCENT'].')');
+            $return=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types where STAFF_ID= '.$individual['TEACHER_ID'].' AND COURSE_PERIOD_ID= '.$individual['NEW_COURSE_PERIOD_ID'].' AND COURSE_ID= '.$type['COURSE_ID'].' AND TITLE= "'.html_entity_decode($type['TITLE']).'" '));
+            if($type['TITLE'] == '1ère communication'){
+             DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'En voie de réussite\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
+             DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'Complète et remet ses travaux\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
+             DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'Attitude et comportement\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'34\' , \'1\' ,  \''.$now.'\' )');
+             
+            //SELECT staff_id as staff_id,  \''.$YearMP[1]['MARKING_PERIOD_ID'].'\' as marking_period_id, assignment_type_id as assignment_type_id, \'En voie de réussite\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 33 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_updated FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
+            // DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) SELECT staff_id as staff_id,  \''.$YearMP[1]['MARKING_PERIOD_ID'].'\'  as marking_period_id, assignment_type_id as assignment_type_id, \'Complète et remet ses travaux\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 33 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_updated FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
+            // DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) SELECT staff_id as staff_id,  \''.$YearMP[1]['MARKING_PERIOD_ID'].'\'  as marking_period_id, assignment_type_id as assignment_type_id, \'Attitude et comportement\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 34 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_update FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
+            }
+        }
+    }
+    // DBQuery('INSERT INTO gradebook_assignment_types (title,final_grade_percent,staff_id,course_period_id,course_id) SELECT \'1ère communication\' as title, NULL as final_grade_percent, teacher_id as staff_id, course_period_id as course_period_id, course_id as course_id FROM course_periods WHERE  syear =  \''.$next_syear.'\'');
+    // Assigments 1ere communicatio
+}
+
+
+function CadoStudentFix()
 {
     $courses_count=0;
     $students_count=0;
