@@ -454,7 +454,7 @@ if (User('PROFILE') == 'teacher') {
     //===================================================================================================		
     echo "</FORM></div></li>";
     echo "<li><div class=\"form-group\"><FORM name=head_frm id=head_frm action=Side.php?modfunc=update&btnn=$btn&nsc=$ns&act=course method=POST><INPUT type=hidden name=modcat value='' id=modcat_input>";
-    $course = DBQuery("SELECT DISTINCT cd.COURSE_TITLE, cd.COURSE_ID,cd.CP_TITLE,cd.SUBJECT_ID,cd.SCHOOL_ID FROM course_details cd WHERE (cd.TEACHER_ID='" . User('STAFF_ID') . "' OR cd.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR cd.TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cd.SYEAR='" . UserSyear() . "' AND cd.SCHOOL_ID='" . UserSchool() . "' AND cd.SUBJECT_ID='" . UserSubject() . "' AND (cd.MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (cd.MARKING_PERIOD_ID IS NULL ))"); //AND cd.BEGIN_DATE<='".date('Y-m-d')."' AND cd.END_DATE>='".date('Y-m-d')."'))");
+    $course = DBQuery("SELECT DISTINCT cd.SHORT_NAME, cd.COURSE_TITLE, cd.COURSE_ID,cd.CP_TITLE,cd.SUBJECT_ID,cd.SCHOOL_ID FROM course_details cd WHERE (cd.TEACHER_ID='" . User('STAFF_ID') . "' OR cd.SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR cd.TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND cd.SYEAR='" . UserSyear() . "' AND cd.SCHOOL_ID='" . UserSchool() . "' AND cd.SUBJECT_ID='" . UserSubject() . "' AND (cd.MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (cd.MARKING_PERIOD_ID IS NULL ))"); //AND cd.BEGIN_DATE<='".date('Y-m-d')."' AND cd.END_DATE>='".date('Y-m-d')."'))");
     $RET_temp = DBGet($course);
     $ret_increment = 1;
     $RET = array();
@@ -473,7 +473,7 @@ if (User('PROFILE') == 'teacher') {
     if (count($RET) > 0) {
         foreach ($RET as $course) {
             $grade_level=DBGet(DBQuery("SELECT TITLE from school_gradelevels where id = (SELECT grade_level from courses where course_id= '" . $course['COURSE_ID'] . "')" ));
-            echo "<OPTION id=$course[COURSE_ID] value=$course[COURSE_ID]" . ((UserCourse() == $course['COURSE_ID']) ? ' SELECTED' : '') . ">" .  $grade_level[1]['TITLE'] . "</OPTION>";
+            echo "<OPTION id=$course[COURSE_ID] value=$course[COURSE_ID]" . ((UserCourse() == $course['COURSE_ID']) ? ' SELECTED' : '') . ">" .   $course['SHORT_NAME'] .  "</OPTION>";
         }
     } else {
         echo '<OPTION value="">n/a</OPTION>';
