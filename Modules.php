@@ -518,7 +518,8 @@ if (User('PROFILE') == 'teacher') {
                 $flag = 1;
             }
 
-            echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period['TITLE'] . " - " . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
+            //echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period['TITLE'] . " - " . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
+            echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
             $_SESSION['UserPeriod'] = $period['PERIOD_ID'];
             if (CpvId() == $period['ID']) {
 
