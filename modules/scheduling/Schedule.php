@@ -265,21 +265,21 @@ if ($_REQUEST['del'] == 'true') {
     $a_grd = count(DBGet($association_query_grade));
     $a_rpt = count(DBGet($association_query_reportcard));
 
-    if ($a_grd > 0) {
-        UnableDeletePrompt('' . _cannotdeleteBecauseAssignmentsGradingAreAlreadyGiven . '');
+    // if ($a_grd > 0) {
+    //     UnableDeletePrompt('' . _cannotdeleteBecauseAssignmentsGradingAreAlreadyGiven . '');
 
-        unset($_REQUEST['del']);
-        unset($_REQUEST['c_id']);
-    } elseif ($a_rpt > 0) {
-        UnableDeletePrompt('' . _cannotDeleteBecauseFinalGradeIsAlreadyGiven . '');
+    //     unset($_REQUEST['del']);
+    //     unset($_REQUEST['c_id']);
+    // } elseif ($a_rpt > 0) {
+    //     UnableDeletePrompt('' . _cannotDeleteBecauseFinalGradeIsAlreadyGiven . '');
 
-        unset($_REQUEST['del']);
-        unset($_REQUEST['c_id']);
-    } elseif ($a_attn > 0 || $a_grd > 0 || $a_rpt > 0) {
-        UnableDeletePrompt('' . _cannotDeleteBecauseStudentsAttendanceAreAlreadyTaken . '');
-        unset($_REQUEST['del']);
-        unset($_REQUEST['c_id']);
-    } else {
+    //     unset($_REQUEST['del']);
+    //     unset($_REQUEST['c_id']);
+    // } elseif ($a_attn > 0 || $a_grd > 0 || $a_rpt > 0) {
+    //     UnableDeletePrompt('' . _cannotDeleteBecauseStudentsAttendanceAreAlreadyTaken . '');
+    //     unset($_REQUEST['del']);
+    //     unset($_REQUEST['c_id']);
+    // } else {
 
         if (DeletePromptMod('schedule')) {
             $schedule_fetch = DBGet(DBQuery('SELECT DROPPED FROM schedule WHERE ID=\'' . $_REQUEST['schedule_id'] . '\''));
@@ -306,7 +306,7 @@ if ($_REQUEST['del'] == 'true') {
         }
         unset($_REQUEST['del']);
         unset($_REQUEST['c_id']);
-    }
+    // }
 } else {
     $selectedStudentId = isset($_REQUEST['student_id']) ? $_REQUEST['student_id'] : UserStudentID();
     if (isset($_REQUEST['student_id']) || UserStudentID()) {
@@ -1160,7 +1160,6 @@ function _makeAction($value)
     $year = $_REQUEST['year_date'];
     $i = UserStudentId();
     $rem = "<center><a href=Modules.php?modname=scheduling/Schedule.php&student_id=$i&del=true&c_id=$value&cp_id=$THIS_RET[COURSE_PERIOD_ID]&schedule_id=$THIS_RET[SCHEDULE_ID]&month_date=$month&day_date=$day&year_date=$year class=\"btn btn-danger btn-xs btn-icon\"><i class=\"fa fa-times\"></i></a></center>";
-
     return $rem;
 }
 

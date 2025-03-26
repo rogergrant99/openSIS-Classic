@@ -164,6 +164,13 @@ if ($_REQUEST['modfunc'] == 'save') {
                             $grades_RET[$i]['TEACHER_ID'] = $mps[key($mps)][1]['TEACHER_ID2'];
                             $grades_RET[$i]['COURSE_ID'] = $mps[key($mps)][1]['COURSE_ID'];
                             $grades_RET[$i]['CGPA'] = round($mps[key($mps)][1]['UNWEIGHTED_GPA'], 3);
+                            if(do_cado_teacher_comlpetion($grades_RET[$i]['TEACHER_ID'],$grades_RET[$i]['COURSE_ID'],$mps[key($mps)][1]['COURSE_PERIOD_ID'],$grades_RET[$i]['SHORT'])){
+                                echo '<h1><br><b>';
+                                echo $grades_RET[$i]['TEACHER'];
+                                echo '</h1></br></b>';
+                                BackPrompt("Le professeur suivant n'as pas complèté les notes final ou pondération:");
+                                exit;
+                            }
                             if ($mps[key($mps)][1]['WEIGHTED_GP'] && $mps[key($mps)][1]['COURSE_WEIGHT']) {
                                 if (substr(key($mps), 0, 1) == 'E')
                                     $mpkey = substr(key($mps), 1);
@@ -1789,92 +1796,93 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
     if($markingPeriod[1]['SORT_ORDER'] == 255) $numquart--;
     echo '<pre class="section-title">'; echo $title; echo'</pre>';    
     $courseloop=0;
+
     foreach ($course as $key=> $col) {
-        if(html_entity_decode($comments[$courseloop]['COMMENT']) != html_entity_decode('Cours abandonné.'))
-    {
-
-    echo'
-    <table class="class-results__table">
-      <tr>
-        <th
-          rowspan="2"
-          class="class-results--align-left class-results__th--left-header"
-        >
-          <h1>' . $course[$courseloop]['TITLE']  . '</h1>
-          ' . $course[$courseloop]['COURSE_#']  . ' <br />
-          '; 
-          if ($_REQUEST['elements']['teacher'] == 'Y') {
-            echo $course[$courseloop]['TEACHER'];
-          } 
-          echo ' </th>
-        <th colspan="' . $colspan  . '" class="class-results__3col-right">' . $course[$courseloop]['STUDENT_GRADE']  . '</th>
-      </tr>
-      <tr>';
-      for($quartloop=0; $quartloop < $numquart ; $quartloop++){
-        if($quarts[$courseloop][$quartloop+1] == $markingPeriod[1][TITLE]) $quartloop++;
-        echo'<th class="class-results__3col__th">' . $quarts[$courseloop][$quartloop+1]  .'</th>';
-      }
-      echo'
-        <th class="class-results__3col__th">' . $quarts[$courseloop]['FINAL']  .'</th>
-      </tr>
-    ';
-    $resloop=0;
-    foreach ($results[$courseloop] as $key=> $result){
-      echo '<tr>
-      <td class="class-results--align-right">' . $results[$courseloop][$resloop]['TYPE'] . ' ' . $results[$courseloop][$resloop]['WEIGHT'] . '</td> 
-      ';
-      for($quartloop=0; $quartloop < $numquart ; $quartloop++){
-        echo'<td class="class-results--align-center">' . $results[$courseloop][$resloop]['RESULT'][$quartloop]  .'</td>';
+        $SCHED_RET=DBGet(DBQuery('SELECT * from schedule WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND student_id=\'' . $student_id . '\'  AND SYEAR=\'' . UserSyear() . '\' AND COURSE_PERIOD_ID=\'' . $course[$courseloop]['COURSE_PERIOD_ID'] . '\''));  
+        if(html_entity_decode($comments[$courseloop]['COMMENT']) != html_entity_decode('Cours abandonné.') && count($SCHED_RET) && $SCHED_RET[1]['DROPPED'] == 'N')
+        {
+            echo'
+            <table class="class-results__table">
+            <tr>
+                <th
+                rowspan="2"
+                class="class-results--align-left class-results__th--left-header"
+                >
+                <h1>' . $course[$courseloop]['TITLE']  . '</h1>
+                ' . $course[$courseloop]['COURSE_#']  . ' <br />
+                '; 
+                if ($_REQUEST['elements']['teacher'] == 'Y') {
+                    echo $course[$courseloop]['TEACHER'];
+                } 
+                echo ' </th>
+                <th colspan="' . $colspan  . '" class="class-results__3col-right">' . $course[$courseloop]['STUDENT_GRADE']  . '</th>
+            </tr>
+            <tr>';
+            for($quartloop=0; $quartloop < $numquart ; $quartloop++){
+                if($quarts[$courseloop][$quartloop+1] == $markingPeriod[1][TITLE]) $quartloop++;
+                echo'<th class="class-results__3col__th">' . $quarts[$courseloop][$quartloop+1]  .'</th>';
+            }
+            echo'
+                <th class="class-results__3col__th">' . $quarts[$courseloop]['FINAL']  .'</th>
+            </tr>
+            ';
+            $resloop=0;
+            foreach ($results[$courseloop] as $key=> $result){
+                echo '<tr>
+                <td class="class-results--align-right">' . $results[$courseloop][$resloop]['TYPE'] . ' ' . $results[$courseloop][$resloop]['WEIGHT'] . '</td> 
+                ';
+                for($quartloop=0; $quartloop < $numquart ; $quartloop++){
+                    echo'<td class="class-results--align-center">' . $results[$courseloop][$resloop]['RESULT'][$quartloop]  .'</td>';
+                    }
+                echo'
+                    <td class="class-results--align-center">' . $results[$courseloop][$resloop]['RESULT']['FINAL'] .'</td>
+                    </tr>';
+                    $resloop++;
+            }
+            if(! $publish_parents){
+                if($result_diff[$courseloop][0]['RESULTDIFF'] || $result_diff[$courseloop][1]['RESULTDIFF'] || $result_diff[$courseloop][2]['RESULTDIFF']){
+                echo '<td></td>';
+                if($result_diff[$courseloop][0]['RESULTDIFF']){
+                echo '<td class="class-results--align-center  highligth">' . $result_diff[$courseloop][0]['RESULTDIFF'] .'</td>';
+                }
+                else echo '<td></td>';
+                if($result_diff[$courseloop][1]['RESULTDIFF']){
+                echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][1]['RESULTDIFF'] .'</td>';
+                }
+                else echo '<td></td>';
+                if($result_diff[$courseloop][2]['RESULTDIFF']){
+                echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][2]['RESULTDIFF'] .'</td>';
+                }  
+                else echo '<td></td>';   
+                echo '<td></td>';
+            }   
+            if($exam_value[$courseloop]){
+                echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
+            }
         }
-      echo'
-        <td class="class-results--align-center">' . $results[$courseloop][$resloop]['RESULT']['FINAL'] .'</td>
+        echo '  
+        <tr>
+        <tr>
         </tr>';
-        $resloop++;
-    }
-    if(! $publish_parents){
-        if($result_diff[$courseloop][0]['RESULTDIFF'] || $result_diff[$courseloop][1]['RESULTDIFF'] || $result_diff[$courseloop][2]['RESULTDIFF']){
-        echo '<td></td>';
-        if($result_diff[$courseloop][0]['RESULTDIFF']){
-          echo '<td class="class-results--align-center  highligth">' . $result_diff[$courseloop][0]['RESULTDIFF'] .'</td>';
-        }
-        else echo '<td></td>';
-        if($result_diff[$courseloop][1]['RESULTDIFF']){
-          echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][1]['RESULTDIFF'] .'</td>';
-        }
-        else echo '<td></td>';
-        if($result_diff[$courseloop][2]['RESULTDIFF']){
-          echo '<td class="class-results--align-center highligth">' . $result_diff[$courseloop][2]['RESULTDIFF'] .'</td>';
-        }  
-        else echo '<td></td>';   
-        echo '<td></td>';
-      }   
-      if($exam_value[$courseloop]){
-        echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
-    }
-}
-    echo '  
-      <tr>
-      <tr>
-      </tr>';
-      echo '
-      </tr><td class="class-results--align-right"">Unités</td>
-      <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
-      <td colspan=1 style="background-color:grey"></td><td colspan=1 class="class-results--align-center"> </td>
-      '; 
+        echo '
+        </tr><td class="class-results--align-right"">Unités</td>
+        <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
+        <td colspan=1 style="background-color:grey"></td><td colspan=1 class="class-results--align-center"> </td>
+        '; 
 
-    $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id,$grade_id);
-    echo '
-    </tr><td class="class-results--align-right"">Absences / Jours de classe</td>
-    <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</td>
-    <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="class-results--align-center">
-    ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1]+$data['STUDENT_ABSCENCES_QUARTER'][1][2][2]+$data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'
-    </td>
-    ';     
-if ($_REQUEST['elements']['comments'] == 'Y') {
-      echo '<tr>
-        <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
-      </tr>';
-      }
+        $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id,$grade_id);
+        echo '
+        </tr><td class="class-results--align-right"">Absences / Jours de classe</td>
+        <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</td>
+        <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="class-results--align-center">
+        ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1]+$data['STUDENT_ABSCENCES_QUARTER'][1][2][2]+$data['STUDENT_ABSCENCES_QUARTER'][1][3][3] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER']+$data['STUDENT_ABSCENCES_QUARTER'][1][3]['MAXDAYS_QUARTER'] .'
+        </td>
+        ';     
+        if ($_REQUEST['elements']['comments'] == 'Y') {
+        echo '<tr>
+            <td colspan="' . $commentspan . '">' . $comments[$courseloop]['COMMENT_TITLE'] . ': <b><i>' . $comments[$courseloop]['COMMENT'] . '</i></b></td>
+        </tr>';
+        }
     }
     echo '</table>';
     $courseloop++;
@@ -2441,4 +2449,129 @@ function _getage30sept($dateOfBirth){
     $today .= '-09-30'; 
     $diff = date_diff(date_create($dateOfBirth), date_create($today));
     return ($diff->format('%y'));
+}
+function do_cado_teacher_comlpetion($teacher_id,$course_id,$course_period_id,$short_name){
+    $cur_mp= UserMP();
+    $bad_weght=check_weight($course_period_id,$teacher_id,$cur_mp,$course_id);
+    $bad_config=check_config($course_period_id,$teacher_id,$cur_mp,$course_id);
+    if(round(GetFinalAverage($course_period_id,$cur_mp,UserSyear(),$short_name)) > 0 && round(GetFinalAverage($course_id,$cur_mp,UserSyear(),$short_name)) != 'NAN')
+        $bad_final = 0;
+    else 
+        $bad_final = 1;
+    if($bad_config || $bad_weght || $bad_final) 
+        return 1;
+    return 0;
+ }
+function check_weight($course_period_id,$staff_id,$mp,$course_id)
+{
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
+    if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
+    { 
+        $assignment_type_list_sql = 'SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
+                FROM (
+                ( SELECT gat.ASSIGNMENT_TYPE_ID, gat.TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat WHERE gat.COURSE_PERIOD_ID=\'' . $course_period_id . '\' )
+                UNION  
+                (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat, gradebook_assignments ga, course_periods cp
+                WHERE cp.course_period_id = gat.course_period_id AND gat.ASSIGNMENT_TYPE_ID = ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL AND ga.COURSE_ID = \'' . $course_id . '\' AND ga.STAFF_ID = \'' . $staff_id . '\' ) 
+                ) AS T
+                GROUP BY ASSIGNMENT_TYPE_ID';
+        $list_assignment_types = DBGet(DBQuery($assignment_type_list_sql));
+        if (count($list_assignment_types) ==1 ) return 0;
+        foreach ($list_assignment_types as $key => $type)
+        {
+            if($markingPeriod[1][MARKING_PERIOD_ID] == $mp) 
+                break;
+            if($type[TITLE] != $markingPeriod[1][TITLE])
+            {
+            $assignment_weight=DBGet(DBQuery('SELECT    ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.  $mp . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
+            foreach ($assignment_weight as $key => $weight) 
+            {
+                $total+=$weight['ASSIGNMENT_WEIGHT'];
+            }
+            if ($total != 100)
+                return 1;
+                //echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
+            }
+            $total=0;
+
+        $total_assignment_type_weightage = 0;
+        $total_assignment_type_weightage_arr = array();
+
+        if (!empty($list_assignment_types)) {
+            foreach ($list_assignment_types as $at_key => $at_val) {
+                if ($at_val['FINAL_GRADE_PERCENT'] != '' && number_format($at_val['FINAL_GRADE_PERCENT'],2) != 0)
+                    array_push($total_assignment_type_weightage_arr, $at_val['FINAL_GRADE_PERCENT']);
+            }
+
+            $total_assignment_type_weightage = array_sum($total_assignment_type_weightage_arr);
+
+            if ($total_assignment_type_weightage != 1)
+            {
+                return 1;
+                //echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . '</div>';
+            }
+        }else echo 'empty';
+        }
+    }
+    return 0;
+}
+
+function check_config($course_period_id,$staff_id,$mp,$course_id)
+{
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE = "ROUNDING"'));   
+    if($config_RET[1]['VALUE'] != "NORMAL_$course_period_id")
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE = "WEIGHT"'));   
+    if($config_RET[1]['VALUE'] != "Y_$course_period_id")
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE LIKE "' . $course_period_id . '%"'));   
+    if(count($config_RET) < 6 )
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE LIKE "FY-%"'));   
+    if(count($config_RET) != 5 )
+        return 1;
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE LIKE "Q-%"'));   
+    if(count($config_RET) != 4 )
+        return 1;
+        
+    return 0;
+}
+function GetFinalAverage($course_period_id,$mp,$year,$title){
+
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . $year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
+    if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
+    { 
+        //if(substr( $title, 0, 3 ) === "PRE") return 100;
+        $total_group=0;
+        $students=0;
+        $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $mp . '\' ';
+        $grades_RET=DBGet(DBQuery($sql));
+        if($grades_RET){ 
+            foreach ($grades_RET as $key=> $val) {
+                if($year==2022 || substr( $title, 0, 3 ) === "PRE") {
+                    if($val['GRADE_PERCENT'] > 0 ){
+                        $total_group+=$val['GRADE_PERCENT'];
+                        $student++;
+                    }
+                }else
+                    if($val['GRADE_PERCENT'] > 49 ){
+                        $total_group+=$val['GRADE_PERCENT'];
+                        $student++;
+                    }
+            }
+        }
+    }
+    else{
+        //if(substr( $title, 0, 3 ) === "PRE") return 100;
+        $sql='SELECT GRADE_PERCENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $mp . '\' ';
+        $grades_RET=DBGet(DBQuery($sql));
+        if(count($grades_RET))
+            return 100;
+        else
+            return 0;
+    }
+    if($student)
+        return $total_group/$student;
+    else 
+        return 0;
 }
