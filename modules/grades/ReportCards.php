@@ -914,7 +914,7 @@ function CadoHeader($student_id, $grade_id,$attendance_day_RET,$last_mp,$mp) {
         $data['STUDENT_ABSCENCES_YEARLY']=$count;
     }else 
         $data['STUDENT_ABSCENCES_YEARLY']=0;
-    $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id, $grade_id);
+    $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduiteQuarters($student_id, $grade_id);
     $column['SCHOOL_NAME']=_schoolName;
     $column['SCHOOL_CODE']=_schoolCode;
     $column['SCHOOL_PRINCIPAL']=_principal;
@@ -992,7 +992,7 @@ function CadoHeader($student_id, $grade_id,$attendance_day_RET,$last_mp,$mp) {
 
 }
 
-function CadoAssiduite($student_id, $grade_id){
+function CadoAssiduiteQuarters($student_id, $grade_id){
 
     if(strpos($grade_id,"Primaire 1") || strpos($grade_id,"Primaire 3")  || strpos($grade_id,"Primaire 5")  || strpos($grade_id,"Secondaire 1") ){
         $cycle1year=UserSyear();
@@ -1023,6 +1023,86 @@ function CadoAssiduite($student_id, $grade_id){
     //echo '<pre>';  print_r($data); echo '</pre>';
     return $data['STUDENT_ABSCENCES_QUARTER'];
 }
+function CadoAssiduitePeriodsCycle($student_id, $grade_id,$course,$courseloop){
+    // echo $courseloop;
+    // echo '<pre>'; print_r($course); echo '<pre>';
+    if(strpos($grade_id,"Secondaire 1")){
+        $cycle1year=UserSyear();
+        $cycle2year='';
+    }else{
+        $cycle1year=UserSyear()-1;
+        $cycle2year=UserSyear();
+    }
+    $year=$cycle1year;
+    for($i = 0; $i <2; $i++){
+        $code=DBGet(DBQuery('SELECT ID from attendance_codes WHERE SYEAR=\'' . $year . '\' AND STATE_CODE=\'A\''));
+        $ALL_QUART=DBGet(DBQuery('SELECT MARKING_PERIOD_ID,SORT_ORDER from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . $year . '\' AND TITLE LIKE \'Étape%\' ORDER BY sort_order'));
+        if ($_REQUEST['elements']['mp_absences']=='Y') {
+            $mpcount=1;
+            $course_period_id = $course[$year][$courseloop]['COURSE_PERIOD_ID'];
+            foreach ($ALL_QUART as $key=> $quart) {
+                if ( $quart['MARKING_PERIOD_ID'] > UserMP())
+                    break;
+                $count=0;
+                // echo '      MP=';
+                // echo $quart['MARKING_PERIOD_ID'];
+                // echo ' Year=';
+                // echo $year;
+                // echo ' Code=';
+                // echo $code[1]['ID'];
+                // echo ' Sudent=';
+                // echo  $student_id;
+                // echo ' CoursePeriodID=';
+                // echo $course_period_id;
+                // echo ' Marking period=';
+                // echo $quart['MARKING_PERIOD_ID'];
+                // echo '      +++++++++++++++++ ';
+                $ATT_RET=DBGet(DBQuery('SELECT SCHOOL_DATE,PERIOD_ID,COURSE_PERIOD_ID,MARKING_PERIOD_ID,ATTENDANCE_CODE,student_id from attendance_period WHERE STUDENT_ID=\'' .  $student_id . '\'  AND ATTENDANCE_CODE=\'' .  $code[1]['ID'] . '\'  AND COURSE_PERIOD_ID =\'' . $course_period_id . '\' AND MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\''));
+                // echo '<pre>'; print_r($ATT_RET); echo '</pre>';
+                $MAXDAYS_RET=DBGet(DBQuery('SELECT DAYS FROM school_quarters WHERE MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\''));
+                foreach ($ATT_RET as $abs) $count+=1 - $abs['STATE_VALUE'];
+                $data['STUDENT_ABSCENCES_QUARTER'][$i][$mpcount][$mpcount]=$count;
+                $data['STUDENT_ABSCENCES_QUARTER'][$i][$mpcount]['MAXDAYS_QUARTER']=$MAXDAYS_RET[1]['DAYS'];
+                // echo '<pre>';  print_r($data); echo '</pre>';
+                $mpcount+=1;
+            }
+        }else $data['STUDENT_ABSCENCES_QUARTER']=0;
+        //echo '<pre>';  print_r($data); echo '</pre>';
+        $year=$cycle2year;
+    }
+    //echo '<pre>';  print_r($data); echo '</pre>';
+    return $data['STUDENT_ABSCENCES_QUARTER'];
+}
+
+
+function CadoAssiduitePeriods($student_id, $grade_id,$course_period_id){
+
+
+    $cycle1year=UserSyear()-1;
+    $cycle2year=UserSyear();
+    $year=$cycle1year;
+    for($i = 0; $i <2; $i++){
+        $code=DBGet(DBQuery('SELECT ID from attendance_codes WHERE SYEAR=\'' . $year . '\' AND STATE_CODE=\'A\''));
+        $ALL_QUART=DBGet(DBQuery('SELECT MARKING_PERIOD_ID,SORT_ORDER from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . $year . '\' AND TITLE LIKE \'Étape%\' ORDER BY sort_order'));
+        if ($_REQUEST['elements']['mp_absences']=='Y') {
+            $mpcount=1;
+            foreach ($ALL_QUART as $key=> $quart) {
+                if ( $quart['MARKING_PERIOD_ID'] > UserMP())
+                    break;
+                $count=0;
+                $ATT_RET=DBGet(DBQuery('SELECT SCHOOL_DATE,PERIOD_ID,COURSE_PERIOD_ID,MARKING_PERIOD_ID,ATTENDANCE_CODE,student_id from attendance_period WHERE STUDENT_ID=\'' .  $student_id . '\'  AND ATTENDANCE_CODE=\'' .  $code[1]['ID'] . '\'  AND COURSE_PERIOD_ID =\'' . $course_period_id . '\' AND MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\''));
+                $MAXDAYS_RET=DBGet(DBQuery('SELECT DAYS FROM school_quarters WHERE MARKING_PERIOD_ID =\'' . $quart['MARKING_PERIOD_ID'] . '\''));
+                foreach ($ATT_RET as $abs) $count+=1 - $abs['STATE_VALUE'];
+                $data['STUDENT_ABSCENCES_QUARTER'][$i][$mpcount][$mpcount]=$count;
+                $data['STUDENT_ABSCENCES_QUARTER'][$i][$mpcount]['MAXDAYS_QUARTER']=$MAXDAYS_RET[1]['DAYS'];
+                $mpcount+=1;
+            }
+        }else $data['STUDENT_ABSCENCES_QUARTER']=0;
+        $year=$cycle2year;
+    }
+    return $data['STUDENT_ABSCENCES_QUARTER'];
+}
+
 
 function CadoStudentCommunication($mgrades_RET, $student_id, $columns,$grade_id,$mp,$last_mp) {
 
@@ -1750,7 +1830,10 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
     <tr>
     </tr>';
     if($abscences){
-            $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id,$grade_id);
+        if(strpos($grade_id,"Primaire"))
+            $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduiteQuarters($student_id,$grade_id);
+        else
+            $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduitePeriodsCycle($student_id,$grade_id,$course,$courseloop);
         echo '
         </tr><td class="class-results--align-right"">Unités</td>
         <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
@@ -1869,8 +1952,7 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
         <td colspan=1 style="background-color:grey"></td><td colspan=1 style="background-color:grey"></td>
         <td colspan=1 style="background-color:grey"></td><td colspan=1 class="class-results--align-center"> </td>
         '; 
-
-        $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduite($student_id,$grade_id);
+        $data['STUDENT_ABSCENCES_QUARTER']=CadoAssiduitePeriods($student_id,$grade_id,$col['COURSE_PERIOD_ID']);
         echo '
         </tr><td class="class-results--align-right"">Absences / Jours de classe</td>
         <td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][1][1] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][1]['MAXDAYS_QUARTER'] .'</td><td colspan=1 class="center">' . $data['STUDENT_ABSCENCES_QUARTER'][1][2][2] .' / ' . $data['STUDENT_ABSCENCES_QUARTER'][1][2]['MAXDAYS_QUARTER'] .'</td>
