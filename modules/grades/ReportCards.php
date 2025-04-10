@@ -1722,6 +1722,8 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
                 else{
                     $row1=$results[$year-1];
                     $row2=$results[$year];
+                    $diffyear1=$result_diff[$year-1];
+                    $diffyear2=$result_diff[$year];
                     $right=1;
                 }
     }
