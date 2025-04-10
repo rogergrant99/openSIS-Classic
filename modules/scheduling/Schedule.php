@@ -265,21 +265,21 @@ if ($_REQUEST['del'] == 'true') {
     $a_grd = count(DBGet($association_query_grade));
     $a_rpt = count(DBGet($association_query_reportcard));
 
-    // if ($a_grd > 0) {
-    //     UnableDeletePrompt('' . _cannotdeleteBecauseAssignmentsGradingAreAlreadyGiven . '');
+    if ($a_grd > 0) {
+        UnableDeletePrompt('' . _cannotdeleteBecauseAssignmentsGradingAreAlreadyGiven . '');
 
-    //     unset($_REQUEST['del']);
-    //     unset($_REQUEST['c_id']);
-    // } elseif ($a_rpt > 0) {
-    //     UnableDeletePrompt('' . _cannotDeleteBecauseFinalGradeIsAlreadyGiven . '');
+        unset($_REQUEST['del']);
+        unset($_REQUEST['c_id']);
+    } elseif ($a_rpt > 0) {
+        UnableDeletePrompt('' . _cannotDeleteBecauseFinalGradeIsAlreadyGiven . '');
 
-    //     unset($_REQUEST['del']);
-    //     unset($_REQUEST['c_id']);
-    // } elseif ($a_attn > 0 || $a_grd > 0 || $a_rpt > 0) {
-    //     UnableDeletePrompt('' . _cannotDeleteBecauseStudentsAttendanceAreAlreadyTaken . '');
-    //     unset($_REQUEST['del']);
-    //     unset($_REQUEST['c_id']);
-    // } else {
+        unset($_REQUEST['del']);
+        unset($_REQUEST['c_id']);
+    } elseif ($a_attn > 0 || $a_grd > 0 || $a_rpt > 0) {
+        UnableDeletePrompt('' . _cannotDeleteBecauseStudentsAttendanceAreAlreadyTaken . '');
+        unset($_REQUEST['del']);
+        unset($_REQUEST['c_id']);
+    } else {
 
         if (DeletePromptMod('schedule')) {
             $schedule_fetch = DBGet(DBQuery('SELECT DROPPED FROM schedule WHERE ID=\'' . $_REQUEST['schedule_id'] . '\''));
@@ -306,7 +306,7 @@ if ($_REQUEST['del'] == 'true') {
         }
         unset($_REQUEST['del']);
         unset($_REQUEST['c_id']);
-    // }
+    }
 } else {
     $selectedStudentId = isset($_REQUEST['student_id']) ? $_REQUEST['student_id'] : UserStudentID();
     if (isset($_REQUEST['student_id']) || UserStudentID()) {
