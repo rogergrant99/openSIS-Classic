@@ -105,8 +105,8 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
         //'LETTER_GRADE' => _grade,
         'COMMENT' => _comment,
     );
-    $item = 'Assignment';
-    $items = 'Assignments';
+    $item = _assignment;
+    $items = _assignments;
     $link['TITLE']['link'] = "Modules.php?modname=$_REQUEST[modname]&include_inactive=$_REQUEST[include_inactive]";
     $link['TITLE']['variables'] = array('assignment_id' => 'ASSIGNMENT_ID');
     $current_RET[$_REQUEST['student_id']] = DBGet(DBQuery('SELECT g.ASSIGNMENT_ID FROM gradebook_grades g,gradebook_assignments a WHERE a.ASSIGNMENT_ID=g.ASSIGNMENT_ID AND a.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' AND g.STUDENT_ID=\'' . $_REQUEST['student_id'] . '\' AND g.COURSE_PERIOD_ID=\'' . $course_period_id . '\'' . ($_REQUEST['assignment_id'] == 'all' ? '' : ' AND g.ASSIGNMENT_ID=\'' . $_REQUEST['assignment_id'] . '\'')), array(), array('ASSIGNMENT_ID'));
@@ -132,8 +132,8 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
             'ACTIVE' => _schoolStatus,
             'ACTIVE_SCHEDULE' => _courseStatus,
         );
-    $item = 'Student';
-    $items = 'Students';
+    $item = _student;
+    $items = _students;
     $link['FULL_NAME']['link'] = "Modules.php?modname=$_REQUEST[modname]&include_inactive=$_REQUEST[include_inactive]&assignment_id=all" . ($_REQUEST['period'] != '' ? '&period=' . $_REQUEST['period'] : '');
     $link['FULL_NAME']['variables'] = array('student_id' => 'STUDENT_ID');
     if ($_SESSION['student_id']) {
@@ -335,13 +335,6 @@ if(str_contains($course_id1[1]['TITLE'],"PRE ")){
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 2 -> L’élève se développe adéquatement au regard de la compétence visée.</b></div>';
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 3 -> L’élève se développe avec certaines difficultés au regard de la compétence visée.</b></div>';
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 4 -> L’élève se développe avec des difficultés importantes au regard de la compétence visée.</b></div>';
-    if(str_contains($course_id1[1]['TITLE'],"couvrir ")){
-        echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspLa note attribué a la compétence (Cheminement scolaire) sera noté comme suit:</b></div></div>';
-        echo '<div>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 1 -> L’élève poursuivra ses apprentissages à l’éducation préscolaire, car il n’aura pas atteint l’âge de 6 ans avant le 1er octobre prochain.</b></div></div>';
-        echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 2 -> L’élève poursuivra ses apprentissages à l’éducation préscolaire, selon les modalités prévues dans son plan d’intervention.</b></div>';
-        echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 3 -> L’élève poursuivra ses apprentissages à l’enseignement primaire.</b></div>';
-        echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 4 -> Autre : (Ajouter note dans commentaire de la compétence Final)</b></div>';
-    }
 }
 ListOutput($stu_RET, $LO_columns, $item, $items, $link, array(), $options);
 

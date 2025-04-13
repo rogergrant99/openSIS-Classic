@@ -33,6 +33,12 @@ $fields_RET = DBGet(DBQuery('SELECT ID,TITLE,TYPE,SELECT_OPTIONS,DEFAULT_SELECTI
 if (UserStudentID()) {
     $custom_RET = DBGet(DBQuery('SELECT * FROM students WHERE STUDENT_ID=\'' . UserStudentID() . '\''));
     $value = $custom_RET[1];
+    $custom_RET = DBGet(DBQuery('SELECT * FROM student_enrollment WHERE SYEAR = \'' . UserSyear() . '\' AND STUDENT_ID=\'' . UserStudentID() . '\''));
+    $enroll= $custom_RET[1];
+    $limit=false;
+    if($enroll['GRADE_ID']=='1' && $fields_RET[1]['ID'] == '23'){
+        $limit=true;
+    }
 }
 $num_field_gen = true;
 if (count($fields_RET)) {
@@ -40,7 +46,7 @@ if (count($fields_RET)) {
     $row = 1;
     $i = 1;
     foreach ($fields_RET as $field) {
-        if ($row == 3) {
+        if ($row == 3 || $limit) {
             echo '</div><div class="row">';
             $row = 1;
         }

@@ -1694,7 +1694,12 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
                         }
                     else
                         $can_use_RET = DBGet(DBQuery("SELECT MODNAME FROM profile_exceptions WHERE PROFILE_ID='3' AND CAN_USE='Y'"), array(), array('MODNAME'));
-                    $categories_RET = DBGet(DBQuery("SELECT ID,TITLE,INCLUDE FROM student_field_categories ORDER BY SORT_ORDER,TITLE"));
+                        $custom_RET = DBGet(DBQuery('SELECT * FROM student_enrollment WHERE SYEAR = \'' . UserSyear() . '\' AND STUDENT_ID=\'' . UserStudentID() . '\''));
+                        $enroll= $custom_RET[1];
+                        if($enroll['GRADE_ID']=='1')
+                        $categories_RET = DBGet(DBQuery("SELECT ID,TITLE,INCLUDE FROM student_field_categories where ID not in ('11') ORDER BY SORT_ORDER,TITLE"));
+                    else
+                        $categories_RET = DBGet(DBQuery("SELECT ID,TITLE,INCLUDE FROM student_field_categories where ID not in ('12') ORDER BY SORT_ORDER,TITLE"));
 
                     foreach ($categories_RET as $category) {
                         if ($can_use_RET['students/Student.php&category_id=' . $category['ID']]) {

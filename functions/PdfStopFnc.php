@@ -26,7 +26,7 @@
 #
 #***************************************************************************************
 function PDFStop($handle)
-{	global $OutputType,$htmldocAssetsPath,$filename,$publish_parents,$items,$publish_parents_grade;
+{	global $OutputType,$htmldocAssetsPath,$filename,$publish_parents,$items,$one_page_pdf;
 	$dir = 'assets/studentfiles';
 
 	if($publish_parents || $OutputType=='PDF')
@@ -42,7 +42,7 @@ function PDFStop($handle)
 		fwrite($myfile, $html);
 		fclose($myfile);
 		// One page PDF
-		if($publish_parents_grade == 'Prescolaire')
+		if($one_page_pdf)
 			$command="/usr/local/bin/wkhtmltopdf --page-height 90cm   --page-width 21cm   --encoding utf8 " . $html_file . ' ' . $pdf_file;
 		else
 			$command="/usr/local/bin/wkhtmltopdf -B 10 -L 10 -R 10 -T 10 -s letter --enable-forms     --encoding utf8 " . $html_file . ' ' . $pdf_file;

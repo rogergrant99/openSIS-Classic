@@ -26,6 +26,7 @@ define("_missingAttendanceDataListCreated", "Liste des données de fréquentatio
 define("_openSisIsAProductOfOpenSolutionsForEducationInc", "openSIS est un produit d'Open Solutions for Education, Inc");
 define("_footerText", "openSIS est un produit d'Open Solutions for Education, Inc");
 //SCHOOL SETUP
+define("_cannotdeleteBecauseAssignmentsGradingAreAlreadyGiven", "Impossible de supprimer car les étudiants ont des notes.");
 define("_cannotDeleteBecauseStudentsAreEnrolledInThisCalendar", "Impossible de supprimer car les étudiants sont inscrits dans ce calendrier");
 define("_cannotUploadFileOnlyJpgJpegPngGifFilesAreAllowed", "Impossible de télécharger le fichier. Seuls les fichiers jpg, jpeg, png, gif sont autorisés");
 define("_enterTeacher", "Entrez l'enseignant");
