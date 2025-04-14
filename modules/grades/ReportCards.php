@@ -311,7 +311,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                 }
                 $quart_total=GetGroupAverage($course_id, $course_period_id, $marking_period_id,$year);
                 $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['GROUP_AVG']=$quart_total;
-                $assignment_type_ids = DBGet(DBQuery('SELECT group_concat(distinct(assignment_type_id)) AS assignment_type_ids FROM gradebook_assignments a JOIN gradebook_grades g ON (a.ASSIGNMENT_ID = g.ASSIGNMENT_ID AND g.STUDENT_ID=\'' . $student_id . '\' AND g.COURSE_PERIOD_ID=\'' . $course_period_id . '\') WHERE (a.COURSE_PERIOD_ID=\'' . $course_period_id . '\' OR a.COURSE_ID=\'' . $course_id . '\') AND (a.MARKING_PERIOD_ID=\'' . $marking_period_id . '\') ORDER by a.TITLE'));
+                $assignment_type_ids = DBGet(DBQuery('SELECT group_concat(distinct(assignment_type_id)) AS assignment_type_ids FROM gradebook_assignments WHERE (COURSE_PERIOD_ID=\'' . $course_period_id . '\' OR COURSE_ID=\'' . $course_id . '\') AND (MARKING_PERIOD_ID=\'' . $marking_period_id . '\') ORDER by TITLE'));
                 // echo '<pre>'; print_r($assignment_type_ids); echo '</pre>';
                 if(!$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS']) continue;
                 $assignment_type_weight = DBGet(DBQuery('SELECT SUM(FINAL_GRADE_PERCENT) AS FINAL_GRADE_PERCENT FROM gradebook_assignment_types WHERE assignment_type_id IN ('.$assignment_type_ids[1]['ASSIGNMENT_TYPE_IDS'].')'));
