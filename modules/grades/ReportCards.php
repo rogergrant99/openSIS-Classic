@@ -103,10 +103,10 @@ if ($_REQUEST['modfunc'] == 'save') {
                 // echo '<pre>'; print_r($individual); echo '</pre>';  
                 $handle = PDFStart();
                 CadoHTMLpageSetup(_reportcard_title , $grade_id);
-                CadoHeader($student_id, $grade_id,UserMP());
+                CadoHTMLHeader($student_id, $grade_id,UserMP());
                 foreach ($individual as $one_course) {
                     // Test to see if all teachers have cpmmpleted all requirements before issuing report card
-                    if(do_cado_teacher_comlpetion($one_course['TEACHER_ID'],$one_course['COURSE_ID'],$one_course['COURSE_PERIOD_ID'],$one_course['SHORT_NAME'])){
+                    if(CadoTeacherComlpetion($one_course['TEACHER_ID'],$one_course['COURSE_ID'],$one_course['COURSE_PERIOD_ID'],$one_course['SHORT_NAME'])){
                         echo '<script type="text/javascript"> document.body.innerHTML = \'\'; </script>';
                         echo '<h1><br><b>';
                         echo $one_course['TEACHER_NAME'];
@@ -223,8 +223,6 @@ if (!$_REQUEST['modfunc']) {
     echo '</div>'; //.modal-dialog
     echo '</div>'; //.modal
 }
-
-
 
 //#####################################################//
 //### CADO CUSTOM REPORT CARD
@@ -557,27 +555,27 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 if($colspan==4){
                 for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                     // Year 1 , all competences and quarts
-                    echo'<td class="class-results--align-center">' . myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])   .'</td>';
-                    if(myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])){
-                        $comp_total += myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
+                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])   .'</td>';
+                    if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])){
+                        $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                         $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     }
                 } 
                 // Year 1 , competences totals
-                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
                 }   
             $comp_total=0;
             $weight_total=0;
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 // Year 2 , all competences and quarts
-                echo'<td class="class-results--align-center">' . myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  .'</td>';
-                if(myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])){
+                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  .'</td>';
+                if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])){
                     $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
             // Year 2 , competences totals 
-            echo'<td class="class-results--align-center">' . ($comp_total !=0 ? myround($comp_total * 100 / $weight_total) . '' : '  ') .'</td></tr>';
+            echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ') .'</td></tr>';
         }
         if($numcompetences>1){
             echo '<td class="class-results--align-right">' . _studentAverage .'</td>';
@@ -586,27 +584,27 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
             if($colspan==4){
                 for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                     // Year 1 quarts totals
-                    echo'<td class="class-results--align-center">' . myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])   .'</td>';
-                    if(myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])){
+                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])   .'</td>';
+                    if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])){
                         $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                         $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     }
                 }
                 // Year 1 , all quarts total
-                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? myround($comp_total * 100 / $weight_total) . '' : 'TI')   .'</td>';
+                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')   .'</td>';
             }
         $comp_total=0;
         $weight_total=0;
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 // Year 2 quarts totals
-                echo'<td class="class-results--align-center">' . myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])  .'</td>';
-                if(myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])){
+                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])  .'</td>';
+                if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])){
                     $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
             // Year 2 , all quarts total
-            echo'<td class="class-results--align-center">' .($comp_total !=0 ? myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
+            echo'<td class="class-results--align-center">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
         }
         echo '<td class="class-results--align-right">' . _groupAverage .'</td>';
         $comp_total=0;
@@ -614,28 +612,28 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
         if($colspan==4){
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 // Year 1 group average
-                echo'<td class="class-results--align-center">' . myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])   .'</td>';
-                if(myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])){
+                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])   .'</td>';
+                if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])){
                     $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                 }
             }
             //echo  $comp_total * 100 / $weight_total;
             // Year 1 , all quarts group average total
-            echo'<td class="class-results--align-center">' . ($comp_total !=0 ? myround($comp_total * 100 / $weight_total) . '' : '  ')   .'</td>';
+            echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ')   .'</td>';
         }
         $comp_total=0;
         $weight_total=0;
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 // Year 2 group average
-                echo'<td class="class-results--align-center">' . myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])  .'</td>';
-                if(myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])){
+                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])  .'</td>';
+                if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])){
                     $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
         // Year 2 , all quarts group average total
-        echo'<td class="class-results--align-center">' .($comp_total !=0 ? myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
+        echo'<td class="class-results--align-center">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
 
         if(! $publish_parents){
             if($colspan==4){
@@ -721,7 +719,6 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
 
 //### FIN RESULTATS
 //#####################################################//
-
 
 //#####################################################//
 //### START HTML FUNCTIONS
@@ -846,8 +843,7 @@ function CadoHTMLcommunication($title,$courses,$results,$grade_id,$student_id){
     echo '<tr> <i> <p style="text-align:right;">A : Très satisfaisant<br>B : Satisfaisant<br>C : Insatisfaisant<br>D : Très insatisfaisant</p></i></tr>';    
 }
 
-
-function CadoHeader($student_id, $grade_id,$last_mp) {
+function CadoHTMLHeader($student_id, $grade_id,$last_mp) {
 
     $columns=array();
     $data=array();
@@ -935,7 +931,6 @@ function CadoHeader($student_id, $grade_id,$last_mp) {
 
 }
 
-
 function CadoHTMLHeaderPrescolaire($title,$items,$data){
     $teacher_name=DBGet(DBQuery('select first_name,last_name from staff where staff_id=(select teacher_id from course_periods where title like "PRE 1%" and syear=\'' . UserSyear() . '\')'));
     $sch_img_info= DBGet(DBQuery('SELECT * FROM user_file_upload WHERE SCHOOL_ID='. UserSchool().' AND FILE_INFO=\'schlogo\''));
@@ -1019,7 +1014,6 @@ function CadoHTMLHeaderPrescolaire($title,$items,$data){
     '; 
     echo'<div class="bggrey border"><b>Réservé à l’administration</b><div  class="bggrey">&nbsp<div  class="bggrey">&nbsp</div></div></div>';
 }
-
 
 function CadoHTMLHeaderPrimaire($title,$items,$data){
 
@@ -1341,7 +1335,6 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
     }
 }
 
-
 function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$result_diff,$exam_value,$student_id){
     global $publish_parents;
     global $publish_parents_grade;
@@ -1446,7 +1439,6 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
     $courseloop++;
     }
 }
-
 
 function CadoHTMLcommentairesCompetence($title,$data,$grade_id){
 
@@ -1979,7 +1971,6 @@ function CadoHTMLpageSetup($title,$grade){
 //### END HTML FUNCTIONS
 //#####################################################//
 
-
 //### START ACCESORY FUNCTIONS
 //#####################################################//
 
@@ -2080,12 +2071,16 @@ function _makeTeacherID($teacher, $column){
     return $TEACHER_ID[1]['NAME'];
 }
 
+function _myround($value){
+    if($value== 'N/A') return ''; 
+    return($value !=0 ? round($value) . '' : '');
+}
 
-function do_cado_teacher_comlpetion($teacher_id,$course_id,$course_period_id,$short_name){
+function CadoTeacherComlpetion($teacher_id,$course_id,$course_period_id,$short_name){
     $cur_mp= UserMP();
-    $bad_weght=check_weight($course_period_id,$teacher_id,$cur_mp,$course_id);
-    $bad_config=check_config($course_period_id,$teacher_id,$cur_mp,$course_id);
-    if(round(GetFinalAverage($course_period_id,$cur_mp,UserSyear(),$short_name)) > 0 && round(GetFinalAverage($course_id,$cur_mp,UserSyear(),$short_name)) != 'NAN')
+    $bad_weght=CadoCheckWeight($course_period_id,$teacher_id,$cur_mp,$course_id);
+    $bad_config=CadoCheckConfig($course_period_id,$teacher_id,$cur_mp,$course_id);
+    if(round(CadoGetFinalAverage($course_period_id,$cur_mp,UserSyear(),$short_name)) > 0 && round(CadoGetFinalAverage($course_id,$cur_mp,UserSyear(),$short_name)) != 'NAN')
         $bad_final = 0;
     else 
         $bad_final = 1;
@@ -2094,7 +2089,7 @@ function do_cado_teacher_comlpetion($teacher_id,$course_id,$course_period_id,$sh
     return 0;
 }
 
-function check_weight($course_period_id,$staff_id,$mp,$course_id){
+function CadoCheckWeight($course_period_id,$staff_id,$mp,$course_id){
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
     if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
     { 
@@ -2147,7 +2142,7 @@ function check_weight($course_period_id,$staff_id,$mp,$course_id){
     return 0;
 }
 
-function check_config($course_period_id,$staff_id,$mp,$course_id){
+function CadoCheckConfig($course_period_id,$staff_id,$mp,$course_id){
     $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . $staff_id . '\' AND PROGRAM="Gradebook" AND VALUE LIKE "%_' . $course_period_id . '" AND TITLE = "ROUNDING"'));   
     if($config_RET[1]['VALUE'] != "NORMAL_$course_period_id")
         return 1;
@@ -2166,7 +2161,8 @@ function check_config($course_period_id,$staff_id,$mp,$course_id){
         
     return 0;
 }
-function GetFinalAverage($course_period_id,$mp,$year,$title){
+
+function CadoGetFinalAverage($course_period_id,$mp,$year,$title){
 
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . $year . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
     if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
@@ -2205,7 +2201,6 @@ function GetFinalAverage($course_period_id,$mp,$year,$title){
     else 
         return 0;
 }
-
 
 function CadoStudentComments($student_id, $grade_id,$marking_period) {
     $column=array();
@@ -2314,11 +2309,6 @@ function GetGroupAverage($course_id,$course_period_id,$marking_period,$year){
     }
 }
 
-function myround($value){
-    if($value== 'N/A') return ''; 
-    return($value !=0 ? round($value) . '' : '');
-}
-
 function CadoAssiduiteQuarters($student_id, $grade_id){
 
     if(strpos($grade_id,"Primaire 1") || strpos($grade_id,"Primaire 3")  || strpos($grade_id,"Primaire 5")  || strpos($grade_id,"Secondaire 1") ){
@@ -2348,7 +2338,6 @@ function CadoAssiduiteQuarters($student_id, $grade_id){
     // echo '<pre>';  print_r($data); echo '</pre>';
     return $data['STUDENT_ABSCENCES_QUARTER'];
 }
-
 
 //### END ACCESORY FUNCTIONS
 //#####################################################//
