@@ -409,7 +409,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                     $diff = $final_admim_grade - $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL'];
                     if($diff && $diff < 15 && $final_admim_grade){
                         $assignment=1;
-                        $percent=$final_admim_grade/$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL'];
+                        $percent=$final_admim_grade/round($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL']);
                         foreach ($assign_ids as $key => $val) {
                             $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']=$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']*$percent;
                             if($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE'] > 100)
@@ -570,7 +570,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 // Year 2 , all competences and quarts
                 echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  .'</td>';
                 if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])){
-                    $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
+                    $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
@@ -586,7 +586,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                     // Year 1 quarts totals
                     echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])   .'</td>';
                     if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])){
-                        $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
+                        $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                         $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     }
                 }
@@ -599,7 +599,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 // Year 2 quarts totals
                 echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])  .'</td>';
                 if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])){
-                    $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
+                    $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
