@@ -704,7 +704,7 @@ if(!$_REQUEST['modfunc'] && $course_id)
     echo '</div>'; //.col-md-6
     // ASSIGNMENTS
     if ($_REQUEST['assignment_type_id'] && $_REQUEST['assignment_type_id'] != 'new' && count($types_RET)) {
-        $sql = 'SELECT ASSIGNMENT_ID,TITLE,ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE (COURSE_ID=\'' . $course_id . '\' OR COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ASSIGNMENT_TYPE_ID=\'' . $_REQUEST['assignment_type_id'] . '\' AND (MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' OR MARKING_PERIOD_ID=' . GetMPId('FY') . ' ) ORDER BY ' . Preferences('ASSIGNMENT_SORTING', 'Gradebook') . ' DESC';
+        $sql = 'SELECT ASSIGNMENT_ID,TITLE,ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE (COURSE_ID=\'' . $course_id . '\' OR COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND NOT TITLE="Examen final" AND ASSIGNMENT_TYPE_ID=\'' . $_REQUEST['assignment_type_id'] . '\' AND (MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' OR MARKING_PERIOD_ID=' . GetMPId('FY') . ' ) ORDER BY ' . Preferences('ASSIGNMENT_SORTING', 'Gradebook') . ' DESC';
 
         $QI = DBQuery($sql);
         $assn_RET = DBGet($QI);

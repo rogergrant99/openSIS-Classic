@@ -39,6 +39,16 @@ if (!isset($_openSIS['allow_edit']))
     $_openSIS['allow_edit'] = true;
 
 $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . User('STAFF_ID') . '\' AND PROGRAM=\'Gradebook\' AND VALUE LIKE \'%_' . UserCoursePeriod() . '\''), array(), array('TITLE'));
+$school_RET= DBGet(DBQuery('SELECT * FROM school_years WHERE SYEAR=\'' . UserSyear(). '\''));
+$mp_RET= DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear(). '\' AND marking_period_id=\'' . UserMP() . '\''));
+$final_RET = DBGet(DBQuery('SELECT VALUE FROM program_user_config WHERE USER_ID=\'' . User('STAFF_ID') . '\' AND PROGRAM=\'Gradebook\' AND TITLE LIKE \'FY-E' . $school_RET[1]['MARKING_PERIOD_ID'] . '\' AND VALUE LIKE \'%_' . UserCoursePeriod() . '\''), array('TITLE'));
+$exam=trim(substr($final_RET[1]['VALUE'], 0, 2),"_");
+$asgnTypes_RET = DBGet(DBQuery('SELECT * FROM gradebook_assignment_types WHERE  COURSE_PERIOD_ID=\'' . UserCoursePeriod() . '\''), array('TITLE'));
+foreach ($asgnTypes_RET as $title => $value) {
+    $test_RET = DBGet(DBQuery('SELECT TITLE FROM gradebook_assignments WHERE STAFF_ID=\'' . User('STAFF_ID') . '\' AND MARKING_PERIOD_ID=\'' . UserMP() . '\' AND COURSE_PERIOD_ID=\'' . $value['COURSE_PERIOD_ID'] . '\' AND TITLE="Examen Final"  AND ASSIGNMENT_TYPE_ID=\'' . $value['ASSIGNMENT_TYPE_ID'] . '\''), array('TITLE'));
+    if($value['TITLE'] != "1ère communication" && $exam  && $mp_RET[1]['TITLE'] == 'Étape 3' && ! $test_RET[1]['TITLE'])
+        DBQuery('INSERT INTO gradebook_assignments (STAFF_ID,MARKING_PERIOD_ID,COURSE_PERIOD_ID,ASSIGNMENT_TYPE_ID,TITLE,ASSIGNMENT_WEIGHT,POINTS,ASSIGNED_DATE,DUE_DATE) values('.User('STAFF_ID').','.UserMP().','.$value['COURSE_PERIOD_ID'].','.$value['ASSIGNMENT_TYPE_ID'].',"Examen Final",0,100, \'' . $mp_RET[1]['POST_START_DATE'] . '\', \'' . $mp_RET[1]['POST_END_DATE'] . '\')');
+}
 if (is_countable($config_RET) && count($config_RET))
     foreach ($config_RET as $title => $value) {
         $unused_var = explode('_', $value[1]['VALUE']);

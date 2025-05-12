@@ -87,10 +87,10 @@ if ($mp_RET[1]['MP'] == 'SEM') {
 }
 if ($mp_RET[1]['MP'] == 'FY') {
     $sem = GetParentMP('SEM', UserMP());
-    if ($sem)
-        $fy = GetParentMP('FY', $sem);
-    else
-        $fy = GetParentMP('FY', UserMP());
+    // if ($sem)
+    //     $fy = GetParentMP('FY', $sem);
+    // else
+    //     $fy = GetParentMP('FY', UserMP());
     $qtr = GetChildrenMP('QTR', UserMP());
     $pros = GetChildrenMP('PRO', UserMP());
 }

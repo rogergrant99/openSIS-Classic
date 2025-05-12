@@ -252,7 +252,8 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
             $quarters_RET = DBGet(DBQuery('SELECT TITLE,MARKING_PERIOD_ID,SORT_ORDER from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . $year . '\' AND TITLE LIKE \'1ère commu%\' ORDER BY sort_order')); 
         else
             $quarters_RET = DBGet(DBQuery('SELECT TITLE,MARKING_PERIOD_ID,SORT_ORDER from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . $year . '\' AND TITLE LIKE \'Étape%\' ORDER BY sort_order')); 
-
+        $school_RET=DBGet(DBQuery('SELECT MARKING_PERIOD_ID from school_years WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . $year . '\'')); 
+        $year_mp=$school_RET[1]['MARKING_PERIOD_ID'];
         $quart_loop=1;
         foreach ($quarters_RET as $quart_count => $quart) {
             // echo 'QUART CYCLE ----------------';
@@ -337,6 +338,9 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                         $total_asgnpoints += $total_points[$assignment_type_id];
                     }
                 }
+                $final_RET=DBGet(DBQuery('SELECT VALUE FROM program_user_config WHERE USER_ID=\'' . $teacher_id . '\' AND PROGRAM=\'Gradebook\' AND TITLE LIKE \'FY-E' . $year_mp . '\' AND VALUE LIKE \'%_' . $course_period_id . '\''));
+                if(trim(substr($final_RET[1]['VALUE'], 0, 2),"_")>0)
+                    $exam_weight=trim(substr($final_RET[1]['VALUE'], 0, 2),"_");
                 $tot_weight_grade = 0;
                 $tot_id_grade=array();
                 $assign_typ_wg = array();
@@ -389,7 +393,6 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                         if($total_id_weight[$val['ASSIGNMENT_TYPE_ID']])
                             $grades_RET[$key]['WEIGHT_GRADE']= ($tot_id_grade[$val['ASSIGNMENT_TYPE_ID']]*100) / $total_id_weight[$val['ASSIGNMENT_TYPE_ID']] / $grades_RET[$key]['ASSIGN_TYP_WG'];
                     }
-                    // echo $grades_RET[$key]['ASSIGN_TYP'];
                     if($val['ASSIGNMENT_TYPE_ID'] != $last_id || $premiere_comm[1]['MARKING_PERIOD_ID'] == $mp){
                         $last_id=$val['ASSIGNMENT_TYPE_ID'];
                         if($premiere_comm[1]['MARKING_PERIOD_ID'] == $mp)
@@ -400,6 +403,10 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                         $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['WEIGTH']=$grades_RET[$key]['ASSIGN_TYP_WG']/100;
                         $assignment++;
                     } 
+                    if(str_contains($grades_RET[$key]['TITLE'], 'Examen') && str_contains($grades_RET[$key]['TITLE'], 'Final')){
+                        $data['RESULTS']['COURSE'][$course_count]['ASSIGNMENT'][$assignment-1]['YEAR'][$year_loop]['FINALEXAM']=$grades_RET[$key]['POINTS2'];
+                        $data['RESULTS']['COURSE'][$course_count]['ASSIGNMENT'][$assignment-1]['YEAR'][$year_loop]['FINALEXAMWEIGTH']=$exam_weight;
+                    }
                 }
                 $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL']=_makeLetterGrade($tot_weight_grade,$course_period_id,$course['TEACHER_ID'],"%");
                 $sql='SELECT GRADE_PERCENT , COMMENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $quart['MARKING_PERIOD_ID'] . '\' AND STUDENT_ID=\''.$student_id . '\'';
@@ -542,6 +549,8 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
         }else 
             echo '</tr>';
         $numcompetences=$data['COURSES'][$courseloop]['ASIGN_COUNT'];
+        $resultat_final=0;
+        $has_final=false;
         for($comploop=1; $comploop <= $numcompetences ; $comploop++){
             $comp_total=0;
             $weight_total=0;
@@ -552,7 +561,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                     echo '<tr> <td class="class-results--align-right">' . $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['COMPETENCE']  .'</td>';
             }else
                 echo '<td class="class-results--align-right">' . _studentAverage .'</td>';
-                if($colspan==4){
+            if($colspan==4){
                 for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                     // Year 1 , all competences and quarts
                     echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])   .'</td>';
@@ -562,8 +571,20 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                     }
                 } 
                 // Year 1 , competences totals
-                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
-                }   
+                if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH']){
+                    $has_final=true;
+                    $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
+                    $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
+                    if(! $publish_parents)
+                        echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
+                    else
+                        echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>'; 
+                }
+                else
+                    echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+                if($weight_total)
+                    $resultat_final+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['WEIGTH'];
+            }   
             $comp_total=0;
             $weight_total=0;
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
@@ -575,7 +596,19 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 }
             }
             // Year 2 , competences totals 
-            echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ') .'</td></tr>';
+            if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH']){
+                $has_final=true;
+                $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
+                $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
+                if(! $publish_parents)
+                    echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td></tr>';
+                else
+                    echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td></tr>';
+            }
+            else
+                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ') .'</td></tr>';
+            if($weight_total)
+                $resultat_final+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['WEIGTH'];
         }
         if($numcompetences>1){
             echo '<td class="class-results--align-right">' . _studentAverage .'</td>';
@@ -591,7 +624,19 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                     }
                 }
                 // Year 1 , all quarts total
-                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')   .'</td>';
+                if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH']){
+                    $has_final=true;
+                    $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
+                    $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
+                    if(! $publish_parents)
+                        echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
+                    else
+                        echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+                }
+                if($has_final)
+                    echo'<td class="class-results--align-center"> <span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final) . '' : '')   .'</td>';
+                else
+                    echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')   .'</td>';
             }
         $comp_total=0;
         $weight_total=0;
@@ -604,7 +649,19 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 }
             }
             // Year 2 , all quarts total
-            echo'<td class="class-results--align-center">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
+            if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH']){
+                $has_final=true;
+                $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
+                $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
+                if(! $publish_parents)
+                    echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
+                else
+                    echo'<td class="class-results--align-center ">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+            }
+            if($has_final)
+                echo'<td class="class-results--align-center"><span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final) . '' : '')   .'</td></tr>';
+            else
+                echo'<td class="class-results--align-center ">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
         }
         echo '<td class="class-results--align-right">' . _groupAverage .'</td>';
         $comp_total=0;
@@ -2073,7 +2130,8 @@ function _makeTeacherID($teacher, $column){
 
 function _myround($value){
     if($value== 'N/A') return ''; 
-    return($value !=0 ? round($value) . '' : '');
+//    return round(round($value,2),0);
+    return($value !=0 ? round(round($value,2),0) . '' : '');
 }
 
 function CadoTeacherComlpetion($teacher_id,$course_id,$course_period_id,$short_name){
