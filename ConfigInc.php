@@ -58,7 +58,7 @@ if (!defined('CONFIG_INC')) {
     //    $UserPicturesPath = 'assets/userphotos/';
     $openSISTitle = "Le Centre académique de l'Outaouais";
     $openSISAdmins = '1';            // can be list such as '1,23,50' - note, these should be id's in the DefaultSyear, otherwise they can't login anyway
-    $openSISNotifyAddress = 'rgrant@rgfm.com';
+    $openSISNotifyAddress = 'roger.grant@me.com';
     $msgFlag = '';
 
     $openSISModules = array(
