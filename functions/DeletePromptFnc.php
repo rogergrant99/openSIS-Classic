@@ -168,11 +168,11 @@ function DeleteMail($title, $action, $location, $isTrash = 0) {
     $PHP_tmp_SELF = str_replace(' ', '+', $PHP_tmp_SELF);
     if (!$_REQUEST['delete_ok'] && !$_REQUEST['delete_cancel']) {
         if (!$isTrash) {
-            PopTable('header', _confirm ." ". (strpos($action, ' ') === false ? ' ' . ucwords($action) : ''));
+            PopTable('header', _confirm ." la supression");
         } else {
-            PopTable('header', '' . (strpos($action, ' ') === false ? ' ' . ucwords($action) : '') . ' Forever');
+            PopTable('header', '' . (strpos($action, ' ') === false ? ' ' . ucwords($action) : '') . ' pour toujours');
         }
-        echo "<CENTER><h4>"._areYouSureYouWantTo." $action that $title?</h4><br><FORM action=$PHP_tmp_SELF&delete_ok=1 METHOD=POST><INPUT type=submit class=\"btn btn-danger\" value="._ok.">&nbsp;<INPUT type=button class=\"btn btn-primary\" name=delete_cancel value="._cancel." onclick='window.location=\"Modules.php?modname=$location\"'></FORM></CENTER>";
+        echo "<CENTER><h4>"._areYouSureYouWantTo." supprimer $title?</h4><br><FORM action=$PHP_tmp_SELF&delete_ok=1 METHOD=POST><INPUT type=submit class=\"btn btn-danger\" value="._ok.">&nbsp;<INPUT type=button class=\"btn btn-primary\" name=delete_cancel value="._cancel." onclick='window.location=\"Modules.php?modname=$location\"'></FORM></CENTER>";
 
         PopTable('footer');
         return false;

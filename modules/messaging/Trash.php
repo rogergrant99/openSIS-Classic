@@ -15,7 +15,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'delete') {
             $row = "messages";
         else
             $row = "message";
-        if (DeleteMail($count . ' ' . $row, 'delete', $_REQUEST['modname'], true)) {
+        if (DeleteMail($count . ' ' . $row, _delete, $_REQUEST['modname'], true)) {
             unset($_REQUEST['modfunc']);
             $id = array_keys($_REQUEST['mail']);
             foreach ($id as $idi => $idd) {
@@ -259,7 +259,7 @@ if (!isset($_REQUEST['modfunc'])) {
     echo "<div id='students' class='panel panel-default'>";
 
     $columns = array('FROM_USER' => _from,
-     'MAIL_SUBJECT' => _subject,
+     'MAIL_SUBJECT' => _objet,
      'MAIL_DATETIME' => _dateTime,
     );
     $extra['SELECT'] = ",Concat(NULL) AS CHECKBOX";

@@ -72,46 +72,82 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         $mail_id = '';
         $mail_body = '';
     }
-    if (isset($_REQUEST['modto']) && $_REQUEST['m'] == 'reply') {
-        $to_user = $_REQUEST['modto'];
-        $mail_subject = base64_decode($_REQUEST['sub']);
-    }
     echo '<div class="panel-body">';
 
     echo '<div class="row">';
-    echo '<div class="col-md-8">';
+    //echo '<div class="col-md-8">';
 
     echo '<div class="form-group">';
     echo '<div class="input-group">';
-    echo '<span class="input-group-addon">'._to.'</span>';
-    echo TextInput_mail($to_user, 'txtToUser', '', 'onkeyup="nameslist(this.value,1)" autocomplete = "off" class=form-control');
+    if (isset($_REQUEST['modto']) && $_REQUEST['m'] == 'reply') {
+        $to_user = $_REQUEST['modto'];
+        $name = html_entity_decode($_REQUEST['fullname']);
+        $mail_subject = base64_decode($_REQUEST['sub']);
+        $temp=$mail_subject ;
+        $mail_subject = 'RE: ';
+        $mail_subject .=$temp;
+        $hidden='hidden';
+        echo '<span class="input-group-addon text-bold col-lg-4">'._reponse.' ' . $name . ' </span>';
+    }
+    echo TextInput_mail_hidden($to_user, 'txtToUser', '', 'onkeyup="nameslist(this.value,1)" autocomplete = "off" class=form-control');
     echo '</div>'; //.input-group
     echo '<ul class="dropdown-menu" id="ajax_response"></ul>';
     echo '</div>'; //.form-group
 
-    echo '</div>'; //.col-md-8
+    //echo '</div>'; //.col-md-8
     echo '<div class="col-md-4 form-inline">';
     echo '<div class="input-group">';
-    $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
-    echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._selectGroup."</OPTION>";
-    foreach ($groupList as $groupArr) {
-        $option = $groupArr['GROUP_NAME'];
-        $value = $groupArr['GROUP_ID'];
 
-        if ($_REQUEST['sel_group'] == $value)
-            echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
-        else
-            echo "<OPTION value=\"$option\">$option</OPTION>";
+    if (User('PROFILE') == 'teacher' ){
+        $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by last_name'));
+        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
+        foreach ($groupList as $groupArr) {
+            $option = $groupArr['EMAIL'];
+            $value = $groupArr['GROUP_NAME'];
+            $value .= '  (';
+            $value .= $groupArr['CONTACT'];
+            $value .= ')';
+            if ($_REQUEST['sel_group'] == $value)
+                echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
+            else
+                echo "<OPTION value=\"$option\">$value</OPTION>";
+            }
+        echo '</SELECT>';
+        echo '<span class="input-group-btn">';
+    }
+    if (User('PROFILE') == 'admin' ){
+        $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
+        echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._selectGroup."</OPTION>";
+        foreach ($groupList as $groupArr) {
+            $option = $groupArr['GROUP_NAME'];
+            $value = $groupArr['GROUP_ID'];
+
+            if ($_REQUEST['sel_group'] == $value)
+                echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
+            else
+                echo "<OPTION value=\"$option\">$option</OPTION>";
+        }
+        echo '</SELECT>';
+        echo '<span class="input-group-btn">';
+    }
+    if (User('PROFILE') == 'parent'){
+        $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . ' AND STUDENT_ID=' . UserStudentID(). '))order by last_name'));
+        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_teacher ."</OPTION>";
+        foreach ($groupList as $groupArr) {
+            $option = $groupArr['EMAIL'];
+            $value = $groupArr['GROUP_NAME'];
+            if ($_REQUEST['sel_group'] == $value)
+                echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
+            else
+                echo "<OPTION value=\"$option\">$value</OPTION>";
+            }
+        echo '</SELECT>';
+        echo '<span class="input-group-btn">';
     }
     echo '</SELECT>';
     echo '<span class="input-group-btn">';
-    echo '<a href="#" class="btn btn-default" onclick="show_cc()">'._cc.'</a> &nbsp; ';
-    echo '<a href="#" class="btn btn-default" onclick="show_bcc()">'._bcc.'</a>';
-    if (User('PROFILE') == 'teacher') {
-        if (!isset($_REQUEST['modto']) && $_REQUEST['m'] != 'reply') {
-            echo "<a href='#' class='btn btn-default' onclick='window.open(\"ForWindow.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=choose_course\",\"\",\"scrollbars=yes,resizable=yes,width=800,height=400\");'>"._messageMyClass."</a>";
-        }
-    }
+    // echo '<a href="#" class="btn btn-default" onclick="show_cc()">'._cc.'</a> &nbsp; ';
+    // echo '<a href="#" class="btn btn-default" onclick="show_bcc()">'._bcc.'</a>';
     echo '</span>';
     echo '</div>'; //.input-group
     echo '</div>'; //.col-md-4
@@ -149,7 +185,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="col-md-12">';
 
     echo '<div class="form-group">';
-    echo TextInput_mail($mail_subject, 'txtSubj', '', 'placeholder='._subject.'');
+    echo TextInput_mail($mail_subject, 'txtSubj', '', 'placeholder='._objet.'');
     echo '</div>'; //.form-group
     echo '<div id=ajax_response_cc></div>';
 
@@ -164,13 +200,13 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
       $oFCKeditor->Width = "600px";
       $oFCKeditor->ToolbarSet   = 'Mytoolbar ';
       $oFCKeditor->Create() ; */
-    echo '<textarea name="txtBody" id="txtBody" rows="4" cols="100"></textarea>';
+    echo '<textarea name="txtBody" id="txtBody" rows="10" cols="150"></textarea>';
 
 
 
 
 
-    echo '<script type="text/javascript">$(function(){ CKEDITOR.replace(\'txtBody\', { height: \'400px\', extraPlugins: \'forms\'}); });</script>';
+    //echo '<script type="text/javascript">$(function(){ CKEDITOR.replace(\'txtBody\', { height: \'400px\', extraPlugins: \'forms\'}); });</script>';
 
     echo '<h5>'._attachFile.'</h5>';
     echo '<div id="append_tab">';

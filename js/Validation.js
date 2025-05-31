@@ -4311,7 +4311,7 @@ function validate_email(this_DET) {
 
   frmvalidator.setAddnlValidationFunction("mail_body_chk");
   if (!document.getElementById("cp_id")) {
-    frmvalidator.addValidation("txtToUser", "req", "Enter message recipient");
+    frmvalidator.addValidation("txtToUser", "req", "Saisir le destinataire du message");
   }
 }
 function mail_body_chk() {

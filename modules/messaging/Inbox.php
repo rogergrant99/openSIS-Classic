@@ -318,8 +318,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'trash') {
                     } else {
                         $trash_user = $userName;
                     }
-                    $query = 'update msg_inbox set to_user="' . $update_to_user . '",istrash="' . $trash_user . '" where mail_id IN ("' . $mail_id . '")';
-
+                    $query = 'update msg_inbox set to_user="' . $update_to_user . '",istrash="' . $trash_user . '" where mail_id IN (' . $mail_id . ')';
                     $fetch_ex = DBQuery($query);
                 }
                 if (($key = array_search($userName, $to_cc_arr)) !== false) {
@@ -455,12 +454,21 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         if ($fromUser != '')
             $login_authentication = DBGet(DBQuery('SELECT * FROM login_authentication WHERE username=\'' . $fromUser . '\' '));
         $profile = DBGet(DBQuery('SELECT * FROM user_profiles WHERE ID=' . $login_authentication[1]['PROFILE_ID']));
-        if ($profile[1]['PROFILE'] != 'parent') {
+         if ($profile[1]['PROFILE'] != 'parent') {
             if ($profile[1]['PROFILE'] == 'student') {
                 $stu_img_info = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE USER_ID=' . $login_authentication[1]['USER_ID'] . ' AND PROFILE_ID=3 AND SCHOOL_ID=' . UserSchool() . ' AND SYEAR=' . UserSyear() . ' AND FILE_INFO=\'stuimg\''));
             } else {
                 $staff = DBGet(DBQuery('SELECT * FROM staff WHERE STAFF_ID=' . $login_authentication[1]['USER_ID']));
+                $name = preg_replace('/\s+/', '', $staff[1]['FIRST_NAME']);
+                $name .= '+';
+                $name .= preg_replace('/\s+/', '', $staff[1]['LAST_NAME']);
             }
+        }
+        elseif($profile[1]['PROFILE'] == 'parent'){
+            $parent = DBGet(DBQuery('SELECT FIRST_NAME,LAST_NAME FROM people WHERE STAFF_ID=' . $login_authentication[1]['USER_ID']));
+            $name = preg_replace('/\s+/', '', $parent[1]['FIRST_NAME']);
+            $name .= '+';
+            $name .= preg_replace('/\s+/', '', $parent[1]['LAST_NAME']);
         }
         echo '<h3 class="no-margin-top"><a href="Modules.php?modname=messaging/Inbox.php" class="btn btn-icon"><i class="icon-square-left"></i></a> &nbsp; &nbsp;' . $v['MAIL_SUBJECT'] . '</h3>';
         echo '<hr class="no-margin-top"/>';
@@ -475,7 +483,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo '<div class="media-body">';
         echo '<div class="pull-right"><div class="input-group-btn">';
         echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . $v['MAIL_DATETIME'] . '</a>';
-        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&m=reply&sub=' . base64_encode($sub) . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
+        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . $name . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
         echo '</div></div>';
         //echo '<i class="icon-calendar3"></i> '.$v['MAIL_DATETIME'].' <a href="" class="btn btn-default btn-xs btn-icon"><i class="icon-undo2"></i></a>';
         echo '<h6 class="media-heading text-bold">' . GetNameFromUserName($v['FROM_USER']) . '</h6>';
@@ -521,7 +529,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
                 //          }
                 //         for($i=0;$i<(count($attach));$i++)
                 //         {
-                echo "<a href='DownloadWindow.php?down_id=" . $img['ID'] . "'>" . $img['NAME'] . "</a>";
+                echo "<a href='DownloadWindow.php?down_id=" . $img['DOWNLOAD_ID'] . "'>" . $img['NAME'] . "</a>";
 
                 echo '<br>&nbsp;&nbsp;&nbsp;<br>';
             }
@@ -787,7 +795,7 @@ function CheckAuthenticMail($userName, $toUsers, $toCCUsers, $toBCCUsers, $grpNa
         $subject = $_REQUEST['txtSubj'];
 
         if ($subject == '')
-            $subject = 'No Subject';
+            $subject = _noSubject;
         $mailBody = sqlSecurityFilter($_POST['txtBody']);
         $uploaded_file_count = count($_FILES['f']['name']);
         for ($i = 0; $i < $uploaded_file_count; $i++) {

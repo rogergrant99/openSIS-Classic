@@ -229,7 +229,7 @@ if (!isset($_REQUEST['modfunc'])) {
     }
     echo '<div id="students" class="panel panel-default" >';
     $columns = array('TO1' => _to,
-     'MAIL_SUBJECT' => _subject,
+     'MAIL_SUBJECT' => _objet,
      'MAIL_DATETIME' => _dateTime,
     );
     $extra['SELECT'] = ",Concat(NULL) AS CHECKBOX";

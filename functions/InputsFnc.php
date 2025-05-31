@@ -358,6 +358,28 @@ function TextInput_mail($value, $name, $title = '', $options = '', $div = true) 
         return (((is_array($value) ? $value[1] : $value) != '') ? (is_array($value) ? $value[1] : $value) : '-') . ($title != '' ? '<BR><small>' . (strpos(strtolower($title), '<font ') === false ? '<FONT color=' . Preferences('TITLES') . '>' : '') . $title . (strpos(strtolower($title), '<font ') === false ? '</FONT>' : '') . '</small>' : '');
 }
 
+function TextInput_mail_hidden($value, $name, $title = '', $options = '', $div = true) {
+    if (Preferences('HIDDEN') != 'Y')
+        $div = false;
+
+    // mab - support array style $option values
+    if (!$_REQUEST['_openSIS_PDF']) {
+        $value = str_replace("'", '&#39;', str_replace('"', '&rdquo;', $value));
+        $value1 = is_array($value) ? $value[1] : $value;
+        $value = is_array($value) ? $value[0] : $value;
+
+        if (strpos($options, 'size') === false && $value != '')
+            $options .= ' size=' . strlen($value);
+        elseif (strpos($options, 'size') === false)
+            $options .= ' size=10';
+
+
+        return "<INPUT class=\"form-control hidden\" id=$name type=text name=$name " . (($value || $value === '0') ? "value=\"$value\"" : '') . " $options>" . ($title != '' ? '<BR><small>' . (strpos(strtolower($title), '<font ') === false ? '<FONT color=' . Preferences('TITLES') . '>' : '') . $title . (strpos(strtolower($title), '<font ') === false ? '</FONT>' : '') . '</small>' : '');
+    } else
+        return (((is_array($value) ? $value[1] : $value) != '') ? (is_array($value) ? $value[1] : $value) : '-') . ($title != '' ? '<BR><small>' . (strpos(strtolower($title), '<font ') === false ? '<FONT color=' . Preferences('TITLES') . '>' : '') . $title . (strpos(strtolower($title), '<font ') === false ? '</FONT>' : '') . '</small>' : '');
+}
+
+
 function TextInput_mod_a($value, $name, $title = '', $options = '', $div = true) {
     if (Preferences('HIDDEN') != 'Y')
         $div = false;
