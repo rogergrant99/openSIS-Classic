@@ -99,6 +99,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="input-group">';
 
     if (User('PROFILE') == 'teacher' ){
+        $to_cc = 'admin';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by last_name'));
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
         foreach ($groupList as $groupArr) {
@@ -116,6 +117,14 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'admin' ){
+        $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and is_disable ='N' and staff_id order by last_name"));
+        DBQuery('delete from mail_groupmembers where group_id="2"');
+        foreach ($member_select as $member)
+                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(2,\'' . $member['EMAIL'] . '\',2,\'' . UserSchool(). '\')');
+        $member_select = DBGet(DBQuery("SELECT  username as EMAIL FROM login_authentication WHERE user_id IN (select staff_id from people where profile='parent' and profile_id=4 and is_disable is null and staff_id IN (select person_id from students_join_people ) ) and profile_id=4 "));
+        DBQuery('delete from mail_groupmembers where group_id="1"');
+        foreach ($member_select as $member)
+                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(1,\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
         $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
         echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._selectGroup."</OPTION>";
         foreach ($groupList as $groupArr) {
@@ -131,6 +140,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'parent'){
+        $to_cc = 'admin';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . ' AND STUDENT_ID=' . UserStudentID(). '))order by last_name'));
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_teacher ."</OPTION>";
         foreach ($groupList as $groupArr) {

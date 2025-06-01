@@ -431,7 +431,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
     echo '<div class="panel panel-default">';
     echo '<div class="panel-body">';
     $mail_id = $_REQUEST['mail_id'];
-    $mail_body = "select mail_body,mail_attachment,mail_Subject,from_user,mail_datetime,to_cc_multiple,to_multiple_users,to_bcc_multiple,mail_read_unread from msg_inbox where mail_id='$mail_id'";
+    $mail_body = "select mail_body,mail_attachment,mail_Subject,from_user,to_user,mail_datetime,to_cc_multiple,to_multiple_users,to_bcc_multiple,mail_read_unread from msg_inbox where mail_id='$mail_id'";
 
     $mail_body_info = DBGet(DBQuery($mail_body));
     $sub = $mail_body_info[1]['MAIL_SUBJECT'];
@@ -489,7 +489,12 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo '<h6 class="media-heading text-bold">' . GetNameFromUserName($v['FROM_USER']) . '</h6>';
         if ($v['TO_CC_MULTIPLE'] != '' || $v['TO_BCC_MULTIPLE'] != '') {
             echo '<div class="media-annotation dropdown">';
-            echo 'To: Me <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';
+            if (User('PROFILE') == 'admin'){
+                $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from people where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' . $v['TO_USER'] . '")'));
+                echo 'To: ' . $name[1]['NAME'] . ' <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';
+            }
+            else
+                echo 'To: Me <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';            
             echo '<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">';
             if ($v['TO_CC_MULTIPLE'] != '') {
                 echo "<li><b>CC:</b> " . $v['TO_CC_MULTIPLE'] . "</li>";
@@ -668,7 +673,7 @@ if (!isset($_REQUEST['modfunc'])) {
 
 function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBCCs, $grpName)
 {
-    $mailBody = singleQuoteReplace('', '', $mailBody);
+    //$mailBody = singleQuoteReplace('', '', $mailBody);
     $mailBody = ($mailBody);
 
     $subject = singleQuoteReplace('', '', $subject);
@@ -680,13 +685,14 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
         echo '<script>window.location="Modules.php?modname=messaging/Compose.php"
         </script>';
         return false;
-    } else if ($mailBody != "") {
-        $inbox_query = DBQuery('INSERT INTO msg_inbox(to_user,from_user,mail_Subject,mail_body,isdraft,mail_attachment,to_multiple_users,to_cc_multiple,to_cc,to_bcc,to_bcc_multiple,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',\'' . $mailBody . '\',\'' . $isdraft . '\',\'' . $attachment . '\',\'' . $to . '\',\'' . $toCC . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',\'' . $toBCCs . '\',now())');
+    } 
+    else if ($mailBody != "") {
+        $inbox_query = DBQuery('INSERT INTO msg_inbox(to_user,from_user,mail_Subject,mail_body,isdraft,mail_attachment,to_multiple_users,to_cc_multiple,to_cc,to_bcc,to_bcc_multiple,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $isdraft . '\',\'' . $attachment . '\',\'' . $to . '\',\'' . $toCC . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',\'' . $toBCCs . '\',now())');
     }
     if ($grpName == 'false')
-        $outbox_query = DBQuery('INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',\'' . $mailBody . '\',\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',NOW())');
+        $outbox_query = DBQuery('INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',NOW())');
     else {
-        $q = 'INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime,to_grpName) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',\'' . $mailBody . '\',\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',NOW(),\'' . $grpName . '\')';
+        $q = 'INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime,to_grpName) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',NOW(),\'' . $grpName . '\')';
 
         $outbox_query = DBQuery($q);
     }
@@ -796,7 +802,8 @@ function CheckAuthenticMail($userName, $toUsers, $toCCUsers, $toBCCUsers, $grpNa
 
         if ($subject == '')
             $subject = _noSubject;
-        $mailBody = sqlSecurityFilter($_POST['txtBody']);
+        //$mailBody = sqlSecurityFilter($_POST['txtBody']);
+        $mailBody = $_POST['txtBody'];
         $uploaded_file_count = count($_FILES['f']['name']);
         for ($i = 0; $i < $uploaded_file_count; $i++) {
 
