@@ -102,6 +102,11 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     if (User('PROFILE') == 'teacher' ){
         $to_bcc = 'admin';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by last_name'));
+        $index=count($groupList)+1;
+        $groupList[$index]['EMAIL']='admin';
+        $groupList[$index]['GROUP_NAME']='admin';
+        $groupList[$index]['CONTACT']='CADO';
+
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
         foreach ($groupList as $groupArr) {
             $option = $groupArr['EMAIL'];
@@ -113,7 +118,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
                 echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
             else
                 echo "<OPTION value=\"$option\">$value</OPTION>";
-            }
+        }
         echo '</SELECT>';
         echo '<span class="input-group-btn">';
     }
@@ -145,6 +150,9 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     if (User('PROFILE') == 'parent'){
         $to_bcc = 'admin';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . ' AND STUDENT_ID=' . UserStudentID(). '))order by last_name'));
+        $index=count($groupList)+1;
+        $groupList[$index]['EMAIL']='admin';
+        $groupList[$index]['GROUP_NAME']='admin CADO';
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_teacher ."</OPTION>";
         foreach ($groupList as $groupArr) {
             $option = $groupArr['EMAIL'];

@@ -642,7 +642,7 @@ if (!isset($_REQUEST['modfunc'])) {
             $inbox_info[$key]['MAIL_SUBJECT'] = $inbox_info[$key]['MAIL_SUBJECT'] . "<img align='right' src='./assets/attachment.png'>";
         }
         $inbox_info[$key]['FROM_USER'] = GetNameFromUserName($value['FROM_USER']);
-        if (User('PROFILE') == 'admin'){
+        if (User('PROFILE') == 'admin' && $inbox_info[$key]['TO_USER']){
             $profile = DBGet(DBQuery('SELECT profile_id,user_id FROM login_authentication WHERE username =  "' .  $inbox_info[$key]['TO_USER'] . '"'));
             if( $profile[1]['PROFILE_ID'] == 4)
                 $table='PEOPLE';
@@ -654,12 +654,19 @@ if (!isset($_REQUEST['modfunc'])) {
     }
 
     echo '<div id="students" class="panel panel-default">';
-    $columns = array(
-        'FROM_USER' => _from,
-        'TO_NAME' => _to,
-        'MAIL_SUBJECT' => _subject,
-        'MAIL_DATETIME' => _dateTime,
-    );
+    if (User('PROFILE') == 'admin')
+        $columns = array(
+            'FROM_USER' => _from,
+            'TO_NAME' => _to,
+            'MAIL_SUBJECT' => _objet,
+            'MAIL_DATETIME' => _dateTime,
+        );
+    else
+        $columns = array(
+            'FROM_USER' => _from,
+            'MAIL_SUBJECT' => _objet,
+            'MAIL_DATETIME' => _dateTime,
+        );
     $extra['SELECT'] = ",Concat(NULL) AS CHECKBOX";
     $extra['LO_group'] = array('MAIL_ID');
     $extra['columns_before'] = array('CHECKBOX' => '</A><INPUT type=checkbox value=Y name=controller onclick="checkAll(this.form,this.form.controller.checked,\'mail\');"><A>');
