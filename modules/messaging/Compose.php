@@ -84,6 +84,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         $name = html_entity_decode($_REQUEST['fullname']);
         $mail_subject = base64_decode($_REQUEST['sub']);
         $temp=$mail_subject ;
+        $mail_body = hex2bin($_REQUEST['msgbody']);
         $mail_subject = 'RE: ';
         $mail_subject .=$temp;
         $hidden='hidden';
@@ -99,7 +100,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="input-group">';
 
     if (User('PROFILE') == 'teacher' ){
-        $to_cc = 'admin';
+        $to_bcc = 'admin';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by last_name'));
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
         foreach ($groupList as $groupArr) {
@@ -126,21 +127,23 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         foreach ($member_select as $member)
                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(1,\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
         $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
-        echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._selectGroup."</OPTION>";
-        foreach ($groupList as $groupArr) {
-            $option = $groupArr['GROUP_NAME'];
-            $value = $groupArr['GROUP_ID'];
+        if($_REQUEST['m'] != 'reply'){
+            echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._selectGroup."</OPTION>";
+            foreach ($groupList as $groupArr) {
+                $option = $groupArr['GROUP_NAME'];
+                $value = $groupArr['GROUP_ID'];
 
-            if ($_REQUEST['sel_group'] == $value)
-                echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
-            else
-                echo "<OPTION value=\"$option\">$option</OPTION>";
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$option</OPTION>";
+            }
         }
         echo '</SELECT>';
         echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'parent'){
-        $to_cc = 'admin';
+        $to_bcc = 'admin';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . ' AND STUDENT_ID=' . UserStudentID(). '))order by last_name'));
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_teacher ."</OPTION>";
         foreach ($groupList as $groupArr) {
@@ -195,7 +198,10 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="col-md-12">';
 
     echo '<div class="form-group">';
-    echo TextInput_mail($mail_subject, 'txtSubj', '', 'placeholder='._objet.'');
+    if($_REQUEST['m'] == 'reply')
+        echo TextInput_mail($mail_subject, 'txtSubj', '', 'readonly placeholder='._objet.'');
+    else
+        echo TextInput_mail($mail_subject, 'txtSubj', '', 'placeholder='._objet.'');
     echo '</div>'; //.form-group
     echo '<div id=ajax_response_cc></div>';
 
@@ -210,7 +216,15 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
       $oFCKeditor->Width = "600px";
       $oFCKeditor->ToolbarSet   = 'Mytoolbar ';
       $oFCKeditor->Create() ; */
-    echo '<textarea name="txtBody" id="txtBody" rows="10" cols="150"></textarea>';
+    $temp="\n\r";
+    if($_REQUEST['m'] == 'reply'){
+        $data_array = explode("\n", $mail_body);
+        foreach ($data_array as $data_str) {
+            $temp .= '>' . $data_str . "\n";
+            $mail_body = $temp;
+        }
+    }
+    echo '<textarea name="txtBody" id="txtBody" rows="22" cols="150">' . $mail_body . '</textarea>';
 
 
 

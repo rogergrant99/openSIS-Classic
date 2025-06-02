@@ -451,6 +451,8 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
 
     foreach ($mail_body_info as $k => $v) {
         $fromUser = $v['FROM_USER'];
+        $msg = $v['MAIL_BODY'];
+        $msg = bin2hex($msg);
         if ($fromUser != '')
             $login_authentication = DBGet(DBQuery('SELECT * FROM login_authentication WHERE username=\'' . $fromUser . '\' '));
         $profile = DBGet(DBQuery('SELECT * FROM user_profiles WHERE ID=' . $login_authentication[1]['PROFILE_ID']));
@@ -483,35 +485,42 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo '<div class="media-body">';
         echo '<div class="pull-right"><div class="input-group-btn">';
         echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . $v['MAIL_DATETIME'] . '</a>';
-        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . $name . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
+        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&msgbody=' .  $msg . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . $name . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
         echo '</div></div>';
         //echo '<i class="icon-calendar3"></i> '.$v['MAIL_DATETIME'].' <a href="" class="btn btn-default btn-xs btn-icon"><i class="icon-undo2"></i></a>';
         echo '<h6 class="media-heading text-bold">' . GetNameFromUserName($v['FROM_USER']) . '</h6>';
-        if ($v['TO_CC_MULTIPLE'] != '' || $v['TO_BCC_MULTIPLE'] != '') {
-            echo '<div class="media-annotation dropdown">';
-            if (User('PROFILE') == 'admin'){
-                $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from people where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' . $v['TO_USER'] . '")'));
-                echo 'To: ' . $name[1]['NAME'] . ' <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';
-            }
-            else
-                echo 'To: Me <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';            
-            echo '<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">';
-            if ($v['TO_CC_MULTIPLE'] != '') {
-                echo "<li><b>CC:</b> " . $v['TO_CC_MULTIPLE'] . "</li>";
-            }
-            if ($v['TO_BCC_MULTIPLE'] != '') {
-                $to_bcc_arr = explode(',', $v['TO_BCC_MULTIPLE']);
-                if (in_array($userName, $to_bcc_arr)) {
-                    echo "<li><b>BCC:</b> " . $userName . "</li>";
-                }
-            }
-            echo '</ul>';
-            echo '</div>';
-        } else {
-            echo '<div class="media-annotation">To: Me</div>';
-        }
+        // if ($v['TO_CC_MULTIPLE'] != '' || $v['TO_BCC_MULTIPLE'] != '') {
+        //     echo '<div class="media-annotation dropdown">';
+        //     if (User('PROFILE') == 'admin'){
+        //         $profile = DBGet(DBQuery('SELECT profile_id,user_id FROM login_authentication WHERE username =  "' . $v['TO_USER'] . '"'));
+        //         if( $profile[1]['PROFILE_ID'] == 4)
+        //             $table='PEOPLE';
+        //         else
+        //             $table='STAFF';
+        //         $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from ' . $table . ' where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' . $v['TO_USER'] . '")'));
+        //         echo 'To: ' . $name[1]['NAME'] . ' <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';
+        //     }
+        //     else
+        //         echo 'To: Me <a href="javascript:void(0)" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-down"></i></a>';            
+        //     echo '<ul class="dropdown-menu" aria-labelledby="dropdownMenu1">';
+        //     if ($v['TO_CC_MULTIPLE'] != '') {
+        //         echo "<li><b>CC:</b> " . $v['TO_CC_MULTIPLE'] . "</li>";
+        //     }
+        //     if ($v['TO_BCC_MULTIPLE'] != '') {
+        //         $to_bcc_arr = explode(',', $v['TO_BCC_MULTIPLE']);
+        //         if (in_array($userName, $to_bcc_arr)) {
+        //             echo "<li><b>BCC:</b> " . $userName . "</li>";
+        //         }
+        //     }
+        //     echo '</ul>';
+        //     echo '</div>';
+        // } else {
+        //     echo '<div class="media-annotation">To: Me</div>';
+        // }
+        echo '<br>';
 
-        echo '<div class="mt-20">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</div>';
+        // echo '<div class="mt-20">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</div>';
+        echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</textarea>';
         if ($v['MAIL_ATTACHMENT'] != '') {
             echo "
                   " . _attachment . ": ";
@@ -633,11 +642,21 @@ if (!isset($_REQUEST['modfunc'])) {
             $inbox_info[$key]['MAIL_SUBJECT'] = $inbox_info[$key]['MAIL_SUBJECT'] . "<img align='right' src='./assets/attachment.png'>";
         }
         $inbox_info[$key]['FROM_USER'] = GetNameFromUserName($value['FROM_USER']);
+        if (User('PROFILE') == 'admin'){
+            $profile = DBGet(DBQuery('SELECT profile_id,user_id FROM login_authentication WHERE username =  "' .  $inbox_info[$key]['TO_USER'] . '"'));
+            if( $profile[1]['PROFILE_ID'] == 4)
+                $table='PEOPLE';
+            else
+                $table='STAFF';
+            $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from ' . $table . ' where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' . $inbox_info[$key]['TO_USER'] . '")'));
+            $inbox_info[$key]['TO_NAME']=$name[1]['NAME'];
+        }
     }
 
     echo '<div id="students" class="panel panel-default">';
     $columns = array(
         'FROM_USER' => _from,
+        'TO_NAME' => _to,
         'MAIL_SUBJECT' => _subject,
         'MAIL_DATETIME' => _dateTime,
     );
@@ -953,4 +972,8 @@ function output_file($file, $name, $mime_type = '', $mod_file)
     } else
         die('Error - can not open file.');
     die();
+}
+function encodeURIComponent($str) {
+    $revert = array('%21'=>'!', '%2A'=>'*', '%27'=>"'", '%28'=>'(', '%29'=>')');
+    return strtr(rawurlencode($str), $revert);
 }

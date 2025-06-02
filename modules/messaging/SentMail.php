@@ -138,7 +138,8 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         }
         echo '</div>'; //.media-annotation
         
-        echo '<div class="mt-20">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</div>';
+        echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</textarea>';
+        //echo '<div class="mt-20">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</div>';
         
         
         if ($v['MAIL_ATTACHMENT'] != '') {

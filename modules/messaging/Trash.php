@@ -145,7 +145,8 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
             
             
         }
-        echo "<tr><td align='left' colspan='2'><br /><div class='mail_body'>" . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . "<br /></div></td></tr></table>";
+        echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</textarea>';
+        //echo "<tr><td align='left' colspan='2'><br /><div class='mail_body'>" . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . "<br /></div></td></tr></table>";
     }
     echo "<p align='center'><a class='btn btn-primary' href='Modules.php?modname=messaging/Trash.php'>"._back."</a></p>";
     PopTable('footer');
