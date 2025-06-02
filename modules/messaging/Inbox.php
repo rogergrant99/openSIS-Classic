@@ -645,9 +645,9 @@ if (!isset($_REQUEST['modfunc'])) {
         if (User('PROFILE') == 'admin' && $inbox_info[$key]['TO_USER']){
             $profile = DBGet(DBQuery('SELECT profile_id,user_id FROM login_authentication WHERE username =  "' .  $inbox_info[$key]['TO_USER'] . '"'));
             if( $profile[1]['PROFILE_ID'] == 4)
-                $table='PEOPLE';
+                $table='people';
             else
-                $table='STAFF';
+                $table='staff';
             $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from ' . $table . ' where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' . $inbox_info[$key]['TO_USER'] . '")'));
             $inbox_info[$key]['TO_NAME']=$name[1]['NAME'];
         }
