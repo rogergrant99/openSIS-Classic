@@ -291,7 +291,8 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'gradebook') {
                             //echo "<pre>";print_r($total_type_weight);echo "</pre>";
                             //$total_IDweight=0;
                             foreach ($assign_types[$student[1]['STUDENT_ID']] as $key => $val) {
-                                $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] = $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]]  * 100 /  $total_type_weight[$student[1]['STUDENT_ID']][$val['0']]  ;
+                                if($total_type_weight[$student[1]['STUDENT_ID']][$val['0']])
+                                    $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] = $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]]  * 100 /  $total_type_weight[$student[1]['STUDENT_ID']][$val['0']]  ;
                                 if($tot_type_grade[$student[1]['STUDENT_ID']][$val[0]])
                                     $tot_weight_grade+= $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] * $assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]] / 100;
                                 //$total_IDweight += $assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]]  ;
