@@ -2030,7 +2030,7 @@ define("_weightedType","Total compétence");
 define("_new_password_request","Demande de nouveau mot de passe");
 define("_new_password_sent","Le nouveau mot de passe a été envoyé à : ");
 define("_your_temporary_password_is","Votre nouveau mot de passe est ");
-define("_if_you_did_not_ask_this_password_reset","Si vouz n'avez pas fait cette demande , veuillez contactez CADO");
+define("_if_you_did_not_ask_this_password_reset","Si vouz n'avez pas fait cette demande , veuillez contactez CADO par téléphone (819) 893-2236, ne pas répondre a ce courriel.");
 define("_allowEditMsg","Permettre la modification des commentaires par les enseignants");
 define("_allowEditTypes","Permettre la modification des types de devoir par les enseignants");
 define("_assigncourses","Assigner les cours a tous les étudiants");

@@ -2022,7 +2022,7 @@ define("_weightedType","Total assignement type");
 define("_new_password_request","New password request");
 define("_new_password_sent","The new password was sent to : ");
 define("_your_temporary_password_is","Your new password is ");
-define("_if_you_did_not_ask_this_password_reset","If you did not ask for this new password, please contact CADO");
+define("_if_you_did_not_ask_this_password_reset","If you did not ask for this new password, please contact CADO by phone (819) 893-2236, do not reply to this email.");
 define("_allowEditMsg","Allow comment modification by the teachers");
 define("_allowEditType","Allow assigment types modification by the teachers");
 define("_assigncourses","Assign courses to all students");
