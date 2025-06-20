@@ -487,7 +487,7 @@ function _makeExtraAssnCols($assignment_id, $column)
             }
             break;
         case 'COMMENT':
-            return TextInput($current_RET[$THIS_RET['STUDENT_ID']][$assignment_id][1]['COMMENT'], 'values[' . $THIS_RET['STUDENT_ID'] . '][' . $assignment_id . '][COMMENT]', '', '  size=11 maxlength=100 tabindex=' . (500 + $tabindex));
+            return TextInput($current_RET[$THIS_RET['STUDENT_ID']][$assignment_id][1]['COMMENT'], 'values[' . $THIS_RET['STUDENT_ID'] . '][' . $assignment_id . '][COMMENT]', '', '  size=11 maxlength=200 tabindex=' . (500 + $tabindex));
             break;
     }
 }
@@ -521,7 +521,7 @@ function _makeExtraStuCols($value, $column)
             break;
         case 'COMMENT':
             $tabindex += $count_assignments;
-            return TextInput($value, 'values[' . $THIS_RET['STUDENT_ID'] . '][' . $THIS_RET['ASSIGNMENT_ID'] . '][COMMENT]', '', ' size=11 maxlength=100 tabindex=' . $tabindex);
+            return TextInput($value, 'values[' . $THIS_RET['STUDENT_ID'] . '][' . $THIS_RET['ASSIGNMENT_ID'] . '][COMMENT]', '', ' size=11 maxlength=200 tabindex=' . $tabindex);
             break;
     }
 }
