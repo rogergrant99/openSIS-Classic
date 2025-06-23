@@ -445,6 +445,10 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                 $SCHED_RET=DBGet(DBQuery('SELECT * from schedule WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND student_id=\'' . $student_id . '\'  AND SYEAR=\'' . UserSyear(). '\' AND COURSE_PERIOD_ID=\'' . $course_period_id . '\'')); 
                 if(count($SCHED_RET) && $SCHED_RET[1]['DROPPED'] == 'Y')
                     $data['COURSES'][$course_count]['DROPPED']=true;
+                $GRADE_LEVEL_RET=DBGet(DBQuery('SELECT title from school_gradelevels WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND id=\'' . $course['GRADE_LEVEL'] . '\'')); 
+                if(count($GRADE_LEVEL_RET))
+                    $data['COURSES'][$course_count]['GRADE_TITLE']=$GRADE_LEVEL_RET[1]["TITLE"];
+                $data['COURSES'][$course_count]['GRADE_LEVEL']=$course['GRADE_LEVEL'];
                 $data['COURSES'][$course_count]['COURSE_TITLE']=$course['COURSE_TITLE'];
                 $data['COURSES'][$course_count]['COURSE_NUMBER']=$course['COURSE_NUMBER'];
                 $data['COURSES'][$course_count]['TEACHER_NAME']=$course['TEACHER_NAME'];
@@ -529,8 +533,10 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
     for($courseloop=1; $courseloop <= $numcourses ; $courseloop++){
         if(html_entity_decode($data['COURSES'][$courseloop]['COMMENT'] ) == html_entity_decode('Cours abandonné.') || $data['COURSES'][$courseloop]['DROPPED'] || ! $data['COURSES'][$courseloop]    )
             continue;
-        if(strpos($grade_id,"Secondaire"))
+        if(strpos($grade_id,"Secondaire")){
             echo'<table class="class-results__table"><tr><th rowspan="3" class="class-results--align-left class-results__th--left-header"><h1>' . $data['COURSES'][$courseloop]['COURSE_TITLE']  . '</h1>Cours :' . $data['COURSES'][$courseloop]['COURSE_NUMBER']  . '<br>Enseignant(e) :' . $data['COURSES'][$courseloop]['TEACHER_NAME']  . ''; 
+            $cycle=$data['COURSES'][$courseloop]['GRADE_TITLE'];
+        }
         else 
             echo'<table class="class-results__table"><tr><th rowspan="3" class="class-results--align-left class-results__th--left-header"><h1>' . $data['COURSES'][$courseloop]['COURSE_TITLE']  . '</h1><br>Enseignant(e) :' . $data['COURSES'][$courseloop]['TEACHER_NAME']  . ''; 
         echo '</th><th colspan="' . $colspan *2  . '" class="class-results__3col-right">' . $cycle  . '</th></tr>';
