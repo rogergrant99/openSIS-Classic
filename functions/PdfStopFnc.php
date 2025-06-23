@@ -67,7 +67,7 @@ function PDFStop($handle)
 				unlink($target_path);
 			}
 			rename($pdf_file, $target_path);
-			DBQuery('INSERT INTO user_file_upload (USER_ID,PROFILE_ID,SCHOOL_ID,SYEAR,NAME, SIZE, TYPE, CONTENT,FILE_INFO) VALUES (' . $publish_parents . ',\'3\',' . UserSchool() . ',' . UserSyear() . ',\'' . $concat_filename . '\', \'' . filesize($target_path) . '\', \'' . $fileType . '\', \'' . $content . '\',\'stufile\')');
+			DBQuery('INSERT INTO user_file_upload (USER_ID,PROFILE_ID,SCHOOL_ID,SYEAR,NAME, TYPE, CONTENT,FILE_INFO) VALUES (' . $publish_parents . ',\'3\',' . UserSchool() . ',' . UserSyear() . ',\'' . $concat_filename . '\', \'' . $fileType . '\', \'' . $content . '\',\'stufile\')');
 			unlink($html_file);
 			$items++;
 			echo $items;
