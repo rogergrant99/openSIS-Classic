@@ -159,7 +159,7 @@ require_once('functions/langFnc.php');
                                     ?>
                                     <input type="password" class="form-control password" placeholder="<?=_enterPassword?>" id="password" name='PASSWORD' AUTOCOMPLETE='off' value="<?php echo $pwd; ?>">
                                 </div>
-                                <div class="language-selection">
+                                <div class="hidden language-selection">
                                     <i class="icon-earth"></i>
                                         <select class="select-search" name="language" id="language" onchange="window.location = 'index.php?language='+this.value">
                                         <?php
@@ -172,7 +172,7 @@ require_once('functions/langFnc.php');
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group text-center">
-                                        <div class="checkbox checkbox-switch switch-success switch-sm">
+                                        <div class="hidden checkbox checkbox-switch switch-success switch-sm">
                                             <label>
                                                 <input type="checkbox" name="remember" id="remember" <?php echo (isset($_COOKIE['remember_me_name'])) ? 'checked="checked"' : ''; ?> /><span></span> <?=_rememberMe?>
                                             </label>
