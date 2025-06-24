@@ -339,8 +339,8 @@ if (!$_REQUEST['student_id'] && $_REQUEST['assignment_id'] == 'all')
 // echo '<hr class="no-margin-bottom"/>';
 
 if(str_contains($course_id1[1]['TITLE'],"PRE ")){
-    echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspLa compétence (Défis) n\'affiche que les commentires </b></div></div>';
-    echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspLa note attribué a la compétence (Progrès) sera noté comme suit:</b></div></div>';
+    echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspLa compétence (Défis) n\'affiche que les commentaires </b></div></div>';
+    echo '<div><b>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspLa compétence (Progrès) affiche les commentaires et sera noté comme suit:</b></div></div>';
     echo '<div>&nbsp&nbsp<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 1 -> L’élève se développe très bien au regard de la compétence visée.</b></div></div>';
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 2 -> L’élève se développe adéquatement au regard de la compétence visée.</b></div>';
     echo '<div>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspNote de 3 -> L’élève se développe avec certaines difficultés au regard de la compétence visée.</b></div>';
