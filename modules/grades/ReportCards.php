@@ -555,7 +555,8 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
         }else 
             echo '</tr>';
         $numcompetences=$data['COURSES'][$courseloop]['ASIGN_COUNT'];
-        $resultat_final=0;
+        $resultat_final[$YY1]=0;
+        $resultat_final[$YY2]=0;
         $has_final=false;
         for($comploop=1; $comploop <= $numcompetences ; $comploop++){
             $comp_total=0;
@@ -589,7 +590,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 else
                     echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
                 if($weight_total)
-                    $resultat_final+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['WEIGTH'];
+                    $resultat_final[$YY2]+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['WEIGTH'];
             }   
             $comp_total=0;
             $weight_total=0;
@@ -614,7 +615,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
             else
                 echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ') .'</td></tr>';
             if($weight_total)
-                $resultat_final+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['WEIGTH'];
+                $resultat_final[$YY1]+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['WEIGTH'];
         }
         if($numcompetences>1){
             echo '<td class="class-results--align-right">' . _studentAverage .'</td>';
@@ -641,9 +642,9 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 }
                 if($has_final){
                     if(! $publish_parents)
-                        echo'<td class="class-results--align-center"> <span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final) . '' : '')   .'</td>';
+                        echo'<td class="class-results--align-center"> <span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final[$YY2]) . '' : '')   .'</td>';
                     else
-                        echo'<td class="class-results--align-center"> <span>' . ($comp_total !=0 ? _myround($resultat_final) . '' : '')   .'</td>';
+                        echo'<td class="class-results--align-center"> <span>' . ($comp_total !=0 ? _myround($resultat_final[$YY2]) . '' : '')   .'</td>';
                 }
                 else
                     echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')   .'</td>';
@@ -670,9 +671,9 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
             }
             if($has_final){
                     if(! $publish_parents)
-                        echo'<td class="class-results--align-center"><span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final) . '' : '')   .'</td></tr>';
+                        echo'<td class="class-results--align-center"><span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final[$YY1]) . '' : '')   .'</td></tr>';
                     else
-                        echo'<td class="class-results--align-center"><span>' . ($comp_total !=0 ? _myround($resultat_final) . '' : '')   .'</td></tr>';
+                        echo'<td class="class-results--align-center"><span>' . ($comp_total !=0 ? _myround($resultat_final[$YY1]) . '' : '')   .'</td></tr>';
             }
             else
                 echo'<td class="class-results--align-center ">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
