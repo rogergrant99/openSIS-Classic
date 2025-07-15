@@ -532,7 +532,7 @@ function _makeMarkingPeriod($val)
 
 function _makeDayNames($daynames)
 {
-    $days_arrr = array("Monday" => 'M', "Tuesday" => 'T', "Wednesday" => 'W', "Thursday" => 'H', "Friday" => 'F', "Saturday" => 'S', "Sunday" => 'U');
+    $days_arrr = array("lundi" => 'M', "mardi" => 'T', "mercredi" => 'W', "jeudi" => 'H', "vendredi" => 'F', "samedi" => 'S', "dimanche" => 'U');
 
     $daystitle = str_split($daynames);
     $daynamearr =[];

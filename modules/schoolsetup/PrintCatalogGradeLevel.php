@@ -43,40 +43,86 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'print' && $_REQUEST['r
 
     $ret = DBGet(DBQuery($sql));
 
+            // echo "<table width=100%  style=\" font-family:Arial; font-size:12px;\" >";
+            // echo '<tr><td colspan="2" valign="top" align="right">';
+            echo'
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 10px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+<h2>Liste de cours</h2>
+<table>
+  <tr>
+    <th>' . _coursePeriod . '</th>
+    <th>' . _time . '</th>
+    <th>' . _days . '</th>
+    <th>' . _location . '</th>
+    <th>' . _teacher . '</th>
+  </tr>            
+            ';
     if (count($ret)) {
 
         foreach ($ret as $s_id) {
-            echo "<table width=100%  style=\" font-family:Arial; font-size:12px;\" >";
             $grade_level_RET = DBGet(DBQuery('SELECT TITLE FROM school_gradelevels WHERE id=\'' . $_REQUEST['id'] . '\''));
             $grade_title = $grade_level_RET[1]['TITLE'];
 
-            if ($grade_title != '') {
-                echo "<tr><td width=105>" . DrawLogo() . "</td><td  style=\"font-size:15px; font-weight:bold; padding-top:20px;\">" . GetSchool(UserSchool()) . "<div style=\"font-size:12px;\">" . _courseCatalogByGradeLevel . " : " . $grade_title . "</div></td><td align=right style=\"padding-top:20px;\">" . ProperDate(DBDate()) . "<br />" . _poweredBy . " openSIS</td></tr><tr><td colspan=3 style=\"border-top:1px solid #333;\">&nbsp;</td></tr></table>";
-            } else {
-                echo "<tr><td width=105>" . DrawLogo() . "</td><td  style=\"font-size:15px; font-weight:bold; padding-top:20px;\">" . GetSchool(UserSchool()) . "<div style=\"font-size:12px;\">" . _courseCatalogByGradeLevel . " : " . _all . "</div></td><td align=right style=\"padding-top:20px;\">" . ProperDate(DBDate()) . "<br />" . _poweredBy . " openSIS</td></tr><tr><td colspan=3 style=\"border-top:1px solid #333;\">&nbsp;</td></tr></table>";
-            }
+            // if ($grade_title != '') {
+            //     echo "<tr><td width=105>" . DrawLogo() . "</td><td  style=\"font-size:15px; font-weight:bold; padding-top:20px;\">" . GetSchool(UserSchool()) . "<div style=\"font-size:12px;\">" . _courseCatalogByGradeLevel . " : " . $grade_title . "</div></td><td align=right style=\"padding-top:20px;\">" . ProperDate(DBDate()) . "<br />" . _poweredBy . " openSIS</td></tr><tr><td colspan=3 style=\"border-top:1px solid #333;\">&nbsp;</td></tr></table>";
+            // } else {
+            //     echo "<tr><td width=105>" . DrawLogo() . "</td><td  style=\"font-size:15px; font-weight:bold; padding-top:20px;\">" . GetSchool(UserSchool()) . "<div style=\"font-size:12px;\">" . _courseCatalogByGradeLevel . " : " . _all . "</div></td><td align=right style=\"padding-top:20px;\">" . ProperDate(DBDate()) . "<br />" . _poweredBy . " openSIS</td></tr><tr><td colspan=3 style=\"border-top:1px solid #333;\">&nbsp;</td></tr></table>";
+            // }
 
-            echo '<div align="center">';
-            echo '<table border="0" width="100%" align="center"><tr><td><font face=verdana size=-1><b>' . $s_id['SUBJECT'] . '</b></font></td></tr>';
-            echo '<tr><td align="right"><table border="0" width="97%"><tr><td><font face=verdana size=-1><b>' . $s_id['COURSE_TITLE'] . '</b></font></td></tr>';
+            // echo '<div align="center">';
+            // echo '<table border="0" width="100%" align="center"><tr><td><font face=verdana size=-1><b>' . $s_id['SUBJECT'] . '</b></font></td></tr>';
+            // echo '<tr><td align="center"><table border="0" width="97%"><tr><td><font face=verdana size=-1><b>' . $s_id['COURSE_TITLE'] . '</b></font></td></tr>';
 
 
 
-            $sql_periods = 'SELECT  cp.COURSE_PERIOD_ID,cp.COURSE_PERIOD_ID as ROOM,cp.COURSE_PERIOD_ID as PERIOD,cp.COURSE_PERIOD_ID as DAYS,cp.SHORT_NAME,(SELECT CONCAT(LAST_NAME,\' \',FIRST_NAME,\' \') from staff where staff_id=cp.TEACHER_ID) as TEACHER from course_periods cp where cp.course_id=' . $s_id['COURSE_ID'] . ' and cp.syear=\'' . UserSyear() . '\' and cp.school_id=\'' . UserSchool() . '\'';
+            $sql_periods = 'SELECT  cp.COURSE_PERIOD_ID,cp.COURSE_PERIOD_ID as ROOM,cp.COURSE_PERIOD_ID as PERIOD,cp.COURSE_PERIOD_ID as DAYS,cp.SHORT_NAME,(SELECT CONCAT(LAST_NAME,\' \',FIRST_NAME,\' \') from staff where staff_id=cp.TEACHER_ID) as TEACHER from course_periods cp where cp.course_id=' . $s_id['COURSE_ID'] . ' and cp.syear=\'' . UserSyear() . '\' and cp.school_id=\'' . UserSchool() . '\' ';
             $period_list = DBGet(DBQuery($sql_periods), array('ROOM' => '_makeDetails', 'PERIOD' => '_makeDetails', 'DAYS' => '_makeDetails'));
 
  ##############################################List Output Generation##################################################
 
             $columns = array('SHORT_NAME' => _coursePeriod, 'PERIOD' => _time, 'DAYS' => _days, 'ROOM' => _location, 'TEACHER' => _teacher);
 
-            echo '<tr><td colspan="2" valign="top" align="right">';
-            PrintCatalog($period_list, $columns, _course, _courses, '', '', array('search' => false));
-            echo '</td></tr></table></td></tr></table></td></tr>';
+            //print_r($columns);
+            //print_r($period_list);
+            // echo '<tr><td colspan="2" valign="top" align="right">';
+            // echo '<tr>' . $period_list[1]['SHORT_NAME'] . ' </tr>';
+            // echo '<tr>' . $period_list[1]['PERIOD'] . ' </tr>';
+            // echo '<tr>' . $period_list[1]['DAYS'] . ' </tr>';
+            // echo '<tr">' . $period_list[1]['ROOM'] . ' </tr>';
+            // echo '<tr>' . $period_list[1]['TEACHER'] . ' </tr>';
+//           PrintCatalog($period_list, $columns, _course, _courses, '', '', array('search' => false));
+            //echo '<br></td></tr></table></td></tr></table></td></tr>';
+            echo '</tr>';
+echo'
 
+  <tr>
+    <td style="width:15%">' . $period_list[1]['SHORT_NAME'] . '</td>
+    <td style="width:30%">' . $period_list[1]['PERIOD'] . '</td>
+    <td>' . $period_list[1]['DAYS'] . '</td>
+    <td>' . $period_list[1]['ROOM'] . '</td>
+    <td>' . $period_list[1]['TEACHER'] . '</td>
+  </tr>
+';
             ######################################################################################################################
-            echo '</table></div>';
+            // echo '</table></div>';
 
-            echo "<div style=\"page-break-before: always;\"></div>";
+            // echo "<div style=\"page-break-before: always;\"></div>";
         }
     } else
         echo '<table width=100%><tr><td align=center><font color=red face=verdana size=2><strong>' . _noCoursesWereFoundInThisGradeLevel . '</strong></font></td></tr></table>';
@@ -104,6 +150,8 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'print' && $_REQUEST['r
     echo '</div>'; //.col-md-6.col-md-offset-3
     echo '</div>'; //.row
 }
+echo '</table>';
+
 
 ##########functions###################
 
