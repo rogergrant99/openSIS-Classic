@@ -114,7 +114,7 @@ if (User('PROFILE') == 'admin')
     else
     $RET[1]['CALENDAR_ID']=0;
     }
-    echo '<div class="form-group">' . CheckboxInputSwitchModal($RET[1]['CALENDAR_ID'], 'new', _showEventsSystemWide, '', false, 'Yes', 'No', '', 'switch-success') . '</div>';
+    //echo '<div class="form-group">' . CheckboxInputSwitchModal($RET[1]['CALENDAR_ID'], 'new', _showEventsSystemWide, '', false, 'Yes', 'No', '', 'switch-success') . '</div>';
 }
 //else
 //echo '<div class="form-group">' . ($RET[1]['CALENDAR_ID'] == '' ? '<i class="icon-checkbox-checked"></i>' : '<i class="icon-checkbox-unchecked"></i>') . '</div>';

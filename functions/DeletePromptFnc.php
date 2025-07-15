@@ -29,9 +29,9 @@
 
 function DeletePromptCommon($title, $action = 'delete') {
     $tmp_REQUEST = $_REQUEST;
-
-    unset($tmp_REQUEST['delete_ok']);
-
+    $tmp_REQUEST['values']['TITLE']='';
+    $tmp_REQUEST['values']['DESCRIPTION']='';
+    unset($tmp_REQUEST['delete_ok']);    
     $PHP_tmp_SELF = PreparePHP_SELF($tmp_REQUEST);
     $PHP_tmp_SELF = str_replace(' ', '+', $PHP_tmp_SELF);
 

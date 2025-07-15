@@ -465,7 +465,7 @@ if ($_REQUEST['modfunc'] == 'detail') {
 
         echo '<SCRIPT language=javascript> window.close();</script>';
     } elseif (clean_param($_REQUEST['button'], PARAM_ALPHAMOD) == _delete) {
-        if (DeletePromptCommon(_event, 'delete', 'y')) {
+        if (DeletePromptCommon(_event, _delete, 'y')) {
 
             DBQuery("DELETE FROM calendar_events WHERE ID='" . paramlib_validation($column = 'EVENT_ID', $_REQUEST['event_id']) . "'");
             echo '<SCRIPT language=javascript>window.location.href = "Modules.php?modname=' . $_REQUEST['modname'] . '&calendar_id=' . $_REQUEST['calendar_id'] . '&year=' . $_REQUEST['year'] . '&month=' . MonthNWSwitch($_REQUEST['month'], 'tochar') . '"; window.close();</script>';
@@ -657,7 +657,7 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'list_events') {
     echo '<h6 class="panel-title"><A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="text-primary"><i class="icon-square-left"></i>' . _backToCalendar . '</A></h6>';
     echo '</div>'; //.col-md-6
     echo '<div class="col-md-8 text-md-right text-lg-right">';
-    echo '<div class="form-inline inline-block"><div class="inline-block">' . PrepareDateSchedule($start_date, 'start') . '</div><label>&nbsp; &nbsp; - &nbsp; &nbsp;</label><div class="inline-block">' . PrepareDateSchedule($end_date, 'end') . '</div> &nbsp; &nbsp;<INPUT type=submit class="btn btn-primary" value=' . _go . '></div>';
+    //echo '<div class="form-inline inline-block"><div class="inline-block">' . PrepareDateSchedule($start_date, 'start') . '</div><label>&nbsp; &nbsp; - &nbsp; &nbsp;</label><div class="inline-block">' . PrepareDateSchedule($end_date, 'end') . '</div> &nbsp; &nbsp;<INPUT type=submit class="btn btn-primary" value=' . _go . '></div>';
     echo '</div>'; //.col-md-6
     echo '</div>';
 
@@ -843,21 +843,21 @@ if (!$_REQUEST['modfunc']) {
             $day_time = mktime(0, 0, 0, $_REQUEST['month'], $i, $_REQUEST['year']);
             $date = date('d-M-y', $day_time);
             echo "<TD width=100 class=" . ($calendar_RET[$date][1]['MINUTES'] ? $calendar_RET[$date][1]['MINUTES'] == '999' ? 'calendar-active' : 'calendar-extra' : 'calendar-holiday') . " valign=top><table width='100%'><tr><td width=5 valign=top>$i</td>";
-            if (AllowEdit()) {
-                if (User('PROFILE') == 'admin') {
-                    if ($calendar_RET[$date][1]['MINUTES'] == '999') {
-                        echo '<TD class="text-right">' . CheckboxInput_Calendar($calendar_RET[$date], "all_day[$date]", '', '', false, '<i class="icon-checkbox-checked"></i> ', '', true, 'id=all_day_' . $i . ' onclick="return system_wide(' . $i . ');"') . '</TD>';
-                        echo '</TR>';
-                    } else {
-                        echo "<TD class=\"text-right\"><INPUT type=checkbox name=all_day[$date] value=Y id=all_day_$i onclick='return system_wide($i);'></TD>";
-                        echo '</TR>';
-                        echo '<tr><td colspan=2>';
-                        //echo "<div id=syswide_holi_$i style=display:none><span>System Wide </span><INPUT type=checkbox name=show_all[$date] value=Y></div>";
-                        echo TextInput($calendar_RET[$date][1]['MINUTES'], "minutes[$date]", '', 'size=3 class=cell_small onkeydown="return numberOnly(event);"');
-                        echo '</TD></TR>';
-                    }
-                }
-            }
+            // if (AllowEdit()) {
+            //     if (User('PROFILE') == 'admin') {
+            //         if ($calendar_RET[$date][1]['MINUTES'] == '999') {
+            //             echo '<TD class="text-right">' . CheckboxInput_Calendar($calendar_RET[$date], "all_day[$date]", '', '', false, '<i class="icon-checkbox-checked"></i> ', '', true, 'id=all_day_' . $i . ' onclick="return system_wide(' . $i . ');"') . '</TD>';
+            //             echo '</TR>';
+            //         } else {
+            //             echo "<TD class=\"text-right\"><INPUT type=checkbox name=all_day[$date] value=Y id=all_day_$i onclick='return system_wide($i);'></TD>";
+            //             echo '</TR>';
+            //             echo '<tr><td colspan=2>';
+            //             //echo "<div id=syswide_holi_$i style=display:none><span>System Wide </span><INPUT type=checkbox name=show_all[$date] value=Y></div>";
+            //             echo TextInput($calendar_RET[$date][1]['MINUTES'], "minutes[$date]", '', 'size=3 class=cell_small onkeydown="return numberOnly(event);"');
+            //             echo '</TD></TR>';
+            //         }
+            //     }
+            // }
             if (count($blocks_RET) > 0) {
                 unset($options);
                 foreach ($blocks_RET as $block)
@@ -867,21 +867,21 @@ if (!$_REQUEST['modfunc']) {
             }
             echo "</td></tr>";
 
-            if (AllowEdit()) {
-                if (User('PROFILE') == 'admin') {
-                    if ($calendar_RET[$date][1]['MINUTES'] == '999') {
-                        echo '<tr><td colspan="2"><TABLE cellpadding=0 cellspacing=0 >';
-                        echo '<TR><TD><div id=syswide_holi_' . $i . ' style="display:none; padding-top: 10px;"><label class="checkbox-inline"><INPUT type=checkbox name=show_all[' . $date . '] value=Y> ' . _systemWide . '</label></div></TD></TR>';
-                        echo '</TABLE></td></tr>';
-                    } else {
-                        echo "<tr><td colspan='2'><TABLE cellpadding=0 cellspacing=0 >";
-                        echo "<div id=syswide_holi_$i style='display:none; padding-top: 10px;'><label class='checkbox-inline'><INPUT type=checkbox name=show_all[$date] value=Y>" . _systemWide . "</label></div>";
-                        echo "</TABLE></td></tr>";
-                    }
-                }
-            }
+            // if (AllowEdit()) {
+            //     if (User('PROFILE') == 'admin') {
+            //         if ($calendar_RET[$date][1]['MINUTES'] == '999') {
+            //             echo '<tr><td colspan="2"><TABLE cellpadding=0 cellspacing=0 >';
+            //             echo '<TR><TD><div id=syswide_holi_' . $i . ' style="display:none; padding-top: 10px;"><label class="checkbox-inline"><INPUT type=checkbox name=show_all[' . $date . '] value=Y> ' . _systemWide . '</label></div></TD></TR>';
+            //             echo '</TABLE></td></tr>';
+            //         } else {
+            //             echo "<tr><td colspan='2'><TABLE cellpadding=0 cellspacing=0 >";
+            //             echo "<div id=syswide_holi_$i style='display:none; padding-top: 10px;'><label class='checkbox-inline'><INPUT type=checkbox name=show_all[$date] value=Y>" . _systemWide . "</label></div>";
+            //             echo "</TABLE></td></tr>";
+            //         }
+            //     }
+            // }
 
-            echo "<tr><TD colspan=2 height=50 valign=top>";
+            echo "<tr><TD colspan=2 height=80 valign=top>";
 
             if (is_countable($events_RET[$date]) && count($events_RET[$date])) {
                 echo '<TABLE cellpadding=2 cellspacing=2 border=0>';
@@ -890,9 +890,9 @@ if (!$_REQUEST['modfunc']) {
                     if (strlen($event['TITLE']) < 8)
                         $e_title = $event['TITLE'];
                     else
-                        $e_title = substr($event['TITLE'], 0, 8) . '....';
+                        $e_title = substr($event['TITLE'], 0, 70) . '';
 
-                    echo '<TR><TD>' . button("dot", "0000FF", "", "6") . '</TD><TD> <A class=\"event\" HREF=# onclick="CalendarModal(\'' . $event['ID'] . '\',' . $_REQUEST['calendar_id'] . ',\'' . $date . '\',\'' . $_REQUEST['year'] . '\',\'' . MonthNWSwitch($_REQUEST['month']) . '\',\'tochar\')"; return false;>' . ($event['TITLE'] ? $e_title : '***') . '</b></A></TD></TR>';
+                    echo '<TR><TD>' . button("dot", "0000FF", "", "6") . '</TD><TD> <A style="font-size: 12px;" class=\"event\" HREF=# onclick="CalendarModal(\'' . $event['ID'] . '\',' . $_REQUEST['calendar_id'] . ',\'' . $date . '\',\'' . $_REQUEST['year'] . '\',\'' . MonthNWSwitch($_REQUEST['month']) . '\',\'tochar\')"; return false;>' . ($event['TITLE'] ? $e_title : '***') . '</b></A></TD></TR>';
                 }
                 if (is_countable($assignments_RET[$date]) && count($assignments_RET[$date])) {
                     foreach ($assignments_RET[$date] as $event)
@@ -910,7 +910,7 @@ if (!$_REQUEST['modfunc']) {
             echo "</td></tr>";
             if (AllowEdit()) {
                 if (User('PROFILE') == 'admin') {
-                    echo '<tr><td valign=bottom align=left><button type="button" class="btn btn-primary btn-icon btn-xs" data-toggle="modal"  data-event-id=new onclick="CalendarModal(\'new\',' . $_REQUEST['calendar_id'] . ',\'' . $date . '\',\'' . $_REQUEST['year'] . '\',\'' . MonthNWSwitch($_REQUEST['month']) . '\',\'tochar\');"><i class=icon-plus3 ></i></button></td></tr>';
+                    echo '<tr><td valign=bottom align=left><button type="button" class="btn btn-primary btn-icon btn-xs " data-toggle="modal"  data-event-id=new onclick="CalendarModal(\'new\',' . $_REQUEST['calendar_id'] . ',\'' . $date . '\',\'' . $_REQUEST['year'] . '\',\'' . MonthNWSwitch($_REQUEST['month']) . '\',\'tochar\');"><i style="line-height: 0.3; ">+</i></button></td></tr>';
                 }
             }
             echo "</table></TD>";

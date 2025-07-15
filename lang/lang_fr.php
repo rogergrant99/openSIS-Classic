@@ -49,7 +49,7 @@ define("_upcomingEvents", "évènements à venir");
 define("_upcomingEventWasFound", "A été trouvé l'événement à venir.");
 define("_upcomingEventsWereFound", "Événements à venir ont été trouvés.");
 define("_date", "Date");
-define("_event", "Un événement");
+define("_event", "événement");
 define("_description", "La description");
 define("_teachersHaveMissingAttendance", "Certains enseignants n'ont pas pris les présences");
 define("_go_To", "Aller à");
