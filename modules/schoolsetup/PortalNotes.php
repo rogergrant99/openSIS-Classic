@@ -296,13 +296,13 @@ function _makePublishing($value, $name)
 	}
 	$return .= '';
 
-	if (!$profiles_RET)
-		$profiles_RET = DBGet(DBQuery("SELECT ID,TITLE FROM user_profiles ORDER BY ID"));
+	//if (!$profiles_RET)
+		$profiles_RET = DBGet(DBQuery("SELECT ID,TITLE FROM user_profiles where id in(4,3,2) ORDER BY ID"));
 
 	$return .= '<h4 class="p-t-15">' . _visibleTo . '</h4>';
-	foreach (array('all' => _allSchool, 'admin' => _administratorWCustom, 'teacher' => _teacherWCustom, 'parent' => _parentWCustom) as $profile_id => $profile)
-		$return .= "<div class=\"checkbox checkbox-switch switch-success switch-xs \"><label><INPUT type=checkbox name=profiles[$id][$profile_id] value=Y" . (strpos($THIS_RET['PUBLISHED_PROFILES'], ",$profile_id,") !== false ? ' CHECKED' : '') . "><span></span>$profile</label></div>";
-	$i = 3;
+	// foreach (array('all' => _allSchool, 'admin' => _administratorWCustom, 'teacher' => _teacherWCustom, 'parent' => _parentWCustom) as $profile_id => $profile)
+	// 	$return .= "<div class=\"checkbox checkbox-switch switch-success switch-xs \"><label><INPUT type=checkbox name=profiles[$id][$profile_id] value=Y" . (strpos($THIS_RET['PUBLISHED_PROFILES'], ",$profile_id,") !== false ? ' CHECKED' : '') . "><span></span>$profile</label></div>";
+	// $i = 3;
 	foreach ($profiles_RET as $profile) {
 		$i++;
 		if ($profile['TITLE'] == "Super Administrator") {
