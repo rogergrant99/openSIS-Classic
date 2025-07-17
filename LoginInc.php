@@ -123,9 +123,10 @@ require_once('functions/langFnc.php');
                             <form name=loginform method='post' class="text-left" action='index.php'>
                                 <?php
                                 if ($maintain_qr[1]['SYSTEM_MAINTENANCE_SWITCH'] == 'Y') {
+                                    
                                     ?>
                                     <div class="form-group">
-                                        <h4 class="text-center text-danger"><i class="icon-warning22" style="font-size: 50px;"></i><br/><br/>openSIS is under maintenance and login privileges have been turned off. Please log in when it is available again.</h4>
+                                        <h4 class="text-center text-danger"><i class="icon-warning22" style="font-size: 50px;"></i><br/><br/><?php echo $log_msg[1]['MESSAGE'];?></h4>
                                     </div> 
                                     <?php
                                 }

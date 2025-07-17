@@ -843,21 +843,21 @@ if (!$_REQUEST['modfunc']) {
             $day_time = mktime(0, 0, 0, $_REQUEST['month'], $i, $_REQUEST['year']);
             $date = date('d-M-y', $day_time);
             echo "<TD width=100 class=" . ($calendar_RET[$date][1]['MINUTES'] ? $calendar_RET[$date][1]['MINUTES'] == '999' ? 'calendar-active' : 'calendar-extra' : 'calendar-holiday') . " valign=top><table width='100%'><tr><td width=5 valign=top>$i</td>";
-            // if (AllowEdit()) {
-            //     if (User('PROFILE') == 'admin') {
-            //         if ($calendar_RET[$date][1]['MINUTES'] == '999') {
-            //             echo '<TD class="text-right">' . CheckboxInput_Calendar($calendar_RET[$date], "all_day[$date]", '', '', false, '<i class="icon-checkbox-checked"></i> ', '', true, 'id=all_day_' . $i . ' onclick="return system_wide(' . $i . ');"') . '</TD>';
-            //             echo '</TR>';
-            //         } else {
-            //             echo "<TD class=\"text-right\"><INPUT type=checkbox name=all_day[$date] value=Y id=all_day_$i onclick='return system_wide($i);'></TD>";
-            //             echo '</TR>';
-            //             echo '<tr><td colspan=2>';
-            //             //echo "<div id=syswide_holi_$i style=display:none><span>System Wide </span><INPUT type=checkbox name=show_all[$date] value=Y></div>";
-            //             echo TextInput($calendar_RET[$date][1]['MINUTES'], "minutes[$date]", '', 'size=3 class=cell_small onkeydown="return numberOnly(event);"');
-            //             echo '</TD></TR>';
-            //         }
-            //     }
-            // }
+            if (AllowEdit()) {
+                if (User('PROFILE') == 'admin') {
+                    if ($calendar_RET[$date][1]['MINUTES'] == '999') {
+                        echo '<TD class="text-right">' . CheckboxInput_Calendar($calendar_RET[$date], "all_day[$date]", '', '', false, '<i class="icon-checkbox-checked"></i> ', '', true, 'id=all_day_' . $i . ' onclick="return system_wide(' . $i . ');"') . '</TD>';
+                        echo '</TR>';
+                    } else {
+                        echo "<TD class=\"text-right\"><INPUT type=checkbox name=all_day[$date] value=Y id=all_day_$i onclick='return system_wide($i);'></TD>";
+                        echo '</TR>';
+                        echo '<tr><td colspan=2>';
+                        //echo "<div id=syswide_holi_$i style=display:none><span>System Wide </span><INPUT type=checkbox name=show_all[$date] value=Y></div>";
+                        echo TextInput($calendar_RET[$date][1]['MINUTES'], "minutes[$date]", '', 'size=3 class=cell_small onkeydown="return numberOnly(event);"');
+                        echo '</TD></TR>';
+                    }
+                }
+            }
             if (count($blocks_RET) > 0) {
                 unset($options);
                 foreach ($blocks_RET as $block)
