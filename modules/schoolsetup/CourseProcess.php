@@ -82,7 +82,7 @@ switch ($task) {
                 define("_classRoom","Salle de cours");
                 define("_period","Période");
                 define("_days","Journées");
-                define("_takesAttendance","La participation prend");
+                define("_takesAttendance","Prende les présences");
                 define("_room", "Chambre");
                 define("_time", "Temps");
                 define("_saveContinue", "Enregistrer continuer");
@@ -146,7 +146,7 @@ switch ($task) {
                 define("_classRoom","Salle de cours");
                 define("_period","Période");
                 define("_days","Journées");
-                define("_takesAttendance","La participation prend");
+                define("_takesAttendance","Prende les présences");
                 define("_room", "Chambre");
                 define("_time", "Temps");
                 define("_saveContinue", "Enregistrer continuer");

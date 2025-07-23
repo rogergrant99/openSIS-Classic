@@ -2068,7 +2068,7 @@ if (!$_REQUEST['modfunc'] && !$_REQUEST['course_modfunc'] && !$_REQUEST['action'
         $header .= '<div class="col-sm-6 col-lg-4">';
         $header .= '<div class="form-group"><label class="col-md-4 control-label text-right">' . _secondaryTeacher . '</label><div class="col-md-8">' . SelectInput($RET['SECONDARY_TEACHER_ID'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][SECONDARY_TEACHER_ID]', '', $teachers, 'N/A', 'onchange="validate_cp_teacher_fields()"', $div) . '<input type="hidden" id="hidden_secondary_teacher_id" value="' . $RET['SECONDARY_TEACHER_ID'] . '"></div></div>';
         $header .= '<div class="form-group"><label class="col-md-3 control-label text-right">'._teriaryTeacher.'</label><div class="col-md-8">' . SelectInput($RET['TERTIARY_TEACHER_ID'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][TERTIARY_TEACHER_ID]', '', $teachers, 'N/A', 'onchange="validate_cp_teacher_fields()"', $div) . '<input type="hidden" id="hidden_tertiary_teacher_id" value="' . $RET['TERTIARY_TEACHER_ID'] . '"></div></div>';
-        $header .= '</div>allo'; //.col-sm-6.col-lg-4
+        $header .= '</div>'; //.col-sm-6.col-lg-4
         $header .= '<div class="col-sm-6 col-lg-4">';
         $header .= '<div class="form-group"><label class="col-md-4 control-label text-right">' . _seats . '</label><div class="col-md-8"><div class="col-md-4">' . TextInput($RET['TOTAL_SEATS'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][TOTAL_SEATS]', '', 'size=4 class=form-control', $div) . '</div>';
         if ($_REQUEST['course_period_id'] != 'new')

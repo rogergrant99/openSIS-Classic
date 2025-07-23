@@ -424,13 +424,13 @@ echo '</ul>
 
 echo '<div class="navbar-text pull-right">';
 if (User('PROFILE') == 'teacher') {
-    echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
+    //echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
 } elseif (User('PROFILE') == 'student') {
-    echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
+    //echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
 } elseif (User('PROFILE') == 'parent') {
-    echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
+    //echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
 } else {
-    echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
+    //echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
 }
 echo '</div>';
 if (User('PROFILE') == 'teacher') {
@@ -499,37 +499,38 @@ if (User('PROFILE') == 'teacher') {
         $_SESSION['UserCoursePeriod'] = $RET[1]['COURSE_PERIOD_ID'];
     }
 
-    echo "<SELECT class=\"select\" style=\"width: 200px;\" name=period onChange='this.form.submit();' >";
-    if (count($RET) > 0) {
-        $flag = 0;
-        foreach ($RET as $period) {
-            $x_sel = "";
-            $period_det = DBGet(DBQuery('SELECT sp.TITLE as PERIOD_NAME,cpv.DAYS,cpv.COURSE_PERIOD_DATE FROM course_period_var cpv,school_periods sp WHERE cpv.ID=' . $period['ID'] . ' AND cpv.PERIOD_ID=sp.PERIOD_ID'));
-            $period_det = $period_det[1];
-            $days_arr = array("Monday" => 'M', "Tuesday" => 'T', "Wednesday" => 'W', "Thursday" => 'H', "Friday" => 'F', "Saturday" => 'S', "Sunday" => 'U');
-            if ($period_det['DAYS'] == '') {
-                $period_det['DAYS'] = date('l', strtotime($period_det['COURSE_PERIOD_DATE']));
-                $period_det['DAYS'] = $days_arr[$period_det['DAYS']];
-            }
+    // Remove period select
+    // echo "<SELECT class=\"select\" style=\"width: 200px;\" name=period onChange='this.form.submit();' >";
+    // if (count($RET) > 0) {
+    //     $flag = 0;
+    //     foreach ($RET as $period) {
+    //         $x_sel = "";
+    //         $period_det = DBGet(DBQuery('SELECT sp.TITLE as PERIOD_NAME,cpv.DAYS,cpv.COURSE_PERIOD_DATE FROM course_period_var cpv,school_periods sp WHERE cpv.ID=' . $period['ID'] . ' AND cpv.PERIOD_ID=sp.PERIOD_ID'));
+    //         $period_det = $period_det[1];
+    //         $days_arr = array("Monday" => 'M', "Tuesday" => 'T', "Wednesday" => 'W', "Thursday" => 'H', "Friday" => 'F', "Saturday" => 'S', "Sunday" => 'U');
+    //         if ($period_det['DAYS'] == '') {
+    //             $period_det['DAYS'] = date('l', strtotime($period_det['COURSE_PERIOD_DATE']));
+    //             $period_det['DAYS'] = $days_arr[$period_det['DAYS']];
+    //         }
 
 
-            if ($flag == 0) {
-                $x_sel = " SELECTED=SELECTED";
-                $flag = 1;
-            }
+    //         if ($flag == 0) {
+    //             $x_sel = " SELECTED=SELECTED";
+    //             $flag = 1;
+    //         }
 
-            //echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period['TITLE'] . " - " . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
-            echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
-            $_SESSION['UserPeriod'] = $period['PERIOD_ID'];
-            if (CpvId() == $period['ID']) {
+    //         //echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period['TITLE'] . " - " . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
+    //         echo "<OPTION id=$period[COURSE_PERIOD_ID] value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period_det['PERIOD_NAME'] . " - " . $period_det['DAYS'] . "</OPTION>";
+    //         $_SESSION['UserPeriod'] = $period['PERIOD_ID'];
+    //         if (CpvId() == $period['ID']) {
 
-                $_SESSION['CpvId'] = $period['ID'];
-                $_SESSION['UserCoursePeriod'] = $period['COURSE_PERIOD_ID'];
-            }
-        }
-    } else {
-        echo '<OPTION value="">n/a</OPTION>';
-    }
+    //             $_SESSION['CpvId'] = $period['ID'];
+    //             $_SESSION['UserCoursePeriod'] = $period['COURSE_PERIOD_ID'];
+    //         }
+    //     }
+    // } else {
+    //     echo '<OPTION value="">n/a</OPTION>';
+    // }
     echo "</SELECT>";
     echo "</FORM></div></li></ul>";
 }
