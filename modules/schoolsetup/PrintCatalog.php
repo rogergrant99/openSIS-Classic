@@ -87,7 +87,7 @@ echo '<!DOCTYPE html>
         table {
             border-collapse: collapse;
             margin: 15px;
-            font-size:11px;
+            font-size:10px;
             font-family: Arial, sans-serif;
         }
         

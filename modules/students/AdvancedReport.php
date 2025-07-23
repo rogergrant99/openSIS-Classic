@@ -208,28 +208,28 @@ if (!$_REQUEST['modfunc']) {
         echo "</FORM>";
     } else {
         $extra['search'] .= '<div class="row">';
-        $extra['search'] .= '<div class="col-lg-6">';
+        // $extra['search'] .= '<div class="col-lg-6">';
 
-        Widgets('course');
-        Widgets('activity');
-        $extra['search'] .= '<div class="well mb-20">';
-        Widgets('absences');
-        $extra['search'] .= '</div>'; //.well
-        $extra['search'] .= '<div class="well mb-20">';
-        Widgets('gpa');
-        $extra['search'] .= '</div>'; //.well
-        $extra['search'] .= '<div class="form-group"><label class="control-label col-lg-4 text-right">' . _includeCoursesActiveAsOf . ' </label><div class="col-lg-8">' . DateInputAY('', 'include_active_date', 3) . '</div></div>';
+        // Widgets('course');
+        // Widgets('activity');
+        // $extra['search'] .= '<div class="well mb-20">';
+        // Widgets('absences');
+        // $extra['search'] .= '</div>'; //.well
+        // $extra['search'] .= '<div class="well mb-20">';
+        // Widgets('gpa');
+        // $extra['search'] .= '</div>'; //.well
+        // $extra['search'] .= '<div class="form-group"><label class="control-label col-lg-4 text-right">' . _includeCoursesActiveAsOf . ' </label><div class="col-lg-8">' . DateInputAY('', 'include_active_date', 3) . '</div></div>';
 
-        $extra['search'] .= '</div><div class="col-lg-6">';
+        // $extra['search'] .= '</div><div class="col-lg-6">';
 
-        Widgets('request');
-        Widgets('eligibility');
-        $extra['search'] .= '<div class="well mb-20">';
-        Widgets('class_rank');
-        $extra['search'] .= '</div>'; //.well
-        $extra['search'] .= '<div class="well mb-20">';
-        Widgets('letter_grade');
-        $extra['search'] .= '</div>'; //.well
+        // Widgets('request');
+        // Widgets('eligibility');
+        // $extra['search'] .= '<div class="well mb-20">';
+        // Widgets('class_rank');
+        // $extra['search'] .= '</div>'; //.well
+        // $extra['search'] .= '<div class="well mb-20">';
+        // Widgets('letter_grade');
+        // $extra['search'] .= '</div>'; //.well
 
         $extra['search'] .= '</div>'; //.col-lg-6
         $extra['search'] .= '</div>'; //.row

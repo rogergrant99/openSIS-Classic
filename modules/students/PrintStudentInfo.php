@@ -959,46 +959,46 @@ if (!$_REQUEST['modfunc']) {
     if (isset($_SESSION['student_id']) && $_SESSION['student_id'] != '') {
         $extra['WHERE'] .= ' AND s.STUDENT_ID=' . $_SESSION['student_id'];
     }
-    $extra['functions'] = array('CHECKBOX' => '_makeChooseCheckbox');
-    $extra['columns_before'] = array('CHECKBOX' => '</A><INPUT type=checkbox value=Y name=controller onclick="checkAllDtMod(this,\'st_arr\');"><A>');
-    $extra['options']['search'] = false;
-    $extra['new'] = true;
+    // $extra['functions'] = array('CHECKBOX' => '_makeChooseCheckbox');
+    // $extra['columns_before'] = array('CHECKBOX' => '</A><INPUT type=checkbox value=Y name=controller onclick="checkAllDtMod(this,\'st_arr\');"><A>');
+    // $extra['options']['search'] = false;
+    // $extra['new'] = true;
 
 
-    $extra['search'] .= '<div class="row">';
-    $extra['search'] .= '<div class="col-md-6">';
-    Widgets('course');
-    $extra['search'] .= '</div><div class="col-md-6">';
-    Widgets('mailing_labels');
-    $extra['search'] .= '</div>';
-    $extra['search'] .= '</div>';
+    // $extra['search'] .= '<div class="row">';
+    // $extra['search'] .= '<div class="col-md-6">';
+    // Widgets('course');
+    // $extra['search'] .= '</div><div class="col-md-6">';
+    // Widgets('mailing_labels');
+    // $extra['search'] .= '</div>';
+    // $extra['search'] .= '</div>';
 
-    $extra['search'] .= '<div class="row">';
-    $extra['search'] .= '<div class="col-md-6">';
-    Widgets('request');
-    $extra['search'] .= '</div><div class="col-md-6">';
-    Widgets('activity');
-    $extra['search'] .= '</div>';
-    $extra['search'] .= '</div>';
+    // $extra['search'] .= '<div class="row">';
+    // $extra['search'] .= '<div class="col-md-6">';
+    // Widgets('request');
+    // $extra['search'] .= '</div><div class="col-md-6">';
+    // Widgets('activity');
+    // $extra['search'] .= '</div>';
+    // $extra['search'] .= '</div>';
 
-    $extra['search'] .= '<div class="row">';
-    $extra['search'] .= '<div class="col-md-6">';
-    $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
-    Widgets('gpa');
-    $extra['search'] .= '</div>'; //.well
-    $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
-    Widgets('letter_grade');
-    $extra['search'] .= '</div>'; //.well
-    $extra['search'] .= '</div><div class="col-md-6">';
-    $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
-    Widgets('class_rank');
-    $extra['search'] .= '</div>'; //.well
-    $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
-    Widgets('absences');
-    $extra['search'] .= '</div>'; //.well
-    Widgets('eligibility');
-    $extra['search'] .= '</div>';
-    $extra['search'] .= '</div>';
+    // $extra['search'] .= '<div class="row">';
+    // $extra['search'] .= '<div class="col-md-6">';
+    // $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
+    // Widgets('gpa');
+    // $extra['search'] .= '</div>'; //.well
+    // $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
+    // Widgets('letter_grade');
+    // $extra['search'] .= '</div>'; //.well
+    // $extra['search'] .= '</div><div class="col-md-6">';
+    // $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
+    // Widgets('class_rank');
+    // $extra['search'] .= '</div>'; //.well
+    // $extra['search'] .= '<div class="well mb-20 pt-5 pb-5">';
+    // Widgets('absences');
+    // $extra['search'] .= '</div>'; //.well
+    // Widgets('eligibility');
+    // $extra['search'] .= '</div>';
+    // $extra['search'] .= '</div>';
 
     Search('student_id', $extra);
     if ($_REQUEST['search_modfunc'] == 'list') {
