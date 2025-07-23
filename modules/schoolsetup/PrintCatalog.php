@@ -165,7 +165,7 @@ foreach ($get_periods as $key => $period) {
     if( $period["ATTENDANCE"]=='Y' ){
     echo '     <!-- Rows 1-5 -->
                 <tr>
-                    <td class="spanning-cell" rowspan="5">'. $get_periods[$key]["TITLE"] .'<br> ' . $get_periods[$key]["START_TIME"] . ' - '. $get_periods[$key]["END_TIME"] . '</td>
+                    <td class="spanning-cell" rowspan="5">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
                     <td class="regular-cell1">1</td>
                     <td class="data-cell" class="data-cell" style="background-color:rgb('. $data[8][$get_periods[$key]["START_TIME"]]['COLOUR']['M'] .');  ">'. $data[8][$get_periods[$key]["START_TIME"]]['M']. '</td>
                     <td class="data-cell" style="background-color:rgb('. $data[8][$get_periods[$key]["START_TIME"]]['COLOUR']['T'] .');  ">'. $data[8][$get_periods[$key]["START_TIME"]]['T']. '</td>
@@ -208,7 +208,7 @@ foreach ($get_periods as $key => $period) {
     ';
     }else{
             echo'<tr>
-                <td class="lunch" rowspan="1">'. $get_periods[$key]["TITLE"] .'<br> ' . $get_periods[$key]["START_TIME"] . ' - '. $get_periods[$key]["END_TIME"] . '</td>
+                <td class="lunch" rowspan="1">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
                 <td class="lunch"></td>
                 <td class="lunch"></tdr>
                 <td class="lunch"></td>
@@ -282,7 +282,7 @@ foreach ($get_periods as $key => $period) {
     if( $period["ATTENDANCE"]=='Y' ){
     echo '     <!-- Rows 1-5 -->
             <tr>
-                <td class="spanning-cell" rowspan="6">'. $get_periods[$key]["TITLE"] .'<br> ' . $get_periods[$key]["START_TIME"] . ' - '. $get_periods[$key]["END_TIME"] . '</td>
+                <td class="spanning-cell" rowspan="6">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
                 <td class="regular-cell1">1</td>
                 <td class="data-cell" style="background-color:rgb('. $data[2][$get_periods[$key]["START_TIME"]]['COLOUR']['M'] .');  ">'. $data[2][$get_periods[$key]["START_TIME"]]['M']. '</td>
                 <td class="data-cell" style="background-color:rgb('. $data[2][$get_periods[$key]["START_TIME"]]['COLOUR']['T'] .');  ">'. $data[2][$get_periods[$key]["START_TIME"]]['T']. '</td>
@@ -334,7 +334,7 @@ foreach ($get_periods as $key => $period) {
     ';
     }else{
             echo'<tr>
-                <td class="lunch last-tr" rowspan="1">'. $get_periods[$key]["TITLE"] .'<br> ' . $get_periods[$key]["START_TIME"] . ' - '. $get_periods[$key]["END_TIME"] . '</td>
+                <td class="lunch last-tr" rowspan="1">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
                 <td class="lunch last-tr"></td>
                 <td class="lunch last-tr"></tdr>
                 <td class="lunch last-tr"></td>
