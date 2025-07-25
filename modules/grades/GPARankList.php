@@ -40,7 +40,7 @@ echo '<tr>';
 echo '<th style="text-align: left; padding: 10px;">ID</th>';
 echo '<th style="text-align: left; padding: 10px;">Cours</th>';
 echo '<th style="text-align: left; padding: 10px;">Types de devoir</th>';
-echo '<th style="text-align: center; padding: 10px;">Pondération %</th>';
+echo '<th style="text-align: center; padding: 10px;">Pondération total %</th>';
 echo '<th style="text-align: center; padding: 10px;">Types présent ?</th>';
 echo '</tr>';
 echo '</thead>';
@@ -63,7 +63,7 @@ foreach($courses as $individual) {
         $typeList = array();
         foreach($types as $type) {
             $typeList[] = htmlspecialchars($type['TITLE']) . 
-                         ($type['FINAL_GRADE_PERCENT'] ? ' (' . $type['FINAL_GRADE_PERCENT'] . '%)' : '');
+                         ($type['FINAL_GRADE_PERCENT'] ? ' (' . number_format($type['FINAL_GRADE_PERCENT'] * 100) . '%)' : '');
             $total+=$type['FINAL_GRADE_PERCENT'] ;
         }
         echo implode('<br>', $typeList);
