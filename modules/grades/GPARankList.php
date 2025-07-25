@@ -47,7 +47,7 @@ echo '</thead>';
 echo '<tbody>';
 
 foreach($courses as $individual) {
-    $types = DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' . $individual['COURSE_PERIOD_ID'] . ' '));
+    $types = DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' . $individual['COURSE_PERIOD_ID'] . ' AND TITLE != \'1ère communication\' '));
     
     $hasTypes = count($types) > 0;
     if($hasTypes) $coursesWithType++;

@@ -147,8 +147,8 @@ function CadoTeacherFix($next_syear)
     //  echo '<pre>'; print_r($oldcourses); echo '</pre>';
 
     foreach($oldcourses as $individual) {
-            $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
-//   echo '<pre>'; print_r($individual); echo '</pre>';
+        $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
+        //   echo '<pre>'; print_r($individual); echo '</pre>';
         foreach($types as $type){
             if (!$type['FINAL_GRADE_PERCENT'])  
                 $type['FINAL_GRADE_PERCENT']='null';
@@ -165,8 +165,17 @@ function CadoTeacherFix($next_syear)
             }
         }
     }
-    // DBQuery('INSERT INTO gradebook_assignment_types (title,final_grade_percent,staff_id,course_period_id,course_id) SELECT \'1ère communication\' as title, NULL as final_grade_percent, teacher_id as staff_id, course_period_id as course_period_id, course_id as course_id FROM course_periods WHERE  syear =  \''.$next_syear.'\'');
-    // Assigments 1ere communicatio
+    $orphanCourses=DBGet(DBQuery('select * from course_details where  rollover_id IS NULL AND syear =' .$this_year. ''));
+    foreach($orphanCourses as $orphanCourse){
+        // echo '<pre>'; print_r($orphanCourse); echo '</pre>';
+        DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$orphanCourse['TEACHER_ID'].','.$orphanCourse['COURSE_PERIOD_ID'].','.$orphanCourse['COURSE_ID'].',\'1ère communication\',NULL)');
+        $newTypeID=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types where  COURSE_PERIOD_ID='.$orphanCourse['COURSE_PERIOD_ID'].' AND COURSE_ID='.$orphanCourse['COURSE_ID'].' '));
+        // echo '<pre>'; print_r($newTypeID); echo '</pre>';
+        echo $newTypeID[1]['ASSIGNMENT_TYPE_ID']; echo '<br>';
+        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$orphanCourse['TEACHER_ID'] . ',' .$orphanCourse['MARKING_PERIOD_ID']. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $orphanCourse['COURSE_PERIOD_ID'] . ' , \'En voie de réussite\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
+        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$orphanCourse['TEACHER_ID'] . ',' .$orphanCourse['MARKING_PERIOD_ID']. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $orphanCourse['COURSE_PERIOD_ID'] . ' , \'Complète et remet ses travaux\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
+        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$orphanCourse['TEACHER_ID'] . ',' .$orphanCourse['MARKING_PERIOD_ID']. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $orphanCourse['COURSE_PERIOD_ID'] . ' , \'Attitude et comportement\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'34\' , \'1\' ,  \''.$now.'\' )');
+    }
 }
 
 
