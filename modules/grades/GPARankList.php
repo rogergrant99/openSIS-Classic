@@ -90,13 +90,13 @@ echo '</table>';
 
 // Summary information
 echo '<div style="margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007cba;">';
-echo '<h3>Summary</h3>';
-echo '<p><strong>Courses with Assignment Types:</strong> ' . $coursesWithType . ' out of ' . count($courses) . '</p>';
-echo '<p><strong>Courses without Assignment Types:</strong> ' . (count($courses) - $coursesWithType) . '</p>';
+echo '<h3>Sommaire</h3>';
+echo '<p><strong>Cours avec types de devoirs:</strong> ' . $coursesWithType . ' sur ' . count($courses) . '</p>';
+echo '<p><strong>Cours sans types de devoirs:</strong> ' . (count($courses) - $coursesWithType) . '</p>';
 
 if(count($courses) > 0) {
     $percentageWithTypes = round(($coursesWithType / count($courses)) * 100, 1);
-    echo '<p><strong>Percentage Configured:</strong> ' . $percentageWithTypes . '%</p>';
+    echo '<p><strong>Pourcentage de cours configurés:</strong> ' . $percentageWithTypes . '%</p>';
 }
 
 echo '</div>';
