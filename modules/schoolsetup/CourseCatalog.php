@@ -33,7 +33,7 @@ if (isset($_SESSION['language']) && $_SESSION['language'] == 'fr'){
     define("_classRoom", "Salle de cours");
     define("_period", "Période");
     define("_days", "Journées");
-    define("_takesAttendance", "La participation prend");
+    define("_takesAttendance", "Prende les présences");
     define("_room", "Chambre");
     define("_time", "Temps");
 } elseif (isset($_SESSION['language']) && $_SESSION['language'] == 'es') {

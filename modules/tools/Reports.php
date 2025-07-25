@@ -142,9 +142,13 @@ function CadoTeacherFix($next_syear)
     $start=$get_dates[1]['POST_START_DATE'];
     $end=$get_dates[1]['POST_END_DATE'];
     $now=date('Y-m-d');
-    $oldcourses=DBGet(DBQuery('SELECT TEACHER_ID,COURSE_ID,COURSE_PERIOD_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .$this_year. ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as NEW_COURSE_PERIOD_ID from course_details where SYEAR=' .$last_year. ''));
+    //$oldcourses=DBGet(DBQuery('SELECT TEACHER_ID,COURSE_ID,COURSE_PERIOD_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .$this_year. ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as NEW_COURSE_PERIOD_ID from course_details where SYEAR=' .$last_year. ''));
+    $oldcourses=DBGet(DBQuery('SELECT cdnew.course_period_id as NEW_COURSE_PERIOD_ID, cdnew.TEACHER_ID,cdold.COURSE_ID as course_id,cdold.COURSE_PERIOD_ID,cdnew.COURSE_TITLE as TITLE,cdnew.CP_TITLE as SHORT from course_details cdold inner join course_details cdnew on (cdnew.rollover_id=cdold.COURSE_ID) where cdnew.syear=' .$this_year. ''));
+    //  echo '<pre>'; print_r($oldcourses); echo '</pre>';
+
     foreach($oldcourses as $individual) {
-        $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
+            $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
+//   echo '<pre>'; print_r($individual); echo '</pre>';
         foreach($types as $type){
             if (!$type['FINAL_GRADE_PERCENT'])  
                 $type['FINAL_GRADE_PERCENT']='null';

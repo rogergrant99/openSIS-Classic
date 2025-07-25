@@ -1233,7 +1233,7 @@ define("_transcripts", "Transcriptions");
 define("_teacherCompletion", "Achèvement des enseignants");
 define("_gradeBreakdown", "Répartition de qualité");
 define("_studentFinalGrades", "Notes finales des étudiants");
-define("_gpaClassRankList", "Liste Rang GPA");
+define("_gpaClassRankList", "Liste des types de devoir");
 define("_honorRoll", "Tableau d'honneur");
 define("_reportCardGrade", "Note du bulletin");
 define("_reportCardGrades", "Notes des bulletins");
