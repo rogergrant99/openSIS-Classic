@@ -28,7 +28,7 @@
 include('../../RedirectModulesInc.php');
 
 $coursesWithType = 0;
-$courses = DBGet(DBQuery('SELECT course_period_id,COURSE_ID,CP_TITLE as SHORT from course_details where syear=' . UserSyear() . ' ORDER by SHORT'));
+$courses = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,COURSE_ID,CP_TITLE as SHORT from course_details where syear=' . UserSyear() . ' ORDER by SHORT'));
 
 echo '<h2>Liste des types de devoir par cours</h2>';
 echo '<p><strong>Nombre de cours total:</strong> ' . count($courses) . '</p>';
@@ -40,7 +40,7 @@ echo '<tr>';
 echo '<th style="text-align: left; padding: 10px;">ID</th>';
 echo '<th style="text-align: left; padding: 10px;">Cours</th>';
 echo '<th style="text-align: left; padding: 10px;">Types de devoir</th>';
-echo '<th style="text-align: center; padding: 10px;">Nombre de types</th>';
+echo '<th style="text-align: center; padding: 10px;">Pondération %</th>';
 echo '<th style="text-align: center; padding: 10px;">Types présent ?</th>';
 echo '</tr>';
 echo '</thead>';
@@ -58,11 +58,13 @@ foreach($courses as $individual) {
     
     // Assignment types column
     echo '<td style="padding: 8px;">';
+    $total=0;
     if($hasTypes) {
         $typeList = array();
         foreach($types as $type) {
             $typeList[] = htmlspecialchars($type['TITLE']) . 
                          ($type['FINAL_GRADE_PERCENT'] ? ' (' . $type['FINAL_GRADE_PERCENT'] . '%)' : '');
+            $total+=$type['FINAL_GRADE_PERCENT'] ;
         }
         echo implode('<br>', $typeList);
     } else {
@@ -71,7 +73,7 @@ foreach($courses as $individual) {
     echo '</td>';
     
     // Type count column
-    echo '<td style="padding: 8px; text-align: center;">' . count($types) . '</td>';
+    echo '<td style="padding: 8px; text-align: center;">' . number_format($total * 100) . '%</td>';
     
     // Has types column
     echo '<td style="padding: 8px; text-align: center;">';
