@@ -544,3 +544,123 @@ function _makeDayNames($daynames)
 
     return $dayname;
 }
+
+
+$course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."' ORDER BY course_periods.TITLE"));
+
+// Function to convert day codes to full day names
+function formatDays($days) {
+    $dayMap = [
+        'M' => 'Lundi',
+        'T' => 'Mardi', 
+        'W' => 'Mercredi',
+        'H' => 'Jeudi',
+        'F' => 'Vendredi'
+    ];
+    
+    $dayArray = str_split($days);
+    $fullDays = [];
+    
+    foreach($dayArray as $day) {
+        if(isset($dayMap[$day])) {
+            $fullDays[] = $dayMap[$day];
+        }
+    }
+    
+    return implode(', ', $fullDays);
+}
+
+// Function to format time (assumes time is in 24-hour format)
+function formatTime($time) {
+    if(empty($time)) return '';
+    
+    // If time is already formatted, return as is
+    if(strpos($time, ':') !== false) {
+        $timestamp = strtotime($time);
+        return date('g:i A', $timestamp);
+    }
+    
+    return $time;
+}
+
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .time-cell {
+            white-space: nowrap;
+        }
+        
+        .room-cell {
+            font-weight: bold;
+            color: #2c5aa0;
+        }
+        
+        .title-cell {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Horaire des cours</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Salle</th>
+            <th>Cours</th>
+            <th>Jours</th>
+            <th>Début</th>
+            <th>Fin</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if(!empty($course_periods)): ?>
+            <?php foreach($course_periods as $key => $cp): ?>
+                <tr>
+                    <td class="room-cell"><?php echo htmlspecialchars($cp['ROOM'] ?? 'N/A'); ?></td>
+                    <td class="title-cell"><?php echo htmlspecialchars($cp['TITLE'] ?? 'N/A'); ?></td>
+                    <td><?php echo formatDays($cp['DAYS'] ?? ''); ?></td>
+                    <td class="time-cell"><?php echo formatTime($cp['START_TIME'] ?? ''); ?></td>
+                    <td class="time-cell"><?php echo formatTime($cp['END_TIME'] ?? ''); ?></td>
+                </tr>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <tr>
+                <td colspan="5" style="text-align: center; font-style: italic;">No course periods found</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
+</body>
+</html>
