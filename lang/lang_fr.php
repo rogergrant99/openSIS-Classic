@@ -34,8 +34,8 @@ define("_thereAreNoCalendarsYetSetup", "Il n'y a pas encore de configuration Cal
 define("_salutation", "Salutation");
 define("_userFieldCategory", "Catégorie Champ Utilisateur");
 define("_addACourse", "Ajouter un cours");
-define("_day", "journée");
-define("_week", "La semaine");
+define("_day", "Journée");
+define("_week", "Semaine");
 define("_month", "Mois");
 define("_notPresent", "Pas présent");
 define("_noteWasFound", "Note a été trouvé.");
@@ -486,7 +486,7 @@ define("_noParentCourseSelected", "Aucun cours pour parents sélectionné");
 define("_noClassListFound", "Aucune liste de classe trouvée.");
 define("_allAvailableClasses", "Toutes les classes disponibles");
 define("_allAvailableClassesFor", "Toutes les classes disponibles pour");
-define("_studentSchedulesReport", "Rapport sur les horaires des étudiants");
+define("_studentSchedulesReport", "Rapport d'horaires étudiants");
 //PRINT CATALOG TERM
 define("_noCoursesAreFoundInThisTerm", "Aucun cours n'est trouvé dans cette étape");
 define("_printt", "Impression");
@@ -1072,7 +1072,7 @@ define("_invalidDataInput", "entrée de données non valide");
 define("_databaseSqlError", "Base de données erreur SQL");
 define("_programError", "erreur de programme");
 define("_studentSchedule", "Horaire étudiant");
-define("_viewSchedule", "Voir le calendrier");
+define("_viewSchedule", "Calendrier étudiant");
 define("_studentRequests", "Demandes d'étudiants");
 define("_groupSchedule", "Assigné cours aux etudiants");
 define("_groupRequests", "Demandes de groupe");

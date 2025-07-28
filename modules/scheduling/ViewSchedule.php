@@ -151,10 +151,12 @@ if (UserStudentID()) {
 
 
             if (User('PROFILE_ID') == 2) {
-                DrawHeader('<div class="form-inline no_print"><div class="input-group">' . PrepareDateSchedule($date, '_date', false, array('submit' => true)) . '<span class="input-group-btn"><INPUT type=submit class="btn btn-primary" value=' . _go . '></span></div><div class="form-group"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . '</label></div></div></div>', '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . '</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
+                // DrawHeader('<div class="form-inline no_print"><div class="input-group">' . PrepareDateSchedule($date, '_date', false, array('submit' => true)) . '<span class="input-group-btn"><INPUT type=submit class="btn btn-primary" value=' . _go . '></span></div><div class="form-group"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . '</label></div></div></div>', '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . '</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
+                DrawHeader('<div class="form-inline no_print"><div class="input-group">' . PrepareDateSchedule($date, '_date', false, array('submit' => true)) . '<span class="input-group-btn"><INPUT type=submit class="btn btn-primary" value=' . _go . '></span></div><div class="form-group"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . '</label></div></div></div>', '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
                 echo '<hr class="no-margin"/>';
             } else {
-                DrawHeader('<div class="form-inline no_print"><div class="input-group">' . PrepareDateSchedule($date, '_date', false, array('submit' => true)) . '<span class="input-group-btn"><INPUT type=submit class="btn btn-primary" value=' . _go . '></span></div></div>', '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . ' :</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
+                // DrawHeader('<div class="form-inline no_print"><div class="input-group">' . PrepareDateSchedule($date, '_date', false, array('submit' => true)) . '<span class="input-group-btn"><INPUT type=submit class="btn btn-primary" value=' . _go . '></span></div></div>', '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . ' :</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
+                DrawHeader('<div class="form-inline no_print"><div class="input-group">' . PrepareDateSchedule($date, '_date', false, array('submit' => true)) . '<span class="input-group-btn"><INPUT type=submit class="btn btn-primary" value=' . _go . '></span></div></div>', '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
                 echo '<hr class="no-margin"/>';
             }
 
@@ -263,9 +265,11 @@ if (UserStudentID()) {
             $week_range = _makeWeeks($cal_RET[1]['START_DATE'], $cal_RET[1]['END_DATE'], 'Modules.php?modname=' . $_REQUEST['modname'] . '&marking_period_id=' . $_REQUEST['marking_period_id'] . '&view_mode=' . $_REQUEST['view_mode'] . '&week_range=');
 
             if (User('PROFILE_ID') == 2) {
-                DrawHeader($week_range, '<div class="form-inline"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _includeInactiveCourses . ':</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">Calendar View :</span>' . $view_mode . '</div></div>');
+                // DrawHeader($week_range, '<div class="form-inline"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _includeInactiveCourses . ':</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">Calendar View :</span>' . $view_mode . '</div></div>');
+                DrawHeader($week_range, '<div class="form-inline"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode">Calendar View :</span>' . $view_mode . '</div></div>');
             } else {
-                DrawHeader($week_range, '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . ':</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . ':</span>' . $view_mode . '</div></div>');
+                // DrawHeader($week_range, '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . ':</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . ':</span>' . $view_mode . '</div></div>');
+                DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . ':</span>' . $view_mode . '</div></div>');
             }
 
 
@@ -278,7 +282,14 @@ if (UserStudentID()) {
             $fy_id = $fy_id[1]['MARKING_PERIOD_ID'];
 
             $QI = ($sql);
-            $wk_schedule_RET = DBGet(DBQuery('SELECT sp.PERIOD_ID,CONCAT(sp.START_TIME,\'' . ' - ' . '\',sp.END_TIME) AS TIME_PERIOD,sp.TITLE FROM school_periods sp WHERE sp.SYEAR=\'' . UserSyear() . '\' AND sp.SCHOOL_ID = \'' . UserSchool() . '\' ORDER BY sp.SORT_ORDER'), array('TIME_PERIOD' => '_makeTimePeriod'));
+
+            //filter by primaire or secondaire
+            $grade_RET = DBGet(DBQuery('select grade_id from student_enrollment where student_id=\'' . UserStudentID() . '\' AND syear =\'' . UserSyear() . '\''));
+            if($grade_RET[1]['GRADE_ID']>7)
+                $search='SP%';
+            else 
+                $search='PP%';
+            $wk_schedule_RET = DBGet(DBQuery('SELECT sp.PERIOD_ID,CONCAT(sp.START_TIME,\'' . ' - ' . '\',sp.END_TIME) AS TIME_PERIOD,sp.TITLE FROM school_periods sp WHERE sp.SYEAR=\'' . UserSyear() . '\' AND sp.SCHOOL_ID = \'' . UserSchool() . '\' and sp.short_name LIKE "'. $search .'" ORDER BY sp.SORT_ORDER'), array('TIME_PERIOD' => '_makeTimePeriod'));
 
             $mp_start_date = DBGET(DBQuery('SELECT start_date FROM marking_periods WHERE MARKING_PERIOD_ID = "' . $_REQUEST['marking_period_id'] . '"'));
 
@@ -330,17 +341,22 @@ if (UserStudentID()) {
                 $custom_schedule_cpid[] = $csd['COURSE_PERIOD_ID'];
             if (count($custom_schedule_cpid) > 0)
                 $custom_schedule_cpid = implode(',', $custom_schedule_cpid);
-            $columns = array('TIME_PERIOD' => 'Period');
+            $columns = array('TIME_PERIOD' => 'Période');
 
             $i = 0;
-            // echo '<pre>';
-            // print_r($week_RET);
-            // echo '</pre>';
+            //  echo '<pre>';
+            //  print_r($wk_schedule_RET);
+            //  echo '</pre>';
+            foreach ($wk_schedule_RET as $key => $sched) {
+                $schedule_RET[$key]['TIME_PERIOD']='8:30 AM - 9:50 AM';
+                for ($z = $today; $z <= $today + $one_day * 4; $z = $z + $one_day){
+                    $schedule_RET[$key][date('y-m-d', $z)]='<font style="color:red;font-size:12px;"> Vacances </font>';
+                }
+           }
             if (count($week_RET)) {
                 foreach ($wk_schedule_RET as $course) {
                     $i++;
-                    $schedule_RET[$i]['TIME_PERIOD'] = '<span title="' . $course['TITLE'] . '">' . $course['TIME_PERIOD'] . '</span>';
-
+                    $schedule_RET[$i]['TIME_PERIOD'] = '<span style="color:DodgerBlue;font-size:12px;" title="' . $course['TITLE'] . '">' . $course['TIME_PERIOD'] . '</span>';
                     for ($j = $today; $j <= $today + $one_day * 6; $j = $j + $one_day) {
 
                         if (is_array($week_RET[date('Y-m-d', $j)][$course['PERIOD_ID']][1]) && in_array(date('Y-m-d', $j), $week_RET[date('Y-m-d', $j)][$course['PERIOD_ID']][1])) {
@@ -366,8 +382,8 @@ if (UserStudentID()) {
                     }
                 }
             }
-            for ($i = $today; $i <= $today + $one_day * 6; $i = $i + $one_day)
-                $columns[date('y-m-d', $i)] = weekDate(date('Y-m-d', $i)) . ' ' . ShortDate(date('Y-m-d', $i));
+            for ($i = $today; $i <= $today + $one_day * 4; $i = $i + $one_day)
+                $columns[date('y-m-d', $i)] = weekDate(date('Y-m-d', $i)) . ' ' . dateFr('d M', $i) ;
             break;
 
         case 'month_view':
@@ -375,9 +391,11 @@ if (UserStudentID()) {
 
 
             if (User('PROFILE_ID') == 2) {
-                DrawHeader($month_str, '<div class="form-inline"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _includeInactiveCourses . '</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _includeInactiveCourses . '</span>' . $view_mode . '</div></div>');
+                // DrawHeader($month_str, '<div class="form-inline"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _includeInactiveCourses . '</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _includeInactiveCourses . '</span>' . $view_mode . '</div></div>');
+                DrawHeader($month_str, '<div class="form-inline"><label class="control-label">&nbsp;</label><div class="checkbox"><label><INPUT type=checkbox name=include_inactive value=Y' . ($_REQUEST['include_inactive'] == 'Y' ? " CHECKED onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=\";'" : " onclick='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . "&include_inactive=Y\";'") . '> ' . _includeInactiveCourses . ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label></div><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _includeInactiveCourses . '</span>' . $view_mode . '</div></div>');
             } else {
-                DrawHeader($month_str, '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . '</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
+                // DrawHeader($month_str, '<div class="form-inline"><div class="input-group"><span class="input-group-addon" id="marking_period_id">' . _markingPeriod . '</span>' . $mp . '</div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
+                DrawHeader($month_str, '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode">' . _calendarView . '</span>' . $view_mode . '</div></div>');
             }
 
             $fy_id = DBGet(DBQuery('SELECT MARKING_PERIOD_ID FROM school_years WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
@@ -395,25 +413,47 @@ if (UserStudentID()) {
             $calendar_RET = DBGet(DBQuery('SELECT SCHOOL_DATE,MINUTES,BLOCK FROM attendance_calendar WHERE SCHOOL_DATE BETWEEN \'' . date('Y-m-d', $time) . '\' AND \'' . date('Y-m-d', mktime(0, 0, 0, $month, $last, $year)) . '\' AND SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''), array(), array('SCHOOL_DATE'));
 
             $skip = date("N", $time) - 1;
-
             //echo '<div class="panel-body">';
             echo '<div id="export_res" class="table-responsive">';
              echo "<TABLE id=\"export_res_table\" class=\"table table-bordered\" style=\"table-layout: fixed;width: 100%;\"><thead><TR align=center>";
-            echo "<TD style=\"width: 14.25%;\">" . _monday . "</TD><TD style=\"width: 14.25%;\">" . _tuesday . "</TD><TD style=\"width: 14.25%;\">" . _wednesday . "</TD><TD style=\"width: 14.25%;\">" . _thursday . "</TD><TD style=\"width: 14.25%;\">" . _friday . "</TD><TD style=\"width: 14.25%;\">" . _saturday . "</TD><TD style=\"width: 14.25%;\">" . _sunday . "</TD>";
+            // echo "<TD style=\"width: 14.25%;\">" . _monday . "</TD><TD style=\"width: 14.25%;\">" . _tuesday . "</TD><TD style=\"width: 14.25%;\">" . _wednesday . "</TD><TD style=\"width: 14.25%;\">" . _thursday . "</TD><TD style=\"width: 14.25%;\">" . _friday . "</TD><TD style=\"width: 14.25%;\">" . _saturday . "</TD><TD style=\"width: 14.25%;\">" . _sunday . "</TD>";
+            echo "<TD style=\"width: 14.25%;\">" . _monday . "</TD><TD style=\"width: 14.25%;\">" . _tuesday . "</TD><TD style=\"width: 14.25%;\">" . _wednesday . "</TD><TD style=\"width: 14.25%;\">" . _thursday . "</TD><TD style=\"width: 14.25%;\">" . _friday . "</TD>";
             echo "</TR></thead><tbody><TR>";
 
             if ($skip) {
-                echo "<td colspan=" . $skip . "></td>";
-                $return_counter = $skip;
+                if($skip!=6){
+                    echo "<td colspan=" . $skip . "></td>";
+                    $return_counter = $skip;
+                }
+                else
+                    $return_counter = 4;
             }
-            for ($i = 1; $i <= $last; $i++) {
+            if($skip==6)
+                $start=2;
+            else 
+                $start=1;
+            for ($i = $start; $i <= $last; $i++) {
                 $day_time = mktime(0, 0, 0, $month, $i, $year);
                 $date = date('Y-m-d', $day_time);
 
                 //------------------------------------------------------------------------------------------------------------------------------------------------------------
                 $full_day = date('l', strtotime($date));
                 $day = get_db_day($full_day);
-                $sql = 'SELECT s.ID AS SCHEDULE_ID,
+
+                if($full_day=='Saturday'){
+                    echo "</TR></thead><tbody><TR>";
+                    $i++;
+                    continue;
+                }
+                if($skip==6){
+                    $return_counter = $skip;
+                }
+
+                // if($full_day=='Sunday') {
+                //     echo "</TR></thead><tbody><TR>";
+                //     continue;
+                // }
+                  $sql = 'SELECT s.ID AS SCHEDULE_ID,
 				s.COURSE_ID,s.COURSE_PERIOD_ID,
 				s.MARKING_PERIOD_ID,s.START_DATE,s.END_DATE,
 				UNIX_TIMESTAMP(s.START_DATE) AS START_EPOCH,UNIX_TIMESTAMP(s.END_DATE) AS END_EPOCH,sp.PERIOD_ID,CONCAT(sp.START_TIME,\'' . ' - ' . '\',sp.END_TIME) AS TIME_PERIOD,sp.START_TIME,
@@ -476,7 +516,7 @@ if (UserStudentID()) {
                 echo "</TD>";
                 $return_counter++;
 
-                if ($return_counter % 7 == 0)
+                if ($return_counter % 5 == 0)
                     echo "</TR><TR>";
             }
             echo "</TR></tbody></TABLE>";
@@ -565,7 +605,7 @@ if (UserStudentID()) {
 
     if ($schedule_RET && $_REQUEST['view_mode'] == 'day_view') {
         echo '<hr class="no-margin"/><div class="panel-body pt-10 pb-10">';
-        echo ProgramLinkforExport('scheduling/PrintSchedules.php', '<b><i class="icon-printer4"></i></b>' . _printSchedule . '', '&modfunc=save&st_arr[]=' . UserStudentID() . '&mp_id=' . $mp_id . '&include_inactive=' . $_REQUEST['include_inactive'] . '&date1=' . $date1 . '&_openSIS_PDF=true', 'target="_blank" class="btn btn-success btn-labeled"') . '</div>';
+       // echo ProgramLinkforExport('scheduling/PrintSchedules.php', '<b><i class="icon-printer4"></i></b>' . _printSchedule . '', '&modfunc=save&st_arr[]=' . UserStudentID() . '&mp_id=' . $mp_id . '&include_inactive=' . $_REQUEST['include_inactive'] . '&date1=' . $date1 . '&_openSIS_PDF=true', 'target="_blank" class="btn btn-success btn-labeled"') . '</div>';
         echo '</div>'; //.panel-body
         } elseif ($schedule_RET && ($_REQUEST['view_mode'] == 'week_view' || $_REQUEST['view_mode'] == 'month_view')) {
         echo '<hr class="no-margin"/><div class="panel-body pt-10 pb-10">';
@@ -778,7 +818,7 @@ function get_db_day($day)
 
 function weekDate($date)
 {
-    return date('l', strtotime($date));
+    return dateFr('l', strtotime($date));
 }
 
 function _makeWeeks($start, $end, $link)
@@ -817,7 +857,7 @@ function _makeMonths($link)
     $prev = $_REQUEST['month'] - $one_day * 30;
     $next = $_REQUEST['month'] + $one_day * 30;
     if ($link != '') {
-        $html .= "<a href='javascript:void(0);' class=\"btn btn-default btn-icon\" title=Previous onClick=\"window.location='" . $link . $prev . "';\"><i class=\"fa fa-chevron-left\"></i></a> &nbsp; &nbsp; <span class=\"calendar-title\">" . date('F', $_REQUEST['month']) . "&nbsp; - &nbsp;" . date('Y', $_REQUEST['month']) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title=Next onClick=\"window.location='" . $link . $next . "';\" class=\"btn btn-default btn-icon\"><i class=\"fa fa-chevron-right\"></i></a>";
+        $html .= "<a href='javascript:void(0);' class=\"btn btn-default btn-icon\" title=Previous onClick=\"window.location='" . $link . $prev . "';\"><i class=\"fa fa-chevron-left\"></i></a> &nbsp; &nbsp; <span class=\"calendar-title\">" . dateFr('F', $_REQUEST['month']) . "&nbsp; - &nbsp;" . date('Y', $_REQUEST['month']) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title=Next onClick=\"window.location='" . $link . $next . "';\" class=\"btn btn-default btn-icon\"><i class=\"fa fa-chevron-right\"></i></a>";
     }
 
     return $html;
@@ -851,7 +891,141 @@ $res = DBGet(DBQuery('SELECT CONCAT(students.LAST_NAME,\', \',coalesce(students.
     echo "<table id='_pdf_header' width='100%' style=\" font-family:Arial; font-size:12px; border:none !important\" >";
     echo "<tr><td style=\"font-size:15px; font-weight:bold;\">" . GetSchool(UserSchool()) . "<br><div style=\"font-size:12px;\">" . _studentSchedulesReport . "</div></td><td style=\"float:right;text-align: right;\">" . ProperDate(DBDate()) . "<br />" . _poweredByOpenSis . "</td></tr><tr><td colspan=2><hr></td></tr></table>";
     echo "<table id='_pdf_header2' width='100%' style=\"font-size:13px; border:none !important\" >";
-    echo '<tr><td><div>Student ID: ' . UserStudentID() . '<br>Student Name: ' . $res[1]['FULL_NAME'] . '<br>Student Grade: ' . $res[1]['TITLE'] . '</div></td></tr>';
+    echo '<tr><td><div>ID Étudiant: ' . UserStudentID() . '<br>Nom de l\'étudiant: ' . $res[1]['FULL_NAME']. '</div></td></tr>';
     echo "</table>";
     echo '</div>';
+}
+
+function dateFr($format, $timestamp = null) {
+    // Use current time if no timestamp provided
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    // French month names
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    // French abbreviated month names
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    // French day names
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    // French abbreviated day names
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Get the formatted date using regular date() function
+    $result = date($format, $timestamp);
+    
+    // Replace English names with French ones
+    $result = str_replace([
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ], $result);
+    
+    $result = str_replace([
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ], [
+        'janv', 'févr', 'mars', 'avr', 'mai', 'juin',
+        'juil', 'août', 'sept', 'oct', 'nov', 'déc'
+    ], $result);
+    
+    $result = str_replace([
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+        'Thursday', 'Friday', 'Saturday'
+    ], [
+        'dimanche', 'lundi', 'mardi', 'mercredi',
+        'jeudi', 'vendredi', 'samedi'
+    ], $result);
+    
+    $result = str_replace([
+        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+    ], [
+        'dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'
+    ], $result);
+    
+    return $result;
+}
+
+// Alternative approach using format characters directly
+function dateFrDirect($format, $timestamp = null) {
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Process format character by character
+    $result = '';
+    $len = strlen($format);
+    $i = 0;
+    
+    while ($i < $len) {
+        $char = $format[$i];
+        
+        switch ($char) {
+            case 'F': // Full month name
+                $result .= $months[date('n', $timestamp)];
+                break;
+            case 'M': // Short month name
+                $result .= $monthsShort[date('n', $timestamp)];
+                break;
+            case 'l': // Full day name
+                $result .= $days[date('w', $timestamp)];
+                break;
+            case 'D': // Short day name
+                $result .= $daysShort[date('w', $timestamp)];
+                break;
+            case '\\': // Escape character
+                if ($i + 1 < $len) {
+                    $result .= $format[$i + 1];
+                    $i++; // Skip next character
+                }
+                break;
+            default:
+                $result .= date($char, $timestamp);
+                break;
+        }
+        $i++;
+    }
+    
+    return $result;
 }

@@ -766,7 +766,8 @@ if (!$_REQUEST['modfunc']) {
         if ($_REQUEST['calendar_id']) {
             $link .= '<div class="row">';
             $link .= '<div class="col-md-3">' . SelectInput($_REQUEST['calendar_id'], 'calendar_id', '', $options, false, " onchange='document.location.href=\"" . PreparePHP_SELF($tmp_REQUEST) . '&amp;calendar_id="+this.form.calendar_id.value;\' ', false) . '</div>';
-            $link .= '<div class="col-md-6"><h3 class="text-center m-0"><a href="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=' . $_REQUEST['modfunc'] . '&month=' . date('m', strtotime('first day of -1 month', $time)) . '&year=' . date('Y', strtotime('first day of -1 month', $time)) . '&calendar_id=' . $_REQUEST['calendar_id'] . '" class="btn btn-icon"><i class="fa fa-chevron-left fa-lg"></i></a> <span class="inline-block p-l-20 p-r-20">' . date("F Y", $time) . '</span> <a href="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=' . $_REQUEST['modfunc'] . '&month=' . date('m', strtotime('first day of +1 month', $time)) . '&year=' . date('Y', strtotime('first day of +1 month', $time)) . '&calendar_id=' . $_REQUEST['calendar_id'] . '" class="btn btn-icon"><i class="fa fa-chevron-right fa-lg"></i></a></h3></div>';
+            // $link .= '<div class="col-md-6"><h3 class="text-center m-0"><a href="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=' . $_REQUEST['modfunc'] . '&month=' . date('m', strtotime('first day of -1 month', $time)) . '&year=' . date('Y', strtotime('first day of -1 month', $time)) . '&calendar_id=' . $_REQUEST['calendar_id'] . '" class="btn btn-icon"><i class="fa fa-chevron-left fa-lg"></i></a> <span class="inline-block p-l-20 p-r-20">' . date("F Y", $time) . '</span> <a href="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=' . $_REQUEST['modfunc'] . '&month=' . date('m', strtotime('first day of +1 month', $time)) . '&year=' . date('Y', strtotime('first day of +1 month', $time)) . '&calendar_id=' . $_REQUEST['calendar_id'] . '" class="btn btn-icon"><i class="fa fa-chevron-right fa-lg"></i></a></h3></div>';
+            $link .= '<div class="col-md-6"><h3 class="text-center m-0"><a href="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=' . $_REQUEST['modfunc'] . '&month=' . date('m', strtotime('first day of -1 month', $time)) . '&year=' . date('Y', strtotime('first day of -1 month', $time)) . '&calendar_id=' . $_REQUEST['calendar_id'] . '" class="btn btn-icon"><i class="fa fa-chevron-left fa-lg"></i></a> <span class="inline-block p-l-20 p-r-20">' . dateFr("F Y", $time) . '</span> <a href="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=' . $_REQUEST['modfunc'] . '&month=' . date('m', strtotime('first day of +1 month', $time)) . '&year=' . date('Y', strtotime('first day of +1 month', $time)) . '&calendar_id=' . $_REQUEST['calendar_id'] . '" class="btn btn-icon"><i class="fa fa-chevron-right fa-lg"></i></a></h3></div>';
             if (User('PROFILE') == 'admin') {
                 $link .= '<div class="col-md-3">';
                 $link .= "<div class=\"btn-group pull-right\"><a href='#' onclick='load_link(\"Modules.php?modname=$_REQUEST[modname]&modfunc=create\");' class=\"btn btn-primary btn-icon btn-lg\" data-popup=\"tooltip\" data-placement=\"top\" data-original-title=\"" . _createANewCalendar . "\"><i class=\"fa fa-plus\"></i></a>";
@@ -801,7 +802,8 @@ if (!$_REQUEST['modfunc']) {
         echo '<div class="panel panel-default">';
         echo '<div class="panel-body">';
         echo '<div class="form-inline">';
-        DrawHeaderHome('<div class="inline-block">' . PrepareDate(strtoupper(date("d-M-y", $time)), '', false, array('M' => date("m", $time), 'Y' => date("y", $time), 'submit' => true, 'view' => 'month')) . '</div>' . ' <A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=list_events&calendar_id=' . $_REQUEST['calendar_id'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="btn btn-default m-l-5">' . _listEvents . '</A>', (User('PROFILE') == 'admin' ? SubmitButton(_save, '', 'class="btn btn-primary pull-right"  onclick="self_disable(this);"') : ''));
+        // DrawHeaderHome('<div class="inline-block">' . PrepareDate(strtoupper(date("d-M-y", $time)), '', false, array('M' => date("m", $time), 'Y' => date("y", $time), 'submit' => true, 'view' => 'month')) . '</div>' . ' <A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=list_events&calendar_id=' . $_REQUEST['calendar_id'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="btn btn-default m-l-5">' . _listEvents . '</A>', (User('PROFILE') == 'admin' ? SubmitButton(_save, '', 'class="btn btn-primary pull-right"  onclick="self_disable(this);"') : ''));
+        DrawHeaderHome(' <A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=list_events&calendar_id=' . $_REQUEST['calendar_id'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="btn btn-default m-l-5">' . _listEvents . '</A>', (User('PROFILE') == 'admin' ? SubmitButton(_save, '', 'class="btn btn-primary pull-right"  onclick="self_disable(this);"') : ''));
         echo '</div>'; //.form-inline
         echo '</div>'; //.panel-body
         echo '</div>'; //.panel
@@ -1029,4 +1031,139 @@ function conv_day($days_arr)
         }
     }
     return $cal_days;
+}
+
+
+function dateFr($format, $timestamp = null) {
+    // Use current time if no timestamp provided
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    // French month names
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    // French abbreviated month names
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    // French day names
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    // French abbreviated day names
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Get the formatted date using regular date() function
+    $result = date($format, $timestamp);
+    
+    // Replace English names with French ones
+    $result = str_replace([
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ], $result);
+    
+    $result = str_replace([
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ], [
+        'janv', 'févr', 'mars', 'avr', 'mai', 'juin',
+        'juil', 'août', 'sept', 'oct', 'nov', 'déc'
+    ], $result);
+    
+    $result = str_replace([
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+        'Thursday', 'Friday', 'Saturday'
+    ], [
+        'dimanche', 'lundi', 'mardi', 'mercredi',
+        'jeudi', 'vendredi', 'samedi'
+    ], $result);
+    
+    $result = str_replace([
+        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+    ], [
+        'dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'
+    ], $result);
+    
+    return $result;
+}
+
+// Alternative approach using format characters directly
+function dateFrDirect($format, $timestamp = null) {
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Process format character by character
+    $result = '';
+    $len = strlen($format);
+    $i = 0;
+    
+    while ($i < $len) {
+        $char = $format[$i];
+        
+        switch ($char) {
+            case 'F': // Full month name
+                $result .= $months[date('n', $timestamp)];
+                break;
+            case 'M': // Short month name
+                $result .= $monthsShort[date('n', $timestamp)];
+                break;
+            case 'l': // Full day name
+                $result .= $days[date('w', $timestamp)];
+                break;
+            case 'D': // Short day name
+                $result .= $daysShort[date('w', $timestamp)];
+                break;
+            case '\\': // Escape character
+                if ($i + 1 < $len) {
+                    $result .= $format[$i + 1];
+                    $i++; // Skip next character
+                }
+                break;
+            default:
+                $result .= date($char, $timestamp);
+                break;
+        }
+        $i++;
+    }
+    
+    return $result;
 }
