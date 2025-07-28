@@ -285,10 +285,14 @@ if (UserStudentID()) {
 
             //filter by primaire or secondaire
             $grade_RET = DBGet(DBQuery('select grade_id from student_enrollment where student_id=\'' . UserStudentID() . '\' AND syear =\'' . UserSyear() . '\''));
-            if($grade_RET[1]['GRADE_ID']>7)
+            if($grade_RET[1]['GRADE_ID']>7){
+                $level='Secondaire';
                 $search='SP%';
-            else 
+            }
+            else{
+                $level='Primaire';
                 $search='PP%';
+            }
             $wk_schedule_RET = DBGet(DBQuery('SELECT sp.PERIOD_ID,CONCAT(sp.START_TIME,\'' . ' - ' . '\',sp.END_TIME) AS TIME_PERIOD,sp.TITLE FROM school_periods sp WHERE sp.SYEAR=\'' . UserSyear() . '\' AND sp.SCHOOL_ID = \'' . UserSchool() . '\' and sp.short_name LIKE "'. $search .'" ORDER BY sp.SORT_ORDER'), array('TIME_PERIOD' => '_makeTimePeriod'));
 
             $mp_start_date = DBGET(DBQuery('SELECT start_date FROM marking_periods WHERE MARKING_PERIOD_ID = "' . $_REQUEST['marking_period_id'] . '"'));
@@ -341,14 +345,14 @@ if (UserStudentID()) {
                 $custom_schedule_cpid[] = $csd['COURSE_PERIOD_ID'];
             if (count($custom_schedule_cpid) > 0)
                 $custom_schedule_cpid = implode(',', $custom_schedule_cpid);
-            $columns = array('TIME_PERIOD' => _period);
+            $columns = array('TIME_PERIOD' => $level);
 
             $i = 0;
             //  echo '<pre>';
             //  print_r($wk_schedule_RET);
             //  echo '</pre>';
             foreach ($wk_schedule_RET as $key => $sched) {
-                $schedule_RET[$key]['TIME_PERIOD']='8:30 AM - 9:50 AM';
+                $schedule_RET[$key]['TIME_PERIOD']='<span style="color:DodgerBlue;font-size:12px;" title="' . $course['TITLE'] . '">' . $wk_schedule_RET[$key]['TIME_PERIOD'] . '</span>';
                 for ($z = $today; $z <= $today + $one_day * 4; $z = $z + $one_day){
                     $schedule_RET[$key][date('y-m-d', $z)]='<font style="color:red;font-size:12px;"> Vacances </font>';
                 }

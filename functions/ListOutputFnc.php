@@ -1958,7 +1958,7 @@ function ListOutput($result, $column_names, $singular = '', $plural = '', $link 
                         }
                         if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0) {
                             $lo_save_id = isset($options['LO_save_id']) ? "&LO_save_id=" . $options['LO_save_id'] : "";
-                            echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true" . $lo_save_id . " class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                            //echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true" . $lo_save_id . " class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
                         }
 
                         echo '</h6>';
@@ -2805,7 +2805,7 @@ function ListOutputWithStudentInfo($result, $column_names, $singular = '', $plur
                         }
                         if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0){
                             $lo_save_id = isset($options['LO_save_id']) ? "&LO_save_id=".$options['LO_save_id'] : "";
-                            echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true". $lo_save_id ." class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                            //echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true". $lo_save_id ." class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
                         }
 
                         echo '</h6>';
@@ -3559,7 +3559,7 @@ function ListOutputCustomDT($result, $column_names, $singular = '', $plural = ''
                         }
                         if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0) {
                             // echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
-                            echo " &nbsp; <a HREF=\"javascript:void(0);\" onclick=\"generateDataTableSpreadsheet();\" class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                            //echo " &nbsp; <a HREF=\"javascript:void(0);\" onclick=\"generateDataTableSpreadsheet();\" class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
                         }
 
                         echo '</h6>';
@@ -4462,8 +4462,8 @@ function ListOutputPeriod($result, $column_names, $singular = '', $plural = '', 
                         elseif ($display_count == 1)
                             echo "<span class=\"heading-text\">1 $singular " . _wasFound . ".</span>";
                     }
-                    if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
-                        echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                    // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
+                    //     echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
 
                     echo '</h6>';
                     $colspan = 1;
@@ -5242,8 +5242,8 @@ function ListOutputSchedule($result, $column_names, $singular = '', $plural = ''
                     elseif ($display_count == 1)
                         echo "<span class=\"heading-text\">1 $singular " . _wasFound . ".</span>";
                 }
-                if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
-                    echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
+                //     echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
 
                 echo '</h6>';
                 $colspan = 1;
@@ -15742,10 +15742,10 @@ function ListOutputExcelCustomDT($result, $column_names, $singular = '', $plural
                     elseif ($_SESSION['AL_RES_COUNT'] == 1)
                         echo "<span class=\"heading-text\">1 $singular " . _wasFound . ".</span>";
                 }
-                if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0) {
-                    // echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
-                    echo " &nbsp; <A HREF=\"javascript:void(0);\" onclick=\"generateDataTableSpreadsheet();\" class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
-                }
+                // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0) {
+                //     // echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                //     echo " &nbsp; <A HREF=\"javascript:void(0);\" onclick=\"generateDataTableSpreadsheet();\" class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                // }
 
                 echo '</h6>';
                 $colspan = 1;
@@ -16637,8 +16637,8 @@ function ListOutputNew_mod($result, $column_names, $singular = '', $plural = '',
                     elseif ($display_count == 1)
                         echo "<span class=\"heading-text\">1 $singular was found.</span>";
                 }
-                if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
-                    echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
+                //     echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
 
                 echo '</h6>';
                 $colspan = 1;
@@ -17407,8 +17407,8 @@ function ListOutputNew($result, $column_names, $singular = '', $plural = '', $li
                     elseif ($display_count == 1)
                         echo "<span class=\"heading-text\">1 $singular " . _wasFound . ".</span>";
                 }
-                if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
-                    echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
+                //     echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
 
                 echo '</h6>';
                 $colspan = 1;
@@ -18961,8 +18961,8 @@ function ListOutputMessagingGroups($result, $column_names, $singular = '', $plur
                         elseif ($display_count == 1)
                             echo "<span class=\"heading-text\">1 $singular " . _wasFound . ".</span>";
                     }
-                    if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
-                        echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                    // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
+                    //     echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', $PHP_tmp_SELF) . "&$extra&LO_save=1&_openSIS_PDF=true class=\" btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
 
                     echo '</h6>';
                     $colspan = 1;
@@ -20514,8 +20514,8 @@ function ListOutputUnscheduleRequests($result, $column_names, $singular = '', $p
                     elseif ($display_count == 1)
                         echo "<span class=\"heading-text\">1 $singular " . _wasFound . ".</span>";
                 }
-                if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
-                    echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', 'Modules.php?modname=scheduling/UnfilledRequests.php&search_modfunc=list&next_modname=scheduling/UnfilledRequests.php') . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
+                // if ($options['save'] && !isset($_REQUEST['_openSIS_PDF']) && $result_count > 0)
+                //     echo " &nbsp; <A HREF=" . str_replace('Modules.php', 'ForExport.php', 'Modules.php?modname=scheduling/UnfilledRequests.php&search_modfunc=list&next_modname=scheduling/UnfilledRequests.php') . "&$extra&LO_save=1&_openSIS_PDF=true  class=\"btn btn-success btn-xs btn-icon text-white\" data-popup=\"tooltip\" data-placement=\"top\" data-container=\"body\" data-original-title=\"Download Spreadsheet\" title=\"Download Spreadsheet\"><i class=\"icon-file-excel\"></i></a>";
 
                 echo '</h6>';
                 $colspan = 1;
