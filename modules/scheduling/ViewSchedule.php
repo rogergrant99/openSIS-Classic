@@ -124,7 +124,7 @@ if (UserStudentID()) {
     }
     if ($_REQUEST['modfunc'] != 'detail') {
         if (!isset($_REQUEST['view_mode'])) {
-            $_REQUEST['view_mode'] = 'day_view';
+            $_REQUEST['view_mode'] = 'week_view';
         }
     }
     ##################################################################
@@ -341,7 +341,7 @@ if (UserStudentID()) {
                 $custom_schedule_cpid[] = $csd['COURSE_PERIOD_ID'];
             if (count($custom_schedule_cpid) > 0)
                 $custom_schedule_cpid = implode(',', $custom_schedule_cpid);
-            $columns = array('TIME_PERIOD' => 'Période');
+            $columns = array('TIME_PERIOD' => _period);
 
             $i = 0;
             //  echo '<pre>';
@@ -373,11 +373,11 @@ if (UserStudentID()) {
                                 (cpv.COURSE_PERIOD_DATE=\'' . date('Y-m-d', $j) . '\' OR cpv.COURSE_PERIOD_DATE IS NULL) AND cpv.PERIOD_ID =\'' . $course['PERIOD_ID'] . '\'  AND r.ROOM_ID=cpv.ROOM_ID AND POSITION(\'' . get_db_day($day) . '\' IN cpv.days)>0 AND cp.COURSE_PERIOD_ID IN (' . $custom_schedule_cpid . ')'));
 
                                 if (is_countable($day_RET_custom) && count($day_RET_custom) > 0)
-                                    $schedule_RET[$i][date('y-m-d', $j)] = (count($day_RET) > 1 ? '<font title="Conflict schedule (' . count($day_RET_custom) . ')" color="red">' . $day_RET_custom[1]['TITLE'] . '<br />Room :' . $day_RET_custom[1]['ROOM'] . '</font>' : '<spna title=' . date("l", $j) . '>' . $day_RET_custom[1]['TITLE'] . '<br />Room :' . $day_RET_custom[1]['ROOM'] . '</span>');
+                                    $schedule_RET[$i][date('y-m-d', $j)] = (count($day_RET) > 1 ? '<font title="Conflict schedule (' . count($day_RET_custom) . ')" color="red">' . $day_RET_custom[1]['TITLE'] . '<br />'. _room .' :' . $day_RET_custom[1]['ROOM'] . '</font>' : '<spna title=' . date("l", $j) . '>' . $day_RET_custom[1]['TITLE'] . '<br />Room :' . $day_RET_custom[1]['ROOM'] . '</span>');
                                 else
                                     $schedule_RET[$i][date('y-m-d', $j)] = '<div align=center title="Schedule not available">--</div>';
                             } else
-                                $schedule_RET[$i][date('y-m-d', $j)] = (count($day_RET) > 1 ? '<font title="Conflict schedule (' . count($day_RET) . ')" color="red">' . $day_RET[1]['TITLE'] . '<br />Room :' . $day_RET[1]['ROOM'] . '</font>' : '<spna title=' . date("l", $j) . '>' . $day_RET[1]['TITLE'] . '<br />Room :' . $day_RET[1]['ROOM'] . '</span>');
+                                $schedule_RET[$i][date('y-m-d', $j)] = (count($day_RET) > 1 ? '<font title="Conflict schedule (' . count($day_RET) . ')" color="red">' . $day_RET[1]['TITLE'] . '<br />'. _room .' :' . $day_RET[1]['ROOM'] . '</font>' : '<span title=' . date("l", $j) . '>' . $day_RET[1]['TITLE'] . '<br />'. _room .' :' . $day_RET[1]['ROOM'] . '</span>');
                         }
                     }
                 }
@@ -560,11 +560,11 @@ if (UserStudentID()) {
         if (User('PROFILE_ID') != 2) {
             $sql .= 'AND (\'' . date('Y-m-d', strtotime($date)) . '\' BETWEEN s.START_DATE AND s.END_DATE OR (s.END_DATE IS NULL AND s.START_DATE<=\'' . date('Y-m-d', strtotime($date)) . '\')) ';
         }
-        // else {
-        //     if ($_REQUEST['include_inactive'] != 'Y') {
-        //         $sql .= 'AND (\'' . date('Y-m-d', strtotime($date)) . '\' BETWEEN s.START_DATE AND s.END_DATE OR (s.END_DATE IS NULL AND s.START_DATE<=\'' . date('Y-m-d', strtotime($date)) . '\')) ';
-        //     }
-        // }
+        else {
+            if ($_REQUEST['include_inactive'] != 'Y') {
+                $sql .= 'AND (\'' . date('Y-m-d', strtotime($date)) . '\' BETWEEN s.START_DATE AND s.END_DATE OR (s.END_DATE IS NULL AND s.START_DATE<=\'' . date('Y-m-d', strtotime($date)) . '\')) ';
+            }
+        }
 
         $sql .= 'AND s.MARKING_PERIOD_ID IN (' . GetAllMP(GetMPTable(GetMP($mp_id, 'TABLE')), $mp_id) . ') 
                 ORDER BY sp.SORT_ORDER,s.MARKING_PERIOD_ID';
@@ -596,6 +596,9 @@ if (UserStudentID()) {
                 'COURSE_MARKING_PERIOD_ID' => _term,
             );
         }
+    }
+    foreach($schedule_RET  as $key => $individual) {
+        $schedule_RET[$key]['DAYS']=GetDaysNames($schedule_RET[$key]['DAYS']);
     }
     if ($_REQUEST['view_mode'] != 'month_view') {
         ListOutput($schedule_RET, $columns, _course, _courses, $link);
@@ -1028,4 +1031,40 @@ function dateFrDirect($format, $timestamp = null) {
     }
     
     return $result;
+}
+
+function GetDaysNames($dayShort)
+{
+	$ret = '';
+
+    if($dayShort == 'U')
+    {
+        $ret = 'Dimanche';
+    }
+	if($dayShort == 'M')
+	{
+		$ret = 'Lundi';
+	}
+	if($dayShort == 'T')
+	{
+		$ret = 'Mardi';
+	}
+	if($dayShort == 'W')
+	{
+		$ret = 'Mercredi';
+	}
+	if($dayShort == 'H')
+	{
+		$ret = 'Jeudi';
+	}
+	if($dayShort == 'F')
+	{
+		$ret = 'Vendredi';
+	}
+    if($dayShort == 'S')
+    {
+        $ret = 'Samedi';
+    }
+
+	return $ret;
 }
