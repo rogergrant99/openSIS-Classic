@@ -37,7 +37,6 @@ function createHtmlPurifier() {
 }
 
 $purifier = createHtmlPurifier();
-echo UserCourse();
 
 if ($_POST && isset($_POST['content'])) {
     $content = $_POST['content'];
