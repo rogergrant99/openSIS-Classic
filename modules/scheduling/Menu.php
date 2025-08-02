@@ -53,6 +53,7 @@ $menu['scheduling']['admin'] = array(
 $menu['scheduling']['teacher'] = array(
 						// 'scheduling/Schedule.php'=>_schedule,
                         'scheduling/ViewSchedule.php'=>_viewSchedule,
+						'scheduling/Planification.php'=>_planification,
 						1=>_reports,
 						'scheduling/PrintSchedules.php'=>_printSchedules,
 						'scheduling/PrintClassLists.php'=>_printClassLists,

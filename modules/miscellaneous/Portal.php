@@ -379,7 +379,7 @@ switch (User('PROFILE')) {
             echo '</div>';
         }
 
-        do_cado_bulletins();
+        // do_cado_bulletins();
         do_cado_courses_files();
         break;
 }
@@ -585,10 +585,11 @@ function do_cado_courses_files(){
             $search='%[';
             $search.=$course['COURSE_PERIOD_ID'];
             $search.=']%';
+            $planification = DBGet(DBQuery('select * from planification where course_id=\'' .$course['COURSE_ID'] . '\''));
             $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course['STAFF_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
-            echo '<div class="panel">';
-            if($fileid){
-                DrawHeader('<span class="text-bold">' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')));
+            echo '<div  class="panel">';
+            if($fileid || count($planification)){
+                DrawHeader('<span  class="text-bold" >- ' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')));
                 echo '<hr class="no-margin" />';
             }
             foreach ($fileid as $file){
@@ -612,6 +613,10 @@ function do_cado_courses_files(){
                      echo '<a class="files" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ' &nbsp; '. $show_filename . '</a>';
                  echo '<div></div>';
             }
+             if(count($planification)){
+                echo '<div style="font-size: 34px; text-align:center"><b>Planification '. $course['SHORT_NAME'] .'</b></div>';
+                echo base64_decode($planification[1]['TEXT']);
+             }
             echo '</div>';
             echo '</td></tr></table>';
         }
