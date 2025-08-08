@@ -137,8 +137,29 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
             echo '</ul>';
         }
         echo '</div>'; //.media-annotation
-        
-        echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</textarea>';
+        echo '</div>'; //.media-annotation
+
+        echo '<div 
+            style="max-width: 1500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 600px;
+            padding: 20px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            ">';
+        // print_r(base64_decode($v['MAIL_BODY']));
+        echo base64_decode($v['MAIL_BODY']);
+        echo '</div>';
+
+        // echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', base64_decode($v['MAIL_BODY'])) . '</textarea>';
         //echo '<div class="mt-20">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</div>';
         
         

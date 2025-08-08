@@ -451,8 +451,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
 
     foreach ($mail_body_info as $k => $v) {
         $fromUser = $v['FROM_USER'];
-        $msg = $v['MAIL_BODY'];
-        $msg = bin2hex($msg);
+         $msg = base64_decode($v['MAIL_BODY']);
         if ($fromUser != '')
             $login_authentication = DBGet(DBQuery('SELECT * FROM login_authentication WHERE username=\'' . $fromUser . '\' '));
         $profile = DBGet(DBQuery('SELECT * FROM user_profiles WHERE ID=' . $login_authentication[1]['PROFILE_ID']));
@@ -485,7 +484,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo '<div class="media-body">';
         echo '<div class="pull-right"><div class="input-group-btn">';
         echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . $v['MAIL_DATETIME'] . '</a>';
-        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&msgbody=' .  $msg . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . $name . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
+        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&msgbody=' .   base64_encode(base64_encode($msg)) . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . $name . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
         echo '</div></div>';
         //echo '<i class="icon-calendar3"></i> '.$v['MAIL_DATETIME'].' <a href="" class="btn btn-default btn-xs btn-icon"><i class="icon-undo2"></i></a>';
         echo '<h6 class="media-heading text-bold">' . GetNameFromUserName($v['FROM_USER']) . '</h6>';
@@ -520,7 +519,26 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo '<br>';
 
         // echo '<div class="mt-20">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</div>';
-        echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', $v['MAIL_BODY']) . '</textarea>';
+        echo '</div>';
+        echo '<div 
+            style="max-width: 1500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 600px;
+            padding: 20px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            ">';
+        echo base64_decode($v['MAIL_BODY']);
+        echo '</div>';
+        // echo '<textarea readonly class="mt-20"  rows="22" cols="150">' . str_replace('<a href=', '<a target="_blank" href=', base64_decode($v['MAIL_BODY'])) . '</textarea>';
         if ($v['MAIL_ATTACHMENT'] != '') {
             echo "
                   " . _attachment . ": ";
@@ -700,7 +718,8 @@ if (!isset($_REQUEST['modfunc'])) {
 function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBCCs, $grpName)
 {
     //$mailBody = singleQuoteReplace('', '', $mailBody);
-    $mailBody = ($mailBody);
+    // $mailBody = ($mailBody);
+    $mailBody = base64_encode($mailBody);
 
     $subject = singleQuoteReplace('', '', $subject);
     $grpName = str_replace("'", "\'", $grpName);
