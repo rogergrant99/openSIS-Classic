@@ -85,7 +85,8 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         $to_user = $_REQUEST['modto'];
         $name = html_entity_decode($_REQUEST['fullname']);
         $mail_subject = base64_decode($_REQUEST['sub']);
-        $content = base64_decode(base64_decode($_REQUEST['msgbody']));
+        $content = '<br><br><br><hr></hr>';
+        $content .= base64_decode(base64_decode($_REQUEST['msgbody']));
         $temp=$mail_subject ;
         $mail_subject = 'RE: ';
         $mail_subject .=$temp;
@@ -118,6 +119,8 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
             $value = $groupArr['GROUP_NAME'];
             $value .= '  (';
             $value .= $groupArr['CONTACT'];
+            if(!$option)
+                $value .= ' !!! Courriel manquant !!! ';                    
             $value .= ')';
             if ($_REQUEST['sel_group'] == $value)
                 echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
