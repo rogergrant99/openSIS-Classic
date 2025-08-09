@@ -235,6 +235,23 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     $temp="\n\r";
     if($_REQUEST['m'] == 'reply'){
         $mail_body = base64_decode($content);
+        echo '<script>
+            document.addEventListener("DOMContentLoaded", function() {
+                setTimeout(function() {
+                    const editor = document.getElementById("editor");
+                    if (editor) {
+                        editor.focus();
+                        // Place cursor at beginning for replies
+                        const range = document.createRange();
+                        const selection = window.getSelection();
+                        range.setStart(editor.firstChild || editor, 0);
+                        range.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                }, 100);
+            });
+        </script>';        
         // $data_array = explode("\n", $mail_body);
         // foreach ($data_array as $data_str) {
         //     $temp .= '>' . $data_str . "\n";
@@ -951,24 +968,24 @@ function scripts(){
 
         // Function to restore cursor position/selection
         function restoreCursorPosition() {
+            const editor = document.getElementById("editor");
             if (savedRange) {
+                editor.focus(); // Ensure editor has focus
                 const selection = window.getSelection();
                 selection.removeAllRanges();
                 try {
                     selection.addRange(savedRange);
                 } catch (e) {
-                    // Fallback if range is invalid
-                    const editor = document.getElementById("editor");
-                    editor.focus();
-                    // Move cursor to end as fallback
+                    // Fallback: place cursor at end
                     const range = document.createRange();
                     range.selectNodeContents(editor);
                     range.collapse(false);
                     selection.addRange(range);
                 }
+            } else {
+                editor.focus();
             }
         }
-
         // Exécuter les commandes d"édition
         function execCmd(command, value = null) {
             const editor = document.getElementById("editor");
@@ -981,6 +998,45 @@ function scripts(){
             updateWordCount();
             updateToolbarState();
         }
+
+        // // Focus editor on page load
+        // document.addEventListener("DOMContentLoaded", function() {
+        //     const editor = document.getElementById("editor");
+        //     if (editor) {
+        //         // Small delay to ensure everything is rendered
+        //         setTimeout(function() {
+        //             editor.focus();
+                    
+        //             // Place cursor appropriately
+        //             const range = document.createRange();
+        //             const selection = window.getSelection();
+                    
+        //             if (editor.innerHTML === "" || editor.innerHTML === "<br>") {
+        //                 editor.innerHTML = "<br>";
+        //                 range.setStart(editor.firstChild, 0);
+        //             } else {
+        //                 // Place at end of existing content
+        //                 range.selectNodeContents(editor);
+        //                 range.collapse(false);
+        //             }
+                    
+        //             selection.removeAllRanges();
+        //             selection.addRange(range);
+        //             saveCursorPosition();
+        //         }, 200);
+        //     }
+        // });
+
+        // // Also focus when window finishes loading
+        // window.addEventListener("load", function() {
+        //     setTimeout(function() {
+        //         const editor = document.getElementById("editor");
+        //         if (editor && !document.activeElement.closest("#editor")) {
+        //             editor.focus();
+        //         }
+        //     }, 300);
+        // });
+
 
         // Auto-save functions
         // function updateAutoSaveStatus(status, message) {
@@ -1746,6 +1802,19 @@ function scripts(){
             // const editor = document.getElementById("editor");
             // console.log("Script loaded.");
             // initializeColorPickers();
+            setTimeout(function() {
+                const editor = document.getElementById("editor");
+                if (editor) {
+                    editor.focus();
+                    // Place cursor at beginning for replies
+                    const range = document.createRange();
+                    const selection = window.getSelection();
+                    range.setStart(editor.firstChild || editor, 0);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }, 100);
             // Save cursor position on various editor interactions
             editor.addEventListener("mouseup", saveCursorPosition);
             editor.addEventListener("keyup", function(e) {
