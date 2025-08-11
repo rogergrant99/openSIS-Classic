@@ -660,14 +660,25 @@ if (!isset($_REQUEST['modfunc'])) {
             $inbox_info[$key]['MAIL_SUBJECT'] = $inbox_info[$key]['MAIL_SUBJECT'] . "<img align='right' src='./assets/attachment.png'>";
         }
         $inbox_info[$key]['FROM_USER'] = GetNameFromUserName($value['FROM_USER']);
-        if (User('PROFILE') == 'admin' && $inbox_info[$key]['TO_USER']){
-            $profile = DBGet(DBQuery('SELECT profile_id,user_id FROM login_authentication WHERE username =  "' .  $inbox_info[$key]['TO_USER'] . '"'));
-            if( $profile[1]['PROFILE_ID'] == 4)
-                $table='people';
-            else
-                $table='staff';
-            $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from ' . $table . ' where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' . $inbox_info[$key]['TO_USER'] . '")'));
-            $inbox_info[$key]['TO_NAME']=$name[1]['NAME'];
+            $toArr = explode(",",  $inbox_info[$key]['TO_USER']);
+            // print_r($toArr);
+            foreach ($toArr as $keyname => $toAddr){
+                $numberOfName=count($toArr);
+                if (User('PROFILE') == 'admin' && $toAddr){
+                    $profile = DBGet(DBQuery('SELECT profile_id,user_id FROM login_authentication WHERE username =  "' .  $toAddr . '"'));
+                if( $profile[1]['PROFILE_ID'] == 4)
+                    $table='people';
+                else
+                    $table='staff';
+                // print_r($toAddr); echo ' - ';
+                $name = DBGet(DBQuery('SELECT concat(first_name, " " , last_name ) as NAME  from ' . $table . ' where staff_id = (SELECT  user_id FROM login_authentication WHERE username = "' .  $toAddr. '")'));
+                // print_r($name); echo ' - ';
+                // echo $name[1]['NAME']; echo ' - ';
+                // echo $keyname;
+                $inbox_info[$key]['TO_NAME'].=$name[1]['NAME'];
+                // echo $numberOfName; echo ' - '; echo $keyname; echo ' + ';
+                if($keyname ==0 && $numberOfName>1 )$inbox_info[$key]['TO_NAME'].= ' , ';
+            }
         }
     }
 

@@ -53,30 +53,128 @@ if(! $_REQUEST['_openSIS_PDF']){
 }
 
 if(! $_REQUEST['_openSIS_PDF']){
-    $grade_level_RET = DBGet(DBQuery('SELECT ID,TITLE FROM school_gradelevels WHERE TITLE != "Préscolaire" AND school_id=\'' . UserSchool() . '\''));
+    $grade_level_RET = DBGet(DBQuery('SELECT ID,TITLE FROM school_gradelevels WHERE  school_id=\'' . UserSchool() . '\''));
     if (count($grade_level_RET)) {
-        echo '<div class="form-group"><div class="col-md-12">' . CreateSelect($grade_level_RET, 'id', 'Tous', _selectGradeLevel . ' : ', 'Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&id=') . '</div></div>';
+        echo '<div class="form-group"><div style="width: 300px;" class="col-md-12">' . CreateSelect($grade_level_RET, 'id', 'Tous', _selectGradeLevel . ' : ', 'Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&id=') . '</div></div><br><br>';
     }
 }
 do_style();
-
+//echo $_REQUEST['id'];
 if($_REQUEST['id']==''){
+    prescolaire('1','2');
+    echo '<br>';
     primaire('0','6');
     echo '<br>';
     secondaire('0','5');
 }
 
-if($_REQUEST['id'] < 8)
+if($_REQUEST['id'] < 8 && $_REQUEST['id'] != 1)
     primaire(strip_tags(trim($_REQUEST['id']))-2,strip_tags(trim($_REQUEST['id']))-1);
 if($_REQUEST['id'] > 7)
     secondaire(strip_tags(trim($_REQUEST['id']))-8,strip_tags(trim($_REQUEST['id']))-7);
+if($_REQUEST['id'] == 1)
+    prescolaire(1,2);
 
 // if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'print' && $_REQUEST['report']) {
 //     echo '<style type="text/css">*{font-family:arial; font-size:10px;}</style>';
 // //    echo '<link rel="stylesheet" type="text/css" href="assets/css/export_print.css" />';
 // }
     
-    
+function prescolaire($start,$end){
+    global $colors;
+
+    $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
+    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'M%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `sort_order`"));
+    $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level = '1'"));
+    $data = array();
+    // echo '<pre>'; print_r($course_periods); echo '</pre>';
+
+    foreach($course_periods as $key => $cp){
+        $len=strlen($cp['DAYS']);
+        $days=$cp['DAYS'];
+        for($x = 1; $x <= $len ; $x++) {
+            $cp['DAYS']=substr($days,$x-1,1);
+            // echo $cp['DAYS'];
+            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=$colors[$cp['COLOUR']];
+            if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=' - ';
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['ROOM'];
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='</b>';
+            }
+            else{
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]=$cp['TITLE'];
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=' - ';
+                $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['ROOM'];
+
+            }
+        }
+    }
+    // echo '<pre>'; print_r($data); echo '</pre>';
+        // $data[2]['12:30:00']['COLOUR']['F']='77, 81, 77, 0.52';
+        // $data[2]['12:30:00']['F']='dîner';
+        // $data[3]['12:30:00']['COLOUR']['F']='77, 81, 77, 0.52';
+        // $data[3]['12:30:00']['F']='dîner';
+    echo '
+    <body>   
+        <table>
+            <thead>
+                <tr>
+                    <th>Période scolaire</th>
+                    <th class="regular-cell1">Niveau</th>
+                    <th>Lundi</th>
+                    <th>Mardi</th>
+                    <th>Mercredi</th>
+                    <th>Jeudi</th>
+                    <th>Vendredi</th>
+                </tr>
+            </thead>
+            <tbody>
+    ';       
+    foreach ($get_periods as $key => $period) {
+        if( $period["ATTENDANCE"]=='Y' ){
+echo '                <tr>
+                    <td class="spanning-cell" rowspan="' . $end - $start. '">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
+        ';
+         for ($i = $start; $i < $end; $i++){
+            if(($end - $start)  < 2) 
+                $cell=1;
+            else 
+                $cell=$i+1;
+            echo '     <!-- Rows 1-5 -->
+                    <td class="regular-cell'. $cell .'">'. $i .'</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$i][$get_periods[$key]["START_TIME"]]['COLOUR']['M'] .');  ">'. $data[$i][$get_periods[$key]["START_TIME"]]['M']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$i][$get_periods[$key]["START_TIME"]]['COLOUR']['T'] .');  ">'. $data[$i][$get_periods[$key]["START_TIME"]]['T']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$i][$get_periods[$key]["START_TIME"]]['COLOUR']['W'] .');  ">'. $data[$i][$get_periods[$key]["START_TIME"]]['W']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$i][$get_periods[$key]["START_TIME"]]['COLOUR']['H'] .');  ">'. $data[$i][$get_periods[$key]["START_TIME"]]['H']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$i][$get_periods[$key]["START_TIME"]]['COLOUR']['F'] .');  ">'. $data[$i][$get_periods[$key]["START_TIME"]]['F']. '</td>
+                
+                
+            ';
+        echo '</tr>';
+         }
+        }else{
+                echo'<tr>
+                    <td class="lunch last-tr" rowspan="1">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
+                    <td class="lunch last-tr"></td>
+                    <td class="lunch last-tr"></tdr>
+                    <td class="lunch last-tr"></td>
+                    <td class="lunch last-tr"></td>
+                    <td class="lunch last-tr"></td>
+                    <td class="lunch last-tr" style="background-color:rgb('. $data[2][$get_periods[$key]["START_TIME"]]['COLOUR']['F'] .');  ">'. $data[2][$get_periods[$key]["START_TIME"]]['F']. ' <br> '. $data[3][$get_periods[$key]["START_TIME"]]['F']. '</td>
+                    </tr>
+                ';
+        }
+
+    }
+    echo '</tbody>
+        </table>
+    </body>
+    ';
+
+}
+
 function primaire($start,$end){
     global $colors;
 

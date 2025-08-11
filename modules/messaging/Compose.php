@@ -107,20 +107,30 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
 
     if (User('PROFILE') == 'teacher' ){
         $to_bcc = 'admin';
-        $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by last_name'));
-        $index=count($groupList)+1;
-        $groupList[$index]['EMAIL']='admin';
-        $groupList[$index]['GROUP_NAME']='admin';
-        $groupList[$index]['CONTACT']='CADO';
-
+        $primaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+        $secondaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id)) as CONTACT2 , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+        $index=count($primaryContactlist)+1;
+        $primaryContactlist[$index]['EMAIL']='admin';
+        $primaryContactlist[$index]['STUDENT_NAME']='admin';
+        $primaryContactlist[$index]['CONTACT']='CADO';
+        // echo '<pre>'; print_r($secondaryContactlist); echo '</pre>';
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
-        foreach ($groupList as $groupArr) {
+        foreach ($primaryContactlist as $key_index =>  $groupArr) {
             $option = $groupArr['EMAIL'];
-            $value = $groupArr['GROUP_NAME'];
-            $value .= '  (';
-            $value .= $groupArr['CONTACT'];
+            if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
+                // echo 'yes';
+                $option .= ',';
+                $option .= $secondaryContactlist[$key_index]['EMAIL'];
+            } 
+            $value = $groupArr['STUDENT_NAME'];
+            $value .= '&nbsp(';
+            $value .= $groupArr['CONTACT']; 
+            if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
+                $value .= ' - ';
+                $value .= $secondaryContactlist[$key_index]['CONTACT2']; 
+            }
             if(!$option)
-                $value .= ' !!! Courriel manquant !!! ';                    
+                $value .= '&nbsp***courriel manquant*** ';                    
             $value .= ')';
             if ($_REQUEST['sel_group'] == $value)
                 echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";

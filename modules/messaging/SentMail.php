@@ -69,7 +69,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
     foreach ($mail_body_info as $k => $v) {
         $to_user = explode(",", $v['TO_USER']);
         $v['TO_USER'] = implode(", ", $to_user);
-
+echo $to_user;
         echo '<h3 class="no-margin-top"><a href="Modules.php?modname=messaging/SentMail.php" class="btn btn-icon"><i class="icon-square-left"></i></a> &nbsp; &nbsp;' . $v['MAIL_SUBJECT'] . '</h3>';
         echo '<hr class="no-margin-top"/>';
 
