@@ -790,7 +790,7 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
     $list=explode(',', $to);
     foreach ($list as $key => $toAddr){
             // mail($toAddr,"Message de CADO",$EXTmsgBody);
-            mail('roger.grant@me.com',$toAddr,$EXT$msgBody);
+            mail('roger.grant@me.com',$toAddr,$EXTmsgBody);
     }
     $mailBody = base64_encode($mailBody);
     $subject = singleQuoteReplace('', '', $subject);
