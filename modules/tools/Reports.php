@@ -92,7 +92,7 @@ if ($_REQUEST['modfunc'] == 'teachers') {
 function CadoTeacherFix($next_syear)
 {
     echo 'CADO - Assigner valeurs par défault aux enseignants ainsi que les compétances des cours';
-    $YearMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_YEARS WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $YearMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM school_years WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
     $E1MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 1\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
     $E2MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 2\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
     $E3MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 3\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
