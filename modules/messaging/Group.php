@@ -46,7 +46,7 @@ if (!isset($_REQUEST['modfunc'])) {
     $select = "SELECT *  from mail_group  WHERE USER_NAME ='$userName' AND SCHOOL_ID= '".UserSchool()."'";
     $link['GROUP_NAME']['link'] = "Modules.php?modname=$_REQUEST[modname]&modfunc=groupmember";
     $link['GROUP_NAME']['variables'] = array('group_id' => 'GROUP_ID');
-    $columns = array('GROUP_NAME' => _groupName, 'DESCRIPTION' => _description, 'CREATION_DATE' => _createDate, 'MEMBERS' => _members , 'action' => _action);
+    $columns = array('GROUP_NAME' => _groupName, 'DESCRIPTION' => _description,  'MEMBERS' => _members , 'action' => _action);
     $list = DBGet(DBQuery($select), array('CREATION_DATE' => 'ProperDate'));
 
     foreach ($list as $id => $value) {
