@@ -93,10 +93,10 @@ function CadoTeacherFix($next_syear)
 {
     echo 'CADO - Assigner valeurs par défault aux enseignants ainsi que les compétances des cours';
     $YearMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM school_years WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
-    $E1MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 1\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
-    $E2MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 2\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
-    $E3MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 3\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
-    $ECMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM SCHOOL_QUARTERS WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'1ère communication\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $E1MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 1\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $E2MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 2\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $E3MP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'Étape 3\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
+    $ECMP = DBGet(DBQuery('SELECT   MARKING_PERIOD_ID FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND TITLE = \'1ère communication\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
     $FY = $FY1 = $FY2 = $FY3 = $FYC = 'FY-';
     $E1 = $E2 = $E3 = $EC = 'Q-';
     $FY .='E';
