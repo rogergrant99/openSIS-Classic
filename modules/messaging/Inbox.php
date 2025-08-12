@@ -802,7 +802,7 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
                 }
             </style>
         </head>
-        <body style="margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f5f7fa; color: #333333; width: 100% !important; min-width: 100%; -webkit-font-smoothing: antialiased;">
+        <body style="margin: 0; padding: 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f5f7fa; color: #333333; width: 100% !important; min-width: 100%; -webkit-font-smoothing: antialiased;">
             <!-- Preheader text -->
             <div style="display: none; font-size: 1px; color: #f5f7fa; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
                 Nouveau message reçu sur le portail CADO - Connectez-vous pour le consulter
@@ -827,7 +827,7 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
                                                         <path d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                                     </svg>
                                                 </div>
-                                                <h1 style="color: white; font-size: 32px; font-weight: 700; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;">Message de CADO</h1>
+                                                <h1 style="color: white; font-size: 32px; font-weight: 700; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">Message de CADO</h1>
                                             </td>
                                         </tr>
                                     </table>
@@ -842,8 +842,8 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
                                         <tr>
                                             <td style="text-align: center;">
                                                 <div style="background-color: #f8f9ff; border-left: 4px solid #667eea; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: left;">
-                                                    <h2 style="color: #333333; font-size: 24px; font-weight: 600; margin: 0 0 15px 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;">Nouveau message reçu</h2>
-                                                    <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;">
+                                                    <h2 style="color: #333333; font-size: 24px; font-weight: 600; margin: 0 0 15px 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">Nouveau message reçu</h2>
+                                                    <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
                                                         Vous avez reçu un message sur le portail de CADO. Veuillez vous connecter au portail pour récupérer le message.
                                                     </p>
                                                 </div>
@@ -869,7 +869,7 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
                                         <tr>
                                             <td>
                                                 <div style="background-color: #f8f9ff; padding: 20px; border-radius: 8px; text-align: center; margin-top: 30px;">
-                                                    <p style="color: #666666; font-size: 14px; margin: 0; line-height: 1.5; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;">
+                                                    <p style="color: #666666; font-size: 14px; margin: 0; line-height: 1.5; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
                                                         <strong>Note:</strong> Ce message a été généré automatiquement. Veuillez ne pas répondre à cet email.
                                                     </p>
                                                 </div>
@@ -882,10 +882,10 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
                             <!-- Footer -->
                             <tr>
                                 <td style="background-color: #f8f9ff; padding: 30px; text-align: center; border-top: 1px solid #e8ecf0;">
-                                    <p style="color: #888888; font-size: 14px; margin: 0 0 10px 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;">
+                                    <p style="color: #888888; font-size: 14px; margin: 0 0 10px 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
                                         © 2025 CADO Portal - Tous droits réservés
                                     </p>
-                                    <p style="color: #aaaaaa; font-size: 12px; margin: 0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;">
+                                    <p style="color: #aaaaaa; font-size: 12px; margin: 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
                                         Système de notification automatique
                                     </p>
                                 </td>
