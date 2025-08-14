@@ -39,4 +39,12 @@ ADD DAYS decimal(9,0) after post_end_date
 course_details Structure:
 select `c`.`title` AS `course_name`,`c`.`short_name` AS `course_number`,`c`.`grade_level` AS `grade_level`,`cp`.`school_id` AS `school_id`,`cp`.`syear` AS `syear`,`cp`.`marking_period_id` AS `marking_period_id`,`cp`.`short_name` AS `short_name`,`c`.`subject_id` AS `subject_id`,`cp`.`course_id` AS `course_id`,`cp`.`course_period_id` AS `course_period_id`,`cp`.`teacher_id` AS `teacher_id`,`c`.`rollover_id` AS `rollover_id`,`cp`.`secondary_teacher_id` AS `secondary_teacher_id`,`cp`.`tertiary_teacher_id` AS `tertiary_teacher_id`,`c`.`title` AS `course_title`,`cp`.`title` AS `cp_title`,`cp`.`grade_scale_id` AS `grade_scale_id`,`cp`.`marking_period_id` AS `mpid`,`cp`.`mp` AS `mp`,`cp`.`credits` AS `credits`,`cp`.`begin_date` AS `begin_date`,`cp`.`end_date` AS `end_date` from (`opensis`.`course_periods` `cp` join `opensis`.`courses` `c`) where `cp`.`course_id` = `c`.`course_id`
 
-CREATE TABLE `planification` (   `id` int(11) NOT NULL AUTO_INCREMENT,   `course_id` int(11) DEFAULT NULL,   `text` mediumblob DEFAULT NULL,   `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),   PRIMARY KEY (`id`) ) ENGINE=InnoDB AUTO_INCREMENT=378 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `planification` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `course_id` int(11) DEFAULT NULL,
+  `text` mediumblob DEFAULT NULL,
+  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `start_date` date DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=445 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
