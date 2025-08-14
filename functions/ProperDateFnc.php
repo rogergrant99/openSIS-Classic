@@ -63,7 +63,7 @@ function ProperDate($date='',$length='long')
 
 	
 	if($date)
-		return date((($length=='long' || Preferences('MONTH')!='F')?Preferences('MONTH'):'M').$sep.Preferences('DAY').$sep.Preferences('YEAR'),mktime(0,0,0,$month,$day,$year));
+		return dateFr((($length=='long' || Preferences('MONTH')!='F')?Preferences('MONTH'):'M').$sep.Preferences('DAY').$sep.Preferences('YEAR'),mktime(0,0,0,$month,$day,$year));
 
 }
 
@@ -116,15 +116,16 @@ function ProperDateMAvr($date='')
     return $date;
     }
     else
-    return date('Y-m-d');    
+    return dateFr('Y-m-d');    
 }
 function mkSisDate($year,$month,$date)
 {
     
-        $monthFormat=date(Preferences('MONTH'),strtotime($year.'-'.$month.'-'.$date));
-        $dayFormat=date(Preferences('DAY'),strtotime($year.'-'.$month.'-'.$date));
-        $yearFormat=date(Preferences('YEAR'),strtotime($year.'-'.$month.'-'.$date));
+        $monthFormat=dateFr(Preferences('MONTH'),strtotime($year.'-'.$month.'-'.$date));
+        $dayFormat=dateFr(Preferences('DAY'),strtotime($year.'-'.$month.'-'.$date));
+        $yearFormat=dateFr(Preferences('YEAR'),strtotime($year.'-'.$month.'-'.$date));
         return $monthFormat.'/'.$dayFormat.'/'.$yearFormat;
    // return date((($length=='long' || Preferences('MONTH')!='F')?Preferences('MONTH'):'M').$sep.Preferences('DAY').$sep.Preferences('YEAR'),mktime(0,0,0,$m[$break_date[1]],$break_date[2],$break_date[0]));
 }
+
 ?>

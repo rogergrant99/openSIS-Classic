@@ -62,6 +62,7 @@ $menu['scheduling']['teacher'] = array(
 
 $menu['scheduling']['parent'] = array(
 						'scheduling/ViewSchedule.php'=>_schedule,
+						'scheduling/Planification.php'=>_planification,
 						'scheduling/PrintClassPictures.php'=>_classPictures,
 						'scheduling/Requests.php'=>_studentRequests,
                         'scheduling/StudentScheduleReport.php'=>_scheduleReport,

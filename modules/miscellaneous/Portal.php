@@ -614,8 +614,8 @@ function do_cado_courses_files(){
                  echo '<div></div>';
             }
              if(count($planification)){
-                echo '<div style="font-size: 34px; text-align:center"><b>Planification '. $course['SHORT_NAME'] .'</b></div>';
-                echo base64_decode($planification[1]['TEXT']);
+                // echo '<div style="font-size: 34px; text-align:center"><b>Planification '. $course['SHORT_NAME'] .'</b></div>';
+                // echo base64_decode($planification[1]['TEXT']);
              }
             echo '</div>';
             echo '</td></tr></table>';
