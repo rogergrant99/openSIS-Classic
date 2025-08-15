@@ -26,6 +26,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #***************************************************************************************
+require_once 'libraries/htmlpurifier/library/HTMLPurifier.auto.php';
 session_start();
 !empty($_SESSION['USERNAME']) or die('Access denied!');
 include('../../RedirectModulesInc.php');
@@ -903,7 +904,41 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
             // mail($toAddr,"Message de CADO",$EXTmsgBody,$headers);
             mail('webmaster.cado@gmail.com',$toAddr,$EXTmsgBody,$headers);
     }
-    $mailBody = base64_encode($mailBody);
+    // HTML Purifier
+    // Configure HTML Purifier
+    function createHtmlPurifier() {
+        $config = HTMLPurifier_Config::createDefault();
+        
+        // Allow common HTML elements and attributes for rich text editing
+        $config->set('HTML.Allowed', 
+            'b,p[class|style],br,strong,b,em,i,u,strike,del,h1,h2,h3,h4,h5,h6,' .
+            'ul,ol,li,blockquote,pre,code,' .
+            'table[style|class|width|cellspacing|cellpadding|border|width|margin|align],thead,tfoot,tr[style|class],td[style|class|valign|colspan],th[style|class|valign],' .
+            'a[href|title|target],' .
+            'img[src|alt|width|height|style],' .
+            'div[style|class],span[style|class],font[color|style|size]'
+        );
+        
+        // Allow safe CSS properties for styling
+        $config->set('CSS.AllowedProperties', 
+            'background-color,rgb,color,font-weight,font-style,text-decoration,font-variant-numeric,font-variant-east-asian,font-variant-alternates,font-size-adjust,font-kerning,font-optical-sizing,font-feature-settings,font-variation-settings,font-variant-position,font-variant-emoji,font-stretch,font-size,line-height,font-family,' .
+            'border-style,border-width,border-color,margin-bottom,' .
+            'text-align,padding,margin,border,width,height'
+        );
+
+
+        // Allow target="_blank" for links
+        $config->set('Attr.AllowedFrameTargets', array('_blank'));
+        
+        // Set cache directory (make sure this directory exists and is writable)
+        $config->set('Cache.SerializerPath', '/tmp/htmlpurifier');
+        
+        return new HTMLPurifier($config);
+    }
+    $purifier = createHtmlPurifier();
+    $clean_content = $purifier->purify($mailBody);
+    $mailBody = base64_encode($clean_content);
+
     $subject = singleQuoteReplace('', '', $subject);
     $grpName = str_replace("'", "\'", $grpName);
     $attachment = str_replace("'", "\'", $attachment);
@@ -1081,7 +1116,7 @@ function CheckAuthenticMail($userName, $toUsers, $toCCUsers, $toBCCUsers, $grpNa
         else
             $multipleBCCUser = '';
 
-        SendMail($multipleUser, $userName, $subject, $mailBody, $attachment, $multipleCCUser, $multipleBCCUser, $grpName);
+       SendMail($multipleUser, $userName, $subject, $mailBody, $attachment, $multipleCCUser, $multipleBCCUser, $grpName);
 
         if (count($to_uav_user) > 0)
             echo '<div class="alert bg-danger alert-styled-left">' . _messageNotSentTo . ' ' . implode(',', $to_uav_user) . ' ' . _asTheyDonTExist . '.</div><br>';

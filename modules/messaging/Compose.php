@@ -28,7 +28,6 @@
 #***************************************************************************************
 //include_once("fckeditor/fckeditor.php");
 include('lang/language.php');
-require_once 'libraries/htmlpurifier/library/HTMLPurifier.auto.php';
 DrawBC(""._messaging." > " . ProgramTitle());
 //PopTable('header', 'Compose Message');
 global $content;

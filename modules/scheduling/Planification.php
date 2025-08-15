@@ -1,9 +1,10 @@
 <?php
 include('lang/language.php');
 include('../../RedirectModulesInc.php');
-//session_start();
-DrawBC("" . _scheduling . " > " . ProgramTitle());
+session_start();
 // print_r($_REQUEST);
+
+DrawBC("" . _scheduling . " > " . ProgramTitle());
 
 if (User('PROFILE') == 'teacher'){
     $course_id = UserCourse();
@@ -17,7 +18,6 @@ if($_REQUEST['id']){
 
 $one_day = 60 * 60 * 24;
 $one_week = 60 * 60 * 24 * 7;
-// print_r($_REQUEST);
 if ($_REQUEST && isset($_REQUEST['week_range'])){
     $start = $_REQUEST['week_range'];
     $week1_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']));
@@ -32,6 +32,11 @@ else{
         while (dateFr('N', $start_time_cur) != 1) {
             $start_time_cur = $start_time_cur - $one_day;
         }
+        $start = $_REQUEST['week_range'] =  date('Y-m-d', $start_time_cur ); 
+        $week1_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']));
+        $week1_sec = strtotime($_REQUEST['week_range']);
+        $week2_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']) + $one_week);
+        $week2_sec = strtotime($_REQUEST['week_range']) + $one_week;
     }
     $week1_date_start =  dateFr('d-M', $start_time_cur);
     $week1_sec = $start_time_cur;
@@ -155,12 +160,13 @@ $week_range = _makeWeeks('', '', 'Modules.php?modname=' . $_REQUEST['modname'] .
 if(! $_REQUEST['_openSIS_PDF']){
     $courses_RET = DBGet(DBQuery('SELECT DISTINCT c.TITLE , cp.COURSE_PERIOD_ID ,cp.COURSE_ID as ID,cp.TEACHER_ID AS STAFF_ID FROM schedule s,course_periods cp,course_period_var cpv,courses c,attendance_calendar acc WHERE s.SYEAR=\'' . UserSyear() . '\' AND cp.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID  AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID  AND (s.MARKING_PERIOD_ID IN (SELECT MARKING_PERIOD_ID FROM school_years WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_semesters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_quarters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE )or s.MARKING_PERIOD_ID  is NULL) AND (\'' . DBDate() . '\' BETWEEN s.START_DATE AND s.END_DATE OR \'' . DBDate() . '\'>=s.START_DATE AND s.END_DATE IS NULL) AND s.STUDENT_ID=\'' . UserStudentID() . '\' AND cp.GRADE_SCALE_ID IS NOT NULL' . (User('PROFILE') == 'teacher' ? ' AND cp.TEACHER_ID=\'' . User('STAFF_ID') . '\'' : '') . ' AND c.COURSE_ID=cp.COURSE_ID ORDER BY TITLE'));
     if (count($courses_RET)) {
-         echo '<div class="form-inline"><div style="width: 300px;" class="col-md-12">' . CreateSelect($courses_RET, 'id', $course_id, _selectCourse . ' : ', 'Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&id=') . '</div><br><br>';
+        echo '<div class="form-inline"><div style="width: 300px;" class="col-md-12">' . CreateSelect($courses_RET, 'id', $course_id, _selectCourse . ' : ', 'Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&id=') . '</div><br><br>';
+        echo '<br>';
+
     }
 }
 
 if(! $_REQUEST['_openSIS_PDF']){
-    echo '<br>';
     DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
 }
 

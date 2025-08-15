@@ -588,7 +588,8 @@ function do_cado_courses_files(){
             $planification = DBGet(DBQuery('select * from planification where course_id=\'' .$course['COURSE_ID'] . '\''));
             $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course['STAFF_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
             echo '<div  class="panel">';
-            if($fileid || count($planification)){
+            // if($fileid || count($planification)){
+            if($fileid){
                 DrawHeader('<span  class="text-bold" >- ' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')));
                 echo '<hr class="no-margin" />';
             }
