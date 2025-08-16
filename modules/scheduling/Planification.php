@@ -2,16 +2,53 @@
 include('lang/language.php');
 include('../../RedirectModulesInc.php');
 session_start();
-// print_r($_REQUEST);
-
 DrawBC("" . _scheduling . " > " . ProgramTitle());
 
+global $course_period_id;
+// Delete file
+if ($_POST && isset($_POST['delete_file'])){
+    $dir = 'assets/stafffiles';
+    $target_path = $dir . '/' . $_POST['teacher_id'] . ''. $_POST['delete_file'] .'' . $fileName . '';
+    DBQuery('DELETE FROM user_file_upload WHERE name="' .$_POST['delete_file'] . '"');
+    unlink($target_path);
+}
+
+// echo '<pre>'; print_r($_FILES); echo '/<pre>';
+// Add file
+if (isset($_FILES['files'])) {
+    $fileCount = count($_FILES['files']['name']);
+    $dir = 'assets/stafffiles';
+    for ($i = 0; $i < $fileCount; $i++) {
+        if ($_FILES['files']['error'][$i] == UPLOAD_ERR_OK) {
+            $fileName = $_FILES['files']['name'][$i];
+            $fileTmpName = $_FILES['files']['tmp_name'][$i];
+            $fileSize = $_FILES['files']['size'][$i];
+            $fileType = $_FILES['files']['type'][$i];
+            $target_path = $dir . '/' . $_POST['teacher_id'] . '-['. $_POST['course_period_id'] .']' . $fileName . '';
+            $content = 'IN_DIR';
+            $concat_filename = str_replace($dir.'/', '', $target_path);
+            $concat_filename = str_replace("'", "\'", $concat_filename);
+            // echo $concat_filename;
+            if(file_exists($target_path)){
+                DBQuery('DELETE FROM user_file_upload WHERE USER_ID=\''  . $_POST['teacher_id'] . '\'AND NAME=\'' . $concat_filename . '\'');
+                unlink($target_path);
+            }
+            move_uploaded_file($fileTmpName, "assets/stafffiles/" . $concat_filename);
+        	// rename($fileTmpName, $target_path);
+            DBQuery('INSERT INTO user_file_upload (USER_ID,PROFILE_ID,SCHOOL_ID,SYEAR,NAME, SIZE, TYPE, CONTENT,FILE_INFO) VALUES (' . $_POST['teacher_id'] . ',\'2\',' . UserSchool() . ',' . UserSyear() . ',\'' . $concat_filename . '\', \'' . $fileSize . '\', \'' . $fileType . '\', \'' . $content . '\',\'stafffile\')');
+        }
+    }
+}
+
+// Teacher  or student
 if (User('PROFILE') == 'teacher'){
     $course_id = UserCourse();
     $editable='';
 }
 else
     $editable='readonly';
+
+// Change course
 if($_REQUEST['id']){
     $course_id  = $_REQUEST['id'];
 }
@@ -94,8 +131,6 @@ if($week2_sec){
     $_SESSION['schedule_data']['week2'] = unserialize($raw_content);
 }
 
-
-
 // Initialize default data if not set (only for non-AJAX requests)
 if (!isset($_SESSION['schedule_data'])) {
     $_SESSION['schedule_data'] = [
@@ -162,13 +197,16 @@ if(! $_REQUEST['_openSIS_PDF']){
     if (count($courses_RET)) {
         echo '<div class="form-inline"><div style="width: 300px;" class="col-md-12">' . CreateSelect($courses_RET, 'id', $course_id, _selectCourse . ' : ', 'Modules.php?modname=' . strip_tags(trim($_REQUEST['modname'])) . '&id=') . '</div><br><br>';
         echo '<br>';
-
+        $default_course_id=$courses_RET[1]['ID'];
     }
 }
 
 if(! $_REQUEST['_openSIS_PDF']){
     DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
 }
+
+if(! $_REQUEST['_openSIS_PDF'])
+    do_cado_courses_files();
 
 function CreateSelect($val, $name, $opt, $cap, $link)
 {
@@ -281,6 +319,68 @@ function dateFr($format, $timestamp = null) {
     return $result;
 }
 
+function do_cado_courses_files(){
+    global $course_id,$default_course_id;
+    if(!$course_id) $course_id=$default_course_id;
+    $course_period_id = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
+    $search='%[';
+    $search.=$course_period_id[1]['COURSE_PERIOD_ID'];
+    $search.=']%';
+    // echo $search;
+    if(User('PROFILE') == 'teacher')
+        $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course_period_id[1]['TEACHER_ID'] . ' AND FILE_INFO="stafffile" '));
+    else
+        $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course_period_id[1]['TEACHER_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
+    if(count($fileid) || User('PROFILE') == 'teacher'){
+        echo "<div id='upload-status' class='upload-box'>
+        <span class='upload-text'>⏳ Téléchargement en cours... Veuillez patienter</span>
+        </div>";
+        echo '<div  class="dl-panel">';
+        foreach ($fileid as $file){
+            $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
+            if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
+                $fileIcon = '<i class="fa fa-file-image-o"></i>';
+            } elseif ($ext == 'doc' || $ext == 'docx') {
+                $fileIcon = '<i class="fa fa-file-word-o"></i>';
+            } elseif ($ext == 'xls' || $ext == 'xlsx') {
+                $fileIcon = '<i class="fa fa-file-excel-o"></i>';
+            } elseif ($ext == 'ppt' || $ext == 'pptx') {
+                $fileIcon = '<i class="fa fa-file-powerpoint-o"></i>';
+            } elseif ($ext == 'pdf') {
+                $fileIcon = '<i class="fa fa-file-pdf-o"></i>';
+            } else {
+                $fileIcon = '<i class="fa fa-file-o"></i>';
+            }
+            if($file['DOWNLOAD_ID'] && ! $_REQUEST['_openSIS_PDF']){
+                $show_filename=strstr($file['NAME'], ']');
+                $show_filename=trim($show_filename, "]");
+                echo "<div>";
+                if(User('PROFILE') == 'teacher')
+                    echo '<button  class="minus-sign" onclick="deleteFile(`'.$file['NAME']  .'`);">X</button>';
+                echo '<a class="custom-file-download" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ''. $show_filename . '</a>';
+                echo "</div>";
+                echo '&nbsp&nbsp&nbsp';
+            }
+        }
+        if(User('PROFILE') == 'teacher')
+        echo "<button  class='plus-sign' onclick=\"document.getElementById('actual-btn').click()\">+</button>";
+    }
+    echo "</div>";
+    echo "<div>&nbsp</div>";
+    echo "<form hidden action='Modules.php?modname=scheduling/Planification.php' method='POST' enctype='multipart/form-data'>
+    <input type='hidden' name='course_period_id' value='";
+    echo $course_period_id[1]['COURSE_PERIOD_ID'];
+    echo"'>
+    <input type='hidden' name='teacher_id' value='";
+    echo $course_period_id[1]['TEACHER_ID'];
+    echo "'>
+    <label hidden for='actual-btn'>Choose a file to upload:</label><br><br>
+    <input hidden type='file' name='files[]' id='actual-btn' onchange='showUploading(); this.form.submit()' multiple><br><br>
+    <button hidden type='submit'>Upload</button>
+    </form>";
+
+}
+
 
 ?>
 
@@ -318,14 +418,18 @@ function dateFr($format, $timestamp = null) {
         th, td {
             border: 1px solid #333;
             padding: 4px;
-            vertical-align: top;
+            vertical-align: center;
             min-height: 40px;
+            font-family: Arial, sans-serif;
+            border: 1px solid #000000ff;
         }
         
         th {
             background-color: #a09b9bff;
             /* font-weight: bold; */
             text-align: center;
+            font-family: Arial, sans-serif;
+            border: 1px solid #000000ff;
         }
         
         .header-row {
@@ -365,6 +469,9 @@ function dateFr($format, $timestamp = null) {
             text-align: center; 
             font-size: 16px;
             color: black;
+            font-family: Arial, sans-serif;
+            background: #d4d6d7ff;
+            border: 1px solid #000000ff;
         }
 
         .semaine-input {
@@ -422,6 +529,114 @@ function dateFr($format, $timestamp = null) {
 
         .auto-save-status.error {
             color: #dc3545;
+        }
+        .plus-sign {
+            background: #24b245ff;
+            /* 
+            border: none;
+            width: 25px;
+            height: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 4px; */
+            color: white;
+            border-radius: 4px;
+            flex-shrink: 0;
+            border: 1px solid #000000ff;
+        }
+
+        .plus-sign:hover {
+            background: #18de43ff;
+            /* border: 1px solid #000000ff; */
+        }
+
+        .minus-sign {
+            background: #d3192bff;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            width: 16px;
+            height: 16px;
+            font-size: 15px;
+            /* font-weight: bold; */
+            cursor: pointer;
+            margin-right: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* Prevents the button from shrinking */
+        }
+
+        .minus-sign:hover {
+            background: #ff0019ff;
+        }
+        .custom-file-download {
+            text-decoration: none;
+            color: #2879caff;
+            display: inline-flex;
+            align-items: center;
+            font-size: 14px;
+            white-space: nowrap; /* Keeps icon and filename together */
+        }
+        .custom-file-download i {
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+
+        .custom-file-download:hover {
+            color: #007bff;
+            text-decoration: underline;
+        }  
+        .dl-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 1px;
+            padding: 4px;
+            font-family: Arial, sans-serif;
+            background: #fdfeffff;
+            border: 1px solid #000000ff;
+        }
+
+        /* Container for each file item (minus button + download link) */
+        .dl-panel > div {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap; /* Prevents breaking between minus sign and filename */
+            background: #fdfeffff;
+            border: 1px solid #000000ff;
+            border-radius: 4px;
+            padding: 1px 4px;
+            /* margin: 2px; */
+        }
+        .upload-box{
+            display:none; 
+            /* padding:10px;  */
+            background: #f50303ff; 
+            border:1px solid #e60b0bff; 
+            border-radius:4px; 
+            /* margin-top:10px;            */
+        }
+        .upload-text{
+            font-family: Arial, sans-serif;
+            color: white; 
+            font-size: 12px;
+            font-weight:bold;            
+        }
+        @media (max-width: 768px) {
+            .dl-panel {
+                gap: 6px;
+            }
+            
+            .dl-panel > div {
+                margin: 1px;
+                padding: 3px 5px;
+            }
+            
+            .custom-file-download {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -641,6 +856,12 @@ function dateFr($format, $timestamp = null) {
             });
         }
 
+        // Delete file
+        function deleteFile(delete_file) {
+            const formData = new FormData();
+            // console.log('File :', delete_file);
+            post('Modules.php?modname=scheduling/Planification.php',{delete_file});
+        }
 
         function updateAutoSaveStatus(status, message) {
             autoSaveStatus.className = `auto-save-status ${status}`;
@@ -669,7 +890,10 @@ function dateFr($format, $timestamp = null) {
         if(document.readyState === 'complete') {
             post('Modules.php?modname=scheduling/Planification.php','auto_save');
         }
-    </script>
+        function showUploading() {
+            document.getElementById('upload-status').style.display = 'block';
+        }
+</script>
 </body>
 </html>
 <?php

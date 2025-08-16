@@ -355,7 +355,7 @@ switch (User('PROFILE')) {
         }
         DrawBC($welcome . ' | '._role.' : '._parent.'');
         do_cado_bulletins();
-        do_cado_courses_files();
+        // do_cado_courses_files();
         break;
 
     case 'student':
@@ -380,7 +380,7 @@ switch (User('PROFILE')) {
         }
 
         // do_cado_bulletins();
-        do_cado_courses_files();
+        // do_cado_courses_files();
         break;
 }
 
