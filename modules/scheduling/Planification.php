@@ -364,7 +364,7 @@ function do_cado_courses_files(){
         if(User('PROFILE') == 'teacher'){
             echo "<button  class='plus-sign' onclick=\"document.getElementById('actual-btn').click()\">+</button>";
             if(!count($fileid))
-                echo "<button class='inserez-text' onclick=\"document.getElementById('actual-btn').click()\">&nbsp Inserez vos fichiers içi.</a>";
+                echo "<button class='inserez-text' onclick=\"document.getElementById('actual-btn').click()\">&nbsp Inserez vos fichiers ici.</a>";
         }
     }
     echo "</div>";
