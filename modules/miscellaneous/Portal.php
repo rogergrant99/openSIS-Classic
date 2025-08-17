@@ -400,7 +400,7 @@ function do_cado_teacher_courses_files(){
     $last_course_id=0;
     foreach ($courses_RET as $course) {
         if($course['COURSE_ID'] != $last_course_id) {
-        //print_r($course);
+        // echo '<pre>'; print_r($course); echo '</pre>';
         $staff_id = $course['STAFF_ID'];
         if (count($courses_RET)) {
             $list_RET = '';
@@ -447,30 +447,30 @@ function do_cado_teacher_courses_files(){
             $search.=']%';
             $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course['STAFF_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
             echo '<div class="panel">';
-            DrawHeader('<span class="text-bold">'. $num_course++ .'  - ' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')),$list_RET);
+            DrawHeader('<span class="text-bold">  - ' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')),$list_RET);
             //echo $list_RET;
             echo '<hr class="no-margin" />';
-            // foreach ($fileid as $file){
-            //     $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
-            //     if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
-            //         $fileIcon = '<i class="fa fa-file-image-o"></i>';
-            //     } elseif ($ext == 'doc' || $ext == 'docx') {
-            //         $fileIcon = '<i class="fa fa-file-word-o"></i>';
-            //     } elseif ($ext == 'xls' || $ext == 'xlsx') {
-            //         $fileIcon = '<i class="fa fa-file-excel-o"></i>';
-            //     } elseif ($ext == 'ppt' || $ext == 'pptx') {
-            //         $fileIcon = '<i class="fa fa-file-powerpoint-o"></i>';
-            //     } elseif ($ext == 'pdf') {
-            //         $fileIcon = '<i class="fa fa-file-pdf-o"></i>';
-            //     } else {
-            //         $fileIcon = '<i class="fa fa-file-o"></i>';
-            //     }
-            //     if($file['DOWNLOAD_ID'])
-            //         $show_filename=strstr($file['NAME'], ']');
-            //         $show_filename=trim($show_filename, "]");
-            //          echo '<a class="files" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ' &nbsp; '. $show_filename . '</a>';
-            //      echo '<div></div>';
-            // }
+            foreach ($fileid as $file){
+                $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
+                if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
+                    $fileIcon = '<i class="fa fa-file-image-o"></i>';
+                } elseif ($ext == 'doc' || $ext == 'docx') {
+                    $fileIcon = '<i class="fa fa-file-word-o"></i>';
+                } elseif ($ext == 'xls' || $ext == 'xlsx') {
+                    $fileIcon = '<i class="fa fa-file-excel-o"></i>';
+                } elseif ($ext == 'ppt' || $ext == 'pptx') {
+                    $fileIcon = '<i class="fa fa-file-powerpoint-o"></i>';
+                } elseif ($ext == 'pdf') {
+                    $fileIcon = '<i class="fa fa-file-pdf-o"></i>';
+                } else {
+                    $fileIcon = '<i class="fa fa-file-o"></i>';
+                }
+                if($file['DOWNLOAD_ID'])
+                    $show_filename=strstr($file['NAME'], ']');
+                    $show_filename=trim($show_filename, "]");
+                    echo '<a style="text-decoration: underline;text-decoration-thickness: 2px; text-decoration-color: blue; gap: 1px;padding: 2px;border-radius:3px;border:1px;font-size: 15px;text-decoration: none;color: #2879caff;display: inline-flex;align-items: center;font-size: 14px;white-space: nowrap;" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ' &nbsp; '. $show_filename . '</a>';
+                 echo '&nbsp&nbsp&nbsp&nbsp';
+            }
             echo '</div>';
             echo '</td></tr></table>';
         }
