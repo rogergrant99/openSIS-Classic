@@ -434,27 +434,27 @@ function do_cado_teacher_courses_files(){
             DrawHeader('<span class="text-bold">'. $num_course++ .'  - ' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')),$list_RET);
             //echo $list_RET;
             echo '<hr class="no-margin" />';
-            foreach ($fileid as $file){
-                $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
-                if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
-                    $fileIcon = '<i class="fa fa-file-image-o"></i>';
-                } elseif ($ext == 'doc' || $ext == 'docx') {
-                    $fileIcon = '<i class="fa fa-file-word-o"></i>';
-                } elseif ($ext == 'xls' || $ext == 'xlsx') {
-                    $fileIcon = '<i class="fa fa-file-excel-o"></i>';
-                } elseif ($ext == 'ppt' || $ext == 'pptx') {
-                    $fileIcon = '<i class="fa fa-file-powerpoint-o"></i>';
-                } elseif ($ext == 'pdf') {
-                    $fileIcon = '<i class="fa fa-file-pdf-o"></i>';
-                } else {
-                    $fileIcon = '<i class="fa fa-file-o"></i>';
-                }
-                if($file['DOWNLOAD_ID'])
-                    $show_filename=strstr($file['NAME'], ']');
-                    $show_filename=trim($show_filename, "]");
-                     echo '<a class="files" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ' &nbsp; '. $show_filename . '</a>';
-                 echo '<div></div>';
-            }
+            // foreach ($fileid as $file){
+            //     $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
+            //     if ($ext == 'jpg' || $ext == 'jpeg' || $ext == 'png' || $ext == 'gif') {
+            //         $fileIcon = '<i class="fa fa-file-image-o"></i>';
+            //     } elseif ($ext == 'doc' || $ext == 'docx') {
+            //         $fileIcon = '<i class="fa fa-file-word-o"></i>';
+            //     } elseif ($ext == 'xls' || $ext == 'xlsx') {
+            //         $fileIcon = '<i class="fa fa-file-excel-o"></i>';
+            //     } elseif ($ext == 'ppt' || $ext == 'pptx') {
+            //         $fileIcon = '<i class="fa fa-file-powerpoint-o"></i>';
+            //     } elseif ($ext == 'pdf') {
+            //         $fileIcon = '<i class="fa fa-file-pdf-o"></i>';
+            //     } else {
+            //         $fileIcon = '<i class="fa fa-file-o"></i>';
+            //     }
+            //     if($file['DOWNLOAD_ID'])
+            //         $show_filename=strstr($file['NAME'], ']');
+            //         $show_filename=trim($show_filename, "]");
+            //          echo '<a class="files" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ' &nbsp; '. $show_filename . '</a>';
+            //      echo '<div></div>';
+            // }
             echo '</div>';
             echo '</td></tr></table>';
         }

@@ -43,10 +43,10 @@ if (isset($_FILES['files'])) {
 // Teacher  or student
 if (User('PROFILE') == 'teacher'){
     $course_id = UserCourse();
-    $editable='';
+    $editable=' class="editable" ';
 }
 else
-    $editable='readonly';
+    $editable=' readonly class="editable-student" ';
 
 // Change course
 if($_REQUEST['id']){
@@ -59,8 +59,8 @@ if ($_REQUEST && isset($_REQUEST['week_range'])){
     $start = $_REQUEST['week_range'];
     $week1_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']));
     $week1_sec = strtotime($_REQUEST['week_range']);
-    $week2_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']) + $one_week);
-    $week2_sec = strtotime($_REQUEST['week_range']) + $one_week;
+    // $week2_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']) + $one_week);
+    // $week2_sec = strtotime($_REQUEST['week_range']) + $one_week;
     $course_id  = $_REQUEST['marking_period_id'];
 }
 else{
@@ -72,13 +72,13 @@ else{
         $start = $_REQUEST['week_range'] =  date('Y-m-d', $start_time_cur ); 
         $week1_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']));
         $week1_sec = strtotime($_REQUEST['week_range']);
-        $week2_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']) + $one_week);
-        $week2_sec = strtotime($_REQUEST['week_range']) + $one_week;
+        // $week2_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']) + $one_week);
+        // $week2_sec = strtotime($_REQUEST['week_range']) + $one_week;
     }
     $week1_date_start =  dateFr('d-M', $start_time_cur);
     $week1_sec = $start_time_cur;
-    $week2_date_start =  dateFr('d-M', $start_time_cur + $one_week);
-    $week2_sec = $start_time_cur + $one_week;
+    // $week2_date_start =  dateFr('d-M', $start_time_cur + $one_week);
+    // $week2_sec = $start_time_cur + $one_week;
 }
 if ($_POST && isset($_POST['content'])) {
     $week =  $_POST['week'];
@@ -93,13 +93,13 @@ if ($_POST && isset($_POST['content'])) {
         $result = DBQuery('UPDATE  planification SET text =  "' . base64_encode($seralizedArray) . '"  WHERE course_id= '. $course_id . ' and start_date = "' . dateFr('Y-m-d',$week1_sec) . '" ');
 
     }
-    if( $week  === 'week2' && $field){
-        $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week2_sec) . '\'  and course_id=\'' . $course_id . '\''));
-        if(!count($RET)) 
-            DBQuery('INSERT INTO planification (start_date,course_id) VALUES  ("' .dateFr('Y-m-d',$week2_sec) .'", '. $course_id . ')'); 
-        $seralizedArray = serialize($_SESSION['schedule_data']['week2']);
-        $result = DBQuery('UPDATE  planification SET text =  "' . base64_encode($seralizedArray) . '"  WHERE course_id= '. $course_id . ' and start_date = "' . dateFr('Y-m-d',$week2_sec) . '" ');
-    }
+    // if( $week  === 'week2' && $field){
+    //     $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week2_sec) . '\'  and course_id=\'' . $course_id . '\''));
+    //     if(!count($RET)) 
+    //         DBQuery('INSERT INTO planification (start_date,course_id) VALUES  ("' .dateFr('Y-m-d',$week2_sec) .'", '. $course_id . ')'); 
+    //     $seralizedArray = serialize($_SESSION['schedule_data']['week2']);
+    //     $result = DBQuery('UPDATE  planification SET text =  "' . base64_encode($seralizedArray) . '"  WHERE course_id= '. $course_id . ' and start_date = "' . dateFr('Y-m-d',$week2_sec) . '" ');
+    // }
     // If this is an auto-save request, return JSON response
     if (isset($_POST['auto_save'])) {
         header('Content-Type: application/json');
@@ -125,11 +125,11 @@ if($week1_sec){
     $_SESSION['schedule_data']['week1'] = unserialize($raw_content);
 }
 // Week 2
-if($week2_sec){
-    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week2_sec) . '\'  and course_id=\'' . $course_id . '\''));
-    $raw_content = base64_decode($RET[1]['TEXT']);
-    $_SESSION['schedule_data']['week2'] = unserialize($raw_content);
-}
+// if($week2_sec){
+//     $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week2_sec) . '\'  and course_id=\'' . $course_id . '\''));
+//     $raw_content = base64_decode($RET[1]['TEXT']);
+//     $_SESSION['schedule_data']['week2'] = unserialize($raw_content);
+// }
 
 // Initialize default data if not set (only for non-AJAX requests)
 if (!isset($_SESSION['schedule_data'])) {
@@ -156,30 +156,31 @@ if (!isset($_SESSION['schedule_data'])) {
             'vendredi_notions' => '',
             'vendredi_devoirs' => '',
             'vendredi_materiel' => ''
-        ],
-        'week2' => [
-            'semaine' => '',
-            'lundi_date' => '',
-            'lundi_notions' => '',
-            'lundi_devoirs' => '',
-            'lundi_materiel' => '',
-            'mardi_date' => '',
-            'mardi_notions' => '',
-            'mardi_devoirs' => '',
-            'mardi_materiel' => '',
-            'mercredi_date' => '',
-            'mercredi_notions' => '',
-            'mercredi_devoirs' => '',
-            'mercredi_materiel' => '',
-            'jeudi_date' => '',
-            'jeudi_notions' => '',
-            'jeudi_devoirs' => '',
-            'jeudi_materiel' => '',
-            'vendredi_date' => '',
-            'vendredi_notions' => '',
-            'vendredi_devoirs' => '',
-            'vendredi_materiel' => ''
         ]
+        // ,
+        // 'week2' => [
+        //     'semaine' => '',
+        //     'lundi_date' => '',
+        //     'lundi_notions' => '',
+        //     'lundi_devoirs' => '',
+        //     'lundi_materiel' => '',
+        //     'mardi_date' => '',
+        //     'mardi_notions' => '',
+        //     'mardi_devoirs' => '',
+        //     'mardi_materiel' => '',
+        //     'mercredi_date' => '',
+        //     'mercredi_notions' => '',
+        //     'mercredi_devoirs' => '',
+        //     'mercredi_materiel' => '',
+        //     'jeudi_date' => '',
+        //     'jeudi_notions' => '',
+        //     'jeudi_devoirs' => '',
+        //     'jeudi_materiel' => '',
+        //     'vendredi_date' => '',
+        //     'vendredi_notions' => '',
+        //     'vendredi_devoirs' => '',
+        //     'vendredi_materiel' => ''
+        // ]
     ];
 }
 
@@ -202,11 +203,9 @@ if(! $_REQUEST['_openSIS_PDF']){
 }
 
 if(! $_REQUEST['_openSIS_PDF']){
-    DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
+    DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><FORM name="exp" class="no-margin-bottom" id="exp" action="ForExport.php?modname=' . urlencode(strip_tags(trim($_REQUEST["modname"]))) . '&modfunc=print&marking_period_id=' . urlencode($course_id) . '&week_range=' . urlencode($start) . '&_openSIS_PDF=true&report=true" method="POST" target="_blank"><div class="text-right"><INPUT type="submit" class="btn btn-primary" value="' . htmlspecialchars(_print, ENT_QUOTES) . '"></div></form><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
 }
 
-if(! $_REQUEST['_openSIS_PDF'])
-    do_cado_courses_files();
 
 function CreateSelect($val, $name, $opt, $cap, $link)
 {
@@ -362,8 +361,11 @@ function do_cado_courses_files(){
                 echo '&nbsp&nbsp&nbsp';
             }
         }
-        if(User('PROFILE') == 'teacher')
-        echo "<button  class='plus-sign' onclick=\"document.getElementById('actual-btn').click()\">+</button>";
+        if(User('PROFILE') == 'teacher'){
+            echo "<button  class='plus-sign' onclick=\"document.getElementById('actual-btn').click()\">+</button>";
+            if(!count($fileid))
+                echo "<button class='inserez-text' onclick=\"document.getElementById('actual-btn').click()\">&nbsp Inserez vos fichiers içi.</a>";
+        }
     }
     echo "</div>";
     echo "<div>&nbsp</div>";
@@ -447,10 +449,10 @@ function do_cado_courses_files(){
             color: white;
         }
         
-        .editable {
+        .editable-student {
             /* background-color: #fff; */
             cursor: text;
-            min-height: 30px;
+            min-height: 75px;
             padding: 0px;
             border: none;
             width: 100%;
@@ -458,7 +460,21 @@ function do_cado_courses_files(){
             font-family: inherit;
             font-size: inherit;
         }
-        
+        .editable-student:focus {
+            /* background-color: #c3ccd5ff; */
+            outline: 1px solid #007cba;
+        }
+        .editable {
+            /* background-color: #fff; */
+            cursor: text;
+            min-height: 101px;
+            padding: 0px;
+            border: none;
+            width: 100%;
+            resize: vertical;
+            font-family: inherit;
+            font-size: inherit;
+        }        
         .editable:focus {
             /* background-color: #c3ccd5ff; */
             outline: 1px solid #007cba;
@@ -510,13 +526,14 @@ function do_cado_courses_files(){
             border-radius: 4px;
             display: none;
         }
-                .auto-save-status {
+        .auto-save-status {
             color: #6c757d;
             font-size: 12px;
-            margin-left: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            text-align: right;
+            /* margin-left: 10px; */
+            /* display: flex;
+            align-items: center; */
+            /* gap: 5px; */
         }
 
         .auto-save-status.saving {
@@ -624,6 +641,14 @@ function do_cado_courses_files(){
             font-size: 12px;
             font-weight:bold;            
         }
+        .inserez-text{
+            font-family: Arial, sans-serif;
+            color: black; 
+            font-size: 12px;
+            border:0px; 
+            background: #fdfeffff;
+            /* font-weight:bold;             */
+        }
         @media (max-width: 768px) {
             .dl-panel {
                 gap: 6px;
@@ -640,6 +665,24 @@ function do_cado_courses_files(){
         }
     </style>
 </head>
+            <?php
+            if(! $_REQUEST['_openSIS_PDF'] && User('PROFILE') == "teacher"){
+            echo '
+                        <div class="auto-save-status" id="autoSaveStatus">
+                        <span class="auto-save-indicator"></span>
+                        <span id="autoSaveText">Auto-sauvegarde activée</span></div>
+
+            ';
+            }else{
+            echo '
+                        <div  class="auto-save-status hidden" id="autoSaveStatus">
+                        <span class="auto-save-indicator hidden" ></span>
+                        <span class="auto-save-indicator hidden id="autoSaveText"></span></div>
+
+            ';
+            }
+            ?>
+
 <body>
         <!-- Week 1 -->
         <div class="week-section">
@@ -657,44 +700,43 @@ function do_cado_courses_files(){
                 
                 <tr>
                     <td class="day-header">Lundi</td>
-                    <td><textarea <?php echo $editable ?> class="editable"  data-week="week1" data-field="lundi_notions"><?php echo htmlspecialchars($data['week1']['lundi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="lundi_devoirs"><?php echo htmlspecialchars($data['week1']['lundi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="lundi_materiel"><?php echo htmlspecialchars($data['week1']['lundi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="lundi_notions"><?php echo htmlspecialchars($data['week1']['lundi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="lundi_devoirs"><?php echo htmlspecialchars($data['week1']['lundi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="lundi_materiel"><?php echo htmlspecialchars($data['week1']['lundi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Mardi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="mardi_notions"><?php echo htmlspecialchars($data['week1']['mardi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="mardi_devoirs"><?php echo htmlspecialchars($data['week1']['mardi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="mardi_materiel"><?php echo htmlspecialchars($data['week1']['mardi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mardi_notions"><?php echo htmlspecialchars($data['week1']['mardi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mardi_devoirs"><?php echo htmlspecialchars($data['week1']['mardi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mardi_materiel"><?php echo htmlspecialchars($data['week1']['mardi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Mercredi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="mercredi_notions"><?php echo htmlspecialchars($data['week1']['mercredi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="mercredi_devoirs"><?php echo htmlspecialchars($data['week1']['mercredi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="mercredi_materiel"><?php echo htmlspecialchars($data['week1']['mercredi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mercredi_notions"><?php echo htmlspecialchars($data['week1']['mercredi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mercredi_devoirs"><?php echo htmlspecialchars($data['week1']['mercredi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mercredi_materiel"><?php echo htmlspecialchars($data['week1']['mercredi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Jeudi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="jeudi_notions"><?php echo htmlspecialchars($data['week1']['jeudi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="jeudi_devoirs"><?php echo htmlspecialchars($data['week1']['jeudi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="jeudi_materiel"><?php echo htmlspecialchars($data['week1']['jeudi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="jeudi_notions"><?php echo htmlspecialchars($data['week1']['jeudi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="jeudi_devoirs"><?php echo htmlspecialchars($data['week1']['jeudi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="jeudi_materiel"><?php echo htmlspecialchars($data['week1']['jeudi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Vendredi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="vendredi_notions"><?php echo htmlspecialchars($data['week1']['vendredi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="vendredi_devoirs"><?php echo htmlspecialchars($data['week1']['vendredi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week1" data-field="vendredi_materiel"><?php echo htmlspecialchars($data['week1']['vendredi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="vendredi_notions"><?php echo htmlspecialchars($data['week1']['vendredi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="vendredi_devoirs"><?php echo htmlspecialchars($data['week1']['vendredi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="vendredi_materiel"><?php echo htmlspecialchars($data['week1']['vendredi_materiel']); ?></textarea></td>
                 </tr>
             </table>
-        </div>
         
         <!-- Week 2 -->
-        <div class="week-section">
-            <table>
+        <!-- <div class="week-section"> -->
+            <!-- <table>
                 <tr class="header-row">
                     <td colspan="4" class="semaine">
                         <strong><?php echo $course ?> semaine du <i> <?php echo $week2_date_start ?></i> </strong>
@@ -709,57 +751,40 @@ function do_cado_courses_files(){
                 
                 <tr>
                     <td class="day-header">Lundi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="lundi_notions"><?php echo htmlspecialchars($data['week2']['lundi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="lundi_devoirs"><?php echo htmlspecialchars($data['week2']['lundi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="lundi_materiel"><?php echo htmlspecialchars($data['week2']['lundi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="lundi_notions"><?php echo htmlspecialchars($data['week2']['lundi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="lundi_devoirs"><?php echo htmlspecialchars($data['week2']['lundi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="lundi_materiel"><?php echo htmlspecialchars($data['week2']['lundi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Mardi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="mardi_notions"><?php echo htmlspecialchars($data['week2']['mardi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="mardi_devoirs"><?php echo htmlspecialchars($data['week2']['mardi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="mardi_materiel"><?php echo htmlspecialchars($data['week2']['mardi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="mardi_notions"><?php echo htmlspecialchars($data['week2']['mardi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="mardi_devoirs"><?php echo htmlspecialchars($data['week2']['mardi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="mardi_materiel"><?php echo htmlspecialchars($data['week2']['mardi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Mercredi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="mercredi_notions"><?php echo htmlspecialchars($data['week2']['mercredi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="mercredi_devoirs"><?php echo htmlspecialchars($data['week2']['mercredi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="mercredi_materiel"><?php echo htmlspecialchars($data['week2']['mercredi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="mercredi_notions"><?php echo htmlspecialchars($data['week2']['mercredi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="mercredi_devoirs"><?php echo htmlspecialchars($data['week2']['mercredi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="mercredi_materiel"><?php echo htmlspecialchars($data['week2']['mercredi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Jeudi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="jeudi_notions"><?php echo htmlspecialchars($data['week2']['jeudi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="jeudi_devoirs"><?php echo htmlspecialchars($data['week2']['jeudi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="jeudi_materiel"><?php echo htmlspecialchars($data['week2']['jeudi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="jeudi_notions"><?php echo htmlspecialchars($data['week2']['jeudi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="jeudi_devoirs"><?php echo htmlspecialchars($data['week2']['jeudi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="jeudi_materiel"><?php echo htmlspecialchars($data['week2']['jeudi_materiel']); ?></textarea></td>
                 </tr>
                 
                 <tr>
                     <td class="day-header">Vendredi</td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="vendredi_notions"><?php echo htmlspecialchars($data['week2']['vendredi_notions']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="vendredi_devoirs"><?php echo htmlspecialchars($data['week2']['vendredi_devoirs']); ?></textarea></td>
-                    <td><textarea <?php echo $editable ?> class="editable" data-week="week2" data-field="vendredi_materiel"><?php echo htmlspecialchars($data['week2']['vendredi_materiel']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="vendredi_notions"><?php echo htmlspecialchars($data['week2']['vendredi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="vendredi_devoirs"><?php echo htmlspecialchars($data['week2']['vendredi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week2" data-field="vendredi_materiel"><?php echo htmlspecialchars($data['week2']['vendredi_materiel']); ?></textarea></td>
                 </tr>
-            </table>
+            </table> -->
 
-            <?php
-            if(! $_REQUEST['_openSIS_PDF'] && User('PROFILE') == "teacher"){
-            echo '
-                        <div class="auto-save-status" id="autoSaveStatus">
-                        <span class="auto-save-indicator"></span>
-                        <span id="autoSaveText">Auto-sauvegarde activée</span>
-
-            ';
-            }else{
-            echo '
-                        <div  class="auto-save-status hidden" id="autoSaveStatus">
-                        <span class="auto-save-indicator hidden" ></span>
-                        <span class="auto-save-indicator hidden id="autoSaveText"></span>
-
-            ';
-            }
-            ?>
     <script>
         const editableCells = document.querySelectorAll('.editable');
         const autoSaveStatus = document.getElementById('autoSaveStatus');
@@ -894,12 +919,14 @@ function do_cado_courses_files(){
             document.getElementById('upload-status').style.display = 'block';
         }
 </script>
-</body>
-</html>
 <?php
+if(! $_REQUEST['_openSIS_PDF'])
+    do_cado_courses_files();
 if(! $_REQUEST['_openSIS_PDF']){
     echo '</div>';
-    echo "<FORM name=exp class=no-margin-bottom id=exp action=ForExport.php?modname=" . strip_tags(trim($_REQUEST['modname'])) . "&modfunc=print&marking_period_id=" . $course_id . "&week_range=" . $start . "&_openSIS_PDF=true&report=true method=POST target=_blank>";
-    echo '<div class="text-right"><INPUT type=submit class="btn btn-primary" value=\'' . _print . '\'></div>';
 }
+
 ?>
+</div>
+</body>
+</html>
