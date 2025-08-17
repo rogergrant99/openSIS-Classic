@@ -39,7 +39,10 @@ if (isset($_FILES['files'])) {
         }
     }
 }
-
+if (User('PROFILE') == 'admin'){
+    check_all_planif();
+    exit;
+}
 // Teacher  or student
 if (User('PROFILE') == 'teacher'){
     $course_id = UserCourse();
@@ -87,7 +90,7 @@ if ($_POST && isset($_POST['content'])) {
     $_SESSION['schedule_data'][$week][$field]=$content;
     if( $week  === 'week1' && $field){
         $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week1_sec) . '\'  and course_id=\'' . $course_id . '\''));
-        if(!count($RET)) 
+        if(!count($RET) && $content)
             DBQuery('INSERT INTO planification (start_date,course_id) VALUES  ("' .dateFr('Y-m-d',$week1_sec) .'", '. $course_id . ')'); 
         $seralizedArray = serialize($_SESSION['schedule_data']['week1']);
         $result = DBQuery('UPDATE  planification SET text =  "' . base64_encode($seralizedArray) . '"  WHERE course_id= '. $course_id . ' and start_date = "' . dateFr('Y-m-d',$week1_sec) . '" ');
@@ -316,6 +319,81 @@ function dateFr($format, $timestamp = null) {
     ], $result);
     
     return $result;
+}
+function check_all_planif(){
+echo '<div class="panel panel-default">';
+$TI = DBQuery('SELECT DISTINCT STAFF_ID,CONCAT(LAST_NAME,\', \',FIRST_NAME) AS FULL_NAME,LAST_NAME,FIRST_NAME FROM staff  WHERE PROFILE_ID="2" ORDER BY LOWER(FULL_NAME) ');
+$teacher_RET= DBGet($TI);
+echo "<FORM class=\"no-margin\" action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . " method=POST>";
+DrawHeader(_teacherCompletion, '<div class="form-inline"><div class="form-group"><label class="control-label ml-20 mr-20">-</label>' . $teacher_select.'</div></div>');
+echo '</FORM>';
+echo '<hr class="no-margin"/>';
+$sql = 'SELECT DISTINCT s.STAFF_ID,CONCAT(s.LAST_NAME,\', \',s.FIRST_NAME) AS FULL_NAME,cp.TITLE,cp.COURSE_PERIOD_ID,cp.SHORT_NAME,cp.COURSE_ID AS COURSE_ID FROM staff s,school_periods sp,course_periods cp
+        WHERE cp.GRADE_SCALE_ID IS NOT NULL AND cp.TEACHER_ID=s.STAFF_ID AND cp.MARKING_PERIOD_ID IN (' . GetAllMP($mp_type, $cur_mp) . ') AND cp.SYEAR=\'' . UserSyear() . '\' AND cp.SCHOOL_ID=\'' . UserSchool() . '\' AND s.PROFILE=\'teacher\'
+		' . (($_REQUEST['period']) ? ' AND cp.COURSE_PERIOD_ID=\'' . $_REQUEST[period] . '\'' : 'ORDER BY  LOWER(cp.SHORT_NAME)') . '	
+		';
+$courses_RET = DBGet(DBQuery($sql));
+// print_r($courses_RET);
+if (count($teacher_RET)) {
+    unset($i);
+    foreach ($teacher_RET as $staff_id ) {
+        if (count($courses_RET)) {
+            unset($j);
+            foreach ($courses_RET as $course ) {
+                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                {
+                    $i++;
+                    $staff_RET[$i]  = '<font size="4" color=green><b><center>';
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= $staff_id['FULL_NAME'];
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= '</b></center>';
+                    break;
+                }
+                $j++;
+            }
+        }
+        if (count($courses_RET)) {
+            unset($j);
+            foreach ($courses_RET as $course ) {
+                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                {
+                    $j++;
+                    $list_RET[$j][$i] = '<font size="4"><i> <u><center><b>';
+                    $list_RET[$j][$i] .= $course['SHORT_NAME'];
+                    $list_RET[$j][$i] .= '</b></font><font size="2">';
+                    $one_day = 60 * 60 * 24;
+                    $one_week = 60 * 60 * 24 * 7;
+                    $start_time_cur = strtotime(date('Y-m-d'));
+                    while (date('N', $start_time_cur) != 1) {
+                        $start_time_cur = $start_time_cur - $one_day;
+                    }
+                    $bad_planif_this= check_planif($course['COURSE_ID'],$start_time_cur);
+                    $bad_planif_next= check_planif($course['COURSE_ID'],$start_time_cur+$one_week);
+                    if($bad_planif_this)
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur), ENT_QUOTES, 'UTF-8');
+                    else 
+                       $list_RET[$j][$i]  .= '<br><i class="fa fa-check fa-lg text-success"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur), ENT_QUOTES, 'UTF-8');
+                    if($bad_planif_next)
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur + $one_week), ENT_QUOTES, 'UTF-8');
+                    else 
+                       $list_RET[$j][$i]  .= '<br><i class="fa fa-check fa-lg text-success"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur + $one_week), ENT_QUOTES, 'UTF-8');
+         
+                }
+            }
+        }
+    }
+}
+$options['search']=false;
+ListOutput($list_RET, $staff_RET, _teacherWhoHasnTEnteredGrades, "","","",$options);
+echo '</div>';
+}
+
+function check_planif($course_id,$start_time){
+    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . date('Y-m-d',$start_time) . '\'  and course_id=\'' . $course_id . '\''));
+    if(count($RET))
+        return false;
+    return true;
 }
 
 function do_cado_courses_files(){

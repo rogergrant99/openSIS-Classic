@@ -2053,5 +2053,5 @@ define("_select_teacher","Choisir le professeur");
 define("_select_student","Choisir l'étudiant");
 define("_noSubject", "Aucun sujet");
 define("_reponse", "Réponse à : ");
-define("_planification", "Planification");
+define("_planification", "Planification de cours");
 ?>

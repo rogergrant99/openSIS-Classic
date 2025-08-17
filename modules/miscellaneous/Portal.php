@@ -404,8 +404,24 @@ function do_cado_teacher_courses_files(){
         $staff_id = $course['STAFF_ID'];
         if (count($courses_RET)) {
             $list_RET = '';
+            $one_day = 60 * 60 * 24;
+            $one_week = 60 * 60 * 24 * 7;
+            $start_time_cur = strtotime(date('Y-m-d'));
+            while (date('N', $start_time_cur) != 1) {
+                $start_time_cur = $start_time_cur - $one_day;
+            }
+            $bad_planif_this= check_planif($course['COURSE_ID'],$start_time_cur);
+            $bad_planif_next= check_planif($course['COURSE_ID'],$start_time_cur+$one_week);
             $bad_weght=check_weight($course['COURSE_PERIOD_ID'],$course['STAFF_ID'],UserMP(),$course['COURSE_ID']);
             $bad_config=check_config($course['COURSE_PERIOD_ID'],$course['STAFF_ID'],UserMP(),$course['COURSE_ID']);
+            if($bad_planif_this)
+                $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planification cette semaine';
+            else 
+                $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Planification cette semaine';
+            if($bad_planif_next)
+                $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planification la semaine prochaine';
+            else 
+                $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Planification la semaine prochaine';
             if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],UserMP(),UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],UserMP(),UserSyear(),$course['SHORT_NAME'])) != 'NAN')
                 $bad_final = 0;
             else 
@@ -501,7 +517,12 @@ function GetGroupAverage($course_period_id,$mp,$year,$title){
     else 
         return 0;
 }
-
+function check_planif($course_id,$start_time){
+    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . date('Y-m-d',$start_time) . '\'  and course_id=\'' . $course_id . '\''));
+    if(count($RET))
+        return false;
+    return true;
+}
 function check_weight($course_period_id,$staff_id,$mp,$course_id)
 {
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   

@@ -100,7 +100,7 @@ if (count($teacher_RET)) {
                 if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
                 {
                     $i++;
-                    $staff_RET[$i]  = '<font size="4"><b><center>';
+                    $staff_RET[$i]  = '<font size="4" color=green><b><center>';
                     $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
                     $staff_RET[$i] .= $staff_id['FULL_NAME'];
                     $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
@@ -117,30 +117,63 @@ if (count($teacher_RET)) {
                 if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
                 {
                     $j++;
-                    $list_RET[$j][$i] = '<font size="2"><i> <u><center>';
+                    $list_RET[$j][$i] = '<font size="4"><u><center><b>';
                     $list_RET[$j][$i] .= $course['SHORT_NAME'];
-                    $list_RET[$j][$i] .= '</i></u>';
+                    $list_RET[$j][$i] .= '</b></font><font size="2">';
                     $bad_weght=check_weight($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
                     $bad_config=check_config($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
+                    $one_day = 60 * 60 * 24;
+                    $one_week = 60 * 60 * 24 * 7;
+                    $start_time_cur = strtotime(date('Y-m-d'));
+                    while (date('N', $start_time_cur) != 1) {
+                        $start_time_cur = $start_time_cur - $one_day;
+                    }
+                    $bad_planif_this= check_planif($course['COURSE_ID'],$start_time_cur);
+                    $bad_planif_next= check_planif($course['COURSE_ID'],$start_time_cur+$one_week);
+                    // $list_RET[$j][$i] .= '<br>';
+                    if($bad_planif_this)
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planif cette semaine';
+                    else 
+                       $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Planif cette semaine';
+                    if($bad_planif_next)
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planif la semaine prochaine';
+                    else 
+                        $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Planif la semaine prochaine';
                     if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) != 'NAN')
                         $bad_final = 0;
                     else 
                         $bad_final = 1;
                     if($bad_config)
-                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Config</i>';
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i>Config</i>';
+                    else 
+                       $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Config';
                     if($bad_weght) 
-                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Pondé</i>';
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i>Pondération</i>';
+                    else 
+                       $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Pondération';
                     if($bad_final)
-                        $list_RET[$j][$i] .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i><b style="color:red;">Final</i>';
-                    if(! $bad_final && ! $bad_config && ! $bad_weght)
-                        $list_RET[$j][$i] .= '<i class="fa fa-check fa-lg text-success"></i>';
+                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i><i>Final</i>';
+                    else 
+                       $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Final';
+                    // if(! $bad_final && ! $bad_config && ! $bad_weght)
+                    //     $list_RET[$j][$i] .= '<i class="fa fa-check fa-lg text-success"></i>';
+                    $list_RET[$j][$i] .=  '</font>';
                 }
             }
         }
     }
 }
-ListOutput($list_RET, $staff_RET, _teacherWhoHasnTEnteredGrades, "");
+$options['search']=false;
+ListOutput($list_RET, $staff_RET, _teacherWhoHasnTEnteredGrades, "","","",$options);
 echo '</div>';
+
+function check_planif($course_id,$start_time){
+    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . date('Y-m-d',$start_time) . '\'  and course_id=\'' . $course_id . '\''));
+    if(count($RET))
+        return false;
+    return true;
+}
+
 
 function GetGroupAverage($course_period_id,$mp,$year,$title){
 
@@ -256,6 +289,74 @@ function check_config($course_period_id,$staff_id,$mp,$course_id)
         return 1;
         
     return 0;
+}
+function dateFr($format, $timestamp = null) {
+    // Use current time if no timestamp provided
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    // French month names
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    // French abbreviated month names
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    // French day names
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    // French abbreviated day names
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Get the formatted date using regular date() function
+    $result = date($format, $timestamp);
+    
+    // Replace English names with French ones
+    $result = str_replace([
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ], $result);
+    
+    $result = str_replace([
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ], [
+        'janv', 'févr', 'mars', 'avr', 'mai', 'juin',
+        'juil', 'août', 'sept', 'oct', 'nov', 'déc'
+    ], $result);
+    
+    $result = str_replace([
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+        'Thursday', 'Friday', 'Saturday'
+    ], [
+        'dimanche', 'lundi', 'mardi', 'mercredi',
+        'jeudi', 'vendredi', 'samedi'
+    ], $result);
+    
+    $result = str_replace([
+        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+    ], [
+        'dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'
+    ], $result);
+    
+    return $result;
 }
 
 ?>
