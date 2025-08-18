@@ -399,6 +399,7 @@ function check_planif($course_id,$start_time){
 function do_cado_courses_files(){
     global $course_id,$default_course_id;
     if(!$course_id) $course_id=$default_course_id;
+    if(!$course_id) return;
     $course_period_id = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
     $search='%[';
     $search.=$course_period_id[1]['COURSE_PERIOD_ID'];
