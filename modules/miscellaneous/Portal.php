@@ -441,11 +441,11 @@ function do_cado_teacher_courses_files(){
                 $list_RET .= '<br>';
             // if(! $bad_final && ! $bad_config && ! $bad_weght)
             // $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>';
-            $fileIcon = '<i class="fa fa-file-word-o"></i>';
-            $search='%[';
-            $search.=$course['COURSE_PERIOD_ID'];
-            $search.=']%';
-            $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course['STAFF_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
+            // $fileIcon = '<i class="fa fa-file-word-o"></i>';
+            // $search='%[';
+            // $search.=$course['COURSE_PERIOD_ID'];
+            // $search.=']%';
+            // $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course['STAFF_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
             echo '<div class="panel">';
             DrawHeader('<span class="text-bold">  - ' . substr($course['SHORT_NAME'] . ' </span>', strrpos(str_replace(' - ', ' ^ ', $course['TITLE']), '^')),$list_RET);
             //echo $list_RET;
