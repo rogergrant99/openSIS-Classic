@@ -38,9 +38,10 @@ if ($_REQUEST['modfunc'] == 'save') {
     $RET = GetStuList($extra);
 
     if (count($RET)) {
-            $columns = array('ASSIGN_TYP' =>_assignmentType,
-             'ASSIGN_TYP_WG' => _weight. '',
-             'ASSIGN_WEIGHT' => _assignmentWeight . '',
+            $columns = array(
+            //  'ASSIGN_TYP' =>_assignmentType,
+            //  'ASSIGN_TYP_WG' => _weight. '',
+            //  'ASSIGN_WEIGHT' => _assignmentWeight . '',
              'TITLE' =>_assignment,
             );
             if ($_REQUEST['assigned_date'] == 'Y')
@@ -51,8 +52,8 @@ if ($_REQUEST['modfunc'] == 'save') {
             );
             $columns += array('POINTS' =>_points,
              'LETTER_GRADE' =>_grade,
-             'WEIGHT_GRADE' =>_weightedGrade,
-             'WEIGHT_TYPE_GRADE'=>_weightedType,
+            //  'WEIGHT_GRADE' =>_weightedGrade,
+            //  'WEIGHT_TYPE_GRADE'=>_weightedType,
              'COMMENT' =>_comment,
             );
 
@@ -258,14 +259,14 @@ if ($_REQUEST['modfunc'] == 'save') {
                         $count++;
                     }
                 }
-                if ($flag) {
-                    // $link['add']['html'] = array('TITLE'=>'<B>Total</B>','LETTER_GRADE'=>'( '.$total_stpoints.' / '.$total_asgnpoints.' ) '._makeLetterGrade(($total_stpoints/$total_asgnpoints),"",$course['TEACHER_ID'],"%").'%&nbsp;'._makeLetterGrade($total_stpoints/$total_asgnpoints,"",$course['TEACHER_ID']),'WEIGHT_GRADE'=>$programconfig[$course['TEACHER_ID']]['WEIGHT']=='Y'?_makeLetterGrade($tot_weight_grade,"",$course['TEACHER_ID'],'%').'%&nbsp;'._makeLetterGrade($tot_weight_grade,"",$course['TEACHER_ID']):'N/A');
-                    $link['add']['html'] = array('TITLE' => '<font style="font-size:13;font-weight:bold;"><B>'._total.'</B></font>', 'POINTS' => '<font style="font-size:13;font-weight:bold;">' . $total_stpoints . ' / ' . $total_asgnpoints . '</font>', 'LETTER_GRADE' => '<font style="font-size:13;font-weight:bold;">' . _makeLetterGrade(($total_stpoints / $total_asgnpoints), "", $course['TEACHER_ID'], "%") .'%' .  '</font>', 'WEIGHT_GRADE' => '<font style="font-size:13;font-weight:bold;">' . ($programconfig[$course['TEACHER_ID']]['WEIGHT'] == 'Y' ? _makeLetterGrade($tot_weight_grade, "", $course['TEACHER_ID'], '%') . '%&nbsp;' . _makeLetterGrade(0, "", $course['TEACHER_ID']) : ''._nA.'') . '</font>');
-                } else {
-                    $link['add']['html'] = array('TITLE' => '<font style="font-size:13;font-weight:bold;"><B>'._total.'</B></font>', 'LETTER_GRADE' => '<font style="font-size:13;font-weight:bold;">'._notGraded.'</font>');
-                }
-                // $link['add']['html']['ASSIGNED_DATE'] = $link['add']['html']['DUE_DATE'] = $link['add']['html']['POINTS'] = $link['add']['html']['COMMENT'] = ' &nbsp; ';
-                $link['add']['html']['ASSIGNED_DATE'] = $link['add']['html']['DUE_DATE'] = $link['add']['html']['COMMENT'] = ' &nbsp; ';
+                // if ($flag) {
+                //     // $link['add']['html'] = array('TITLE'=>'<B>Total</B>','LETTER_GRADE'=>'( '.$total_stpoints.' / '.$total_asgnpoints.' ) '._makeLetterGrade(($total_stpoints/$total_asgnpoints),"",$course['TEACHER_ID'],"%").'%&nbsp;'._makeLetterGrade($total_stpoints/$total_asgnpoints,"",$course['TEACHER_ID']),'WEIGHT_GRADE'=>$programconfig[$course['TEACHER_ID']]['WEIGHT']=='Y'?_makeLetterGrade($tot_weight_grade,"",$course['TEACHER_ID'],'%').'%&nbsp;'._makeLetterGrade($tot_weight_grade,"",$course['TEACHER_ID']):'N/A');
+                //     $link['add']['html'] = array('TITLE' => '<font style="font-size:13;font-weight:bold;"><B>'._total.'</B></font>', 'POINTS' => '<font style="font-size:13;font-weight:bold;">' . $total_stpoints . ' / ' . $total_asgnpoints . '</font>', 'LETTER_GRADE' => '<font style="font-size:13;font-weight:bold;">' . _makeLetterGrade(($total_stpoints / $total_asgnpoints), "", $course['TEACHER_ID'], "%") .'%' .  '</font>', 'WEIGHT_GRADE' => '<font style="font-size:13;font-weight:bold;">' . ($programconfig[$course['TEACHER_ID']]['WEIGHT'] == 'Y' ? _makeLetterGrade($tot_weight_grade, "", $course['TEACHER_ID'], '%') . '%&nbsp;' . _makeLetterGrade(0, "", $course['TEACHER_ID']) : ''._nA.'') . '</font>');
+                // } else {
+                //     $link['add']['html'] = array('TITLE' => '<font style="font-size:13;font-weight:bold;"><B>'._total.'</B></font>', 'LETTER_GRADE' => '<font style="font-size:13;font-weight:bold;">'._notGraded.'</font>');
+                // }
+                // // $link['add']['html']['ASSIGNED_DATE'] = $link['add']['html']['DUE_DATE'] = $link['add']['html']['POINTS'] = $link['add']['html']['COMMENT'] = ' &nbsp; ';
+                // $link['add']['html']['ASSIGNED_DATE'] = $link['add']['html']['DUE_DATE'] = $link['add']['html']['COMMENT'] = ' &nbsp; ';
                 echo '</table>';
 
                 ListOutputPrint($grades_RET, $columns, _assignment, _assignments, $link, array(), array('center' =>false, 'add' =>true));

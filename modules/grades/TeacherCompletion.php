@@ -128,17 +128,17 @@ if (count($teacher_RET)) {
                     while (date('N', $start_time_cur) != 1) {
                         $start_time_cur = $start_time_cur - $one_day;
                     }
-                    $bad_planif_this= check_planif($course['COURSE_ID'],$start_time_cur);
-                    $bad_planif_next= check_planif($course['COURSE_ID'],$start_time_cur+$one_week);
-                    // $list_RET[$j][$i] .= '<br>';
-                    if($bad_planif_this)
-                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planif cette semaine';
-                    else 
-                       $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Planif cette semaine';
-                    if($bad_planif_next)
-                        $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planif la semaine prochaine';
-                    else 
-                        $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Planif la semaine prochaine';
+                    // $bad_planif_this= check_planif($course['COURSE_ID'],$start_time_cur);
+                    // $bad_planif_next= check_planif($course['COURSE_ID'],$start_time_cur+$one_week);
+                    // // $list_RET[$j][$i] .= '<br>';
+                    // if($bad_planif_this)
+                    //     $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planif cette semaine';
+                    // else 
+                    //    $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Planif cette semaine';
+                    // if($bad_planif_next)
+                    //     $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Planif la semaine prochaine';
+                    // else 
+                    //     $list_RET[$j][$i] .= '<br><i class="fa fa-check fa-lg text-success"></i>Planif la semaine prochaine';
                     if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],$cur_mp,UserSyear(),$course['SHORT_NAME'])) != 'NAN')
                         $bad_final = 0;
                     else 
