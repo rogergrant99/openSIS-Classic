@@ -518,11 +518,19 @@ function GetGroupAverage($course_period_id,$mp,$year,$title){
         return 0;
 }
 function check_planif($course_id,$start_time){
-    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . date('Y-m-d',$start_time) . '\'  and course_id=\'' . $course_id . '\''));
+    $course_RET = DBGet(DBQuery('SELECT GRADE_LEVEL,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
+    if($course_RET[1]['GRADE_LEVEL'] >= '2' && $course_RET[1]['GRADE_LEVEL'] <= '7'){
+        $grade_level=$course_RET[1]['GRADE_LEVEL'];
+        $course_id=0;
+    }
+    else
+        $grade_level=0;
+    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . date('Y-m-d',$start_time) . '\' and is_primary=' . $grade_level  . '  and course_id=\'' . $course_id . '\''));
     if(count($RET))
         return false;
     return true;
 }
+
 function check_weight($course_period_id,$staff_id,$mp,$course_id)
 {
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
