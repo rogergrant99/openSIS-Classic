@@ -832,7 +832,7 @@ define("_contactFieldCategories", "Catégories de champs de contact");
 define("_relation", "Lien");
 define("_relationSName", "Nom de la relation");
 define("_street", "Rue");
-define("_zip", "Zip");
+define("_zip", "Code postal");
 define("_emailAddress", "Adresse électronique");
 define("_doNotEnrollAfterThisSchoolYear", "Ne pas inscrire après cette année scolaire");
 define("_birthday", "Anniversaire");

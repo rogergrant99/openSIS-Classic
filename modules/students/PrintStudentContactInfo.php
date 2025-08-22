@@ -36,36 +36,40 @@ if ($_REQUEST['modfunc'] == 'save') {
 
 
 
-		$extra['FROM'] = ' ,students_join_people sjp,people p,student_address sa';
-		$extra['SELECT'] = ' ,sjp.EMERGENCY_TYPE AS CONTACT_TYPE,sjp.RELATIONSHIP AS RELATION,CONCAT(p.Last_Name," " ,p.First_Name) AS RELATION_NAME,sa.STREET_ADDRESS_2 as STREET,sa.STREET_ADDRESS_1 as ADDRESS,sa.CITY,sa.STATE,sa.ZIPCODE AS ZIP,p.WORK_PHONE,p.HOME_PHONE,p.CELL_PHONE,p.EMAIL AS EMAIL_ID';
-		$extra['WHERE'] .= ' AND sjp.student_id=ssm.student_id AND sjp.STUDENT_ID=sa.STUDENT_ID AND sjp.PERSON_ID=sa.PEOPLE_ID AND sjp.PERSON_ID=p.STAFF_ID';
+		$extra['FROM'] = ' JOIN student_enrollment ssm ON ssm.STUDENT_ID = s.STUDENT_ID JOIN students_join_people sjp ON sjp.student_id = ssm.student_id JOIN people p ON sjp.PERSON_ID = p.STAFF_ID JOIN student_address sa ON sjp.STUDENT_ID = sa.STUDENT_ID AND sjp.PERSON_ID = sa.PEOPLE_ID LEFT JOIN login_authentication la ON la.user_id = sjp.person_id';
+		$extra['SELECT'] = ' ,sjp.EMERGENCY_TYPE AS CONTACT_TYPE,sjp.RELATIONSHIP AS RELATION,CONCAT(p.Last_Name," " ,p.First_Name) AS RELATION_NAME,sa.STREET_ADDRESS_2 as STREET,sa.STREET_ADDRESS_1 as ADDRESS,sa.CITY,sa.STATE,sa.ZIPCODE AS ZIP,p.WORK_PHONE,p.HOME_PHONE,p.CELL_PHONE,p.EMAIL AS EMAIL_ID,la.username as USERNAME,  p.staff_id as CONTACT , la.profile_id as PROFILE_ID';
+		$extra['WHERE'] .= ' AND sjp.student_id=ssm.student_id AND (la.profile_id IS NULL OR la.profile_id != 3 ) AND (la.profile_id IS NULL OR la.profile_id != 2 ) AND (la.profile_id IS NULL OR la.profile_id != 1 ) AND sjp.STUDENT_ID=sa.STUDENT_ID AND sjp.PERSON_ID=sa.PEOPLE_ID AND sjp.PERSON_ID=p.STAFF_ID  ';
 		$extra['ORDER'] = ' ,sa.ID';
 
 		$RET = GetStuList($extra);
 
 		if (count($RET)) {
 			$column_name = array(
-				'STUDENT_ID' => _studentId,
-				'ALT_ID' => _alternateId,
+				// 'ALT_ID' => _alternateId,
 				'FULL_NAME' => _student,
+				'STUDENT_ID' => _studentId,
 				'CONTACT_TYPE' => _type,
 				'RELATION' => _relation,
 				'RELATION_NAME' => _relationSName,
-				'STREET' => _street,
-				'ADDRESS' => _address,
-				'CITY' => _city,
-				'STATE' => _state,
-				'ZIP' => _zip,
-				'WORK_PHONE' => _workPhone,
-				'HOME_PHONE' => _homePhone,
-				'CELL_PHONE' => _cellPhone,
+				// 'ADDRESS' => _address,
+				// 'STREET' => _street,
+				// 'CITY' => _city,
+				// 'STATE' => _state,
+				// 'ZIP' => _zip,
+				// 'WORK_PHONE' => _workPhone,
+				// 'HOME_PHONE' => _homePhone,
+				// 'CELL_PHONE' => _cellPhone,
 				'EMAIL_ID' => _emailAddress,
+				'USERNAME' => 'Login portail',
+				// 'CONTACT' => "ID",
+				// 'PROFILE_ID' => "PROFILE",
 			);
 			$singular = _studentContact;
 			$plural = _studentContacts;
 			$options = array('search' => false);
+			$options = array('print' => false);
 
-			ListOutputPrint($RET, $column_name, $singular, $plural, $link = false, $group = false, $options);
+			ListOutputPrint_Report($RET, $column_name, $singular, $plural, $link = false, $group = false, $options);
 		} else {
 			ShowErrPhp(_noContactsWereFound);
 			for_error();
