@@ -295,7 +295,7 @@ define("_time", "Période");
 define("_days", "Journées");
 define("_location", "Emplacement");
 define("_poweredBy", "Alimenté par");
-define("_printCatalogByTerm", "Périodes de cours");
+define("_printCatalogByTerm", "Horaire");
 define("_selectTerm", "Choissisez l'étape");
 define("_reportGeneratedForAllTerms", "Rapport généré pour toutes les étapes");
 define("_courseCatalogByTerm", "Catalogue des cours");
