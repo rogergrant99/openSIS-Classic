@@ -140,6 +140,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'admin' ){
+        $teacherList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . '))order by first_name'));
         $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and is_disable ='N' and staff_id order by last_name"));
         DBQuery('delete from mail_groupmembers where group_id="2"');
         foreach ($member_select as $member)
@@ -150,17 +151,24 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(1,\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
         $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
         if($_REQUEST['m'] != 'reply'){
-            echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._selectGroup."</OPTION>";
+            echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>Faites votre sélection.</OPTION>";
             foreach ($groupList as $groupArr) {
                 $option = $groupArr['GROUP_NAME'];
                 $value = $groupArr['GROUP_ID'];
-
                 if ($_REQUEST['sel_group'] == $value)
                     echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
                 else
                     echo "<OPTION value=\"$option\">$option</OPTION>";
             }
-        }
+            foreach ($teacherList as $groupArr) {
+                $option = $groupArr['EMAIL'];
+                $value = $groupArr['GROUP_NAME'];
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$value</OPTION>";
+                }
+            }
         echo '</SELECT>';
         echo '<span class="input-group-btn">';
     }
