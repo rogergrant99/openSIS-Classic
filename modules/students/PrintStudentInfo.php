@@ -27,7 +27,9 @@
 #
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
-
+ini_set('memory_limit','9000M');
+ini_set('max_execution_time','50000');
+ini_set('max_input_time','50000');
 if (isset($_SESSION['student_id']) && $_SESSION['student_id'] != '') {
     $_REQUEST['search_modfunc'] = 'list';
 }
@@ -931,23 +933,24 @@ if (!$_REQUEST['modfunc']) {
                 default:
                     $category['TITLE'] = $category['TITLE'];
                     break;
-                    // case 'Demographic Info':
-                    //     $category['TITLE'] = _demographicInfo;
-                    //     break;
-                    // case 'Addresses &amp; Contacts':
-                    //     $category['TITLE'] = _addressesContacts;
-                    //     break;
-                    // case 'School Information':
-                    //     $category['TITLE'] = _schoolInformation;
-                    //     break;
-                    // case 'Certification Information':
-                    //     $category['TITLE'] = _certificationInformation;
-                    //     break;
-                    // case 'Schedule':
-                    //     $category['TITLE'] = _schedule;
-                    //     break;
+                case 'Demographic Info':
+                    $category['TITLE'] = _demographicInfo;
+                    break;
+                case 'Addresses &amp; Contacts':
+                    $category['TITLE'] = _addressesContacts;
+                    break;
+                case 'School Information':
+                    $category['TITLE'] = _schoolInformation;
+                    break;
+                case 'Certification Information':
+                    $category['TITLE'] = _certificationInformation;
+                    break;
+                case 'Schedule':
+                    $category['TITLE'] = _schedule;
+                    break;
             }
-            if ($can_use_RET['students/Student.php&category_id=' . $category['ID']]) {
+            // if ($can_use_RET['students/Student.php&category_id=' . $category['ID']]) {
+            if ($category['TITLE'] === _generalInfo || $category['TITLE'] === 'Addresses & Contacts'   ) {
                 $extra['extra_header_left'] .= '<label class="checkbox-inline checkbox-switch switch-success switch-sm"><INPUT type=checkbox name=category[' . $category['ID'] . '] value=Y checked><span></span> ' . ucwords(strtolower($category['TITLE'])) . '</label>';
                 //$extra['extra_header_left'] .= '<td></TD></TR>';
             }
@@ -959,10 +962,10 @@ if (!$_REQUEST['modfunc']) {
     if (isset($_SESSION['student_id']) && $_SESSION['student_id'] != '') {
         $extra['WHERE'] .= ' AND s.STUDENT_ID=' . $_SESSION['student_id'];
     }
-    // $extra['functions'] = array('CHECKBOX' => '_makeChooseCheckbox');
-    // $extra['columns_before'] = array('CHECKBOX' => '</A><INPUT type=checkbox value=Y name=controller onclick="checkAllDtMod(this,\'st_arr\');"><A>');
-    // $extra['options']['search'] = false;
-    // $extra['new'] = true;
+    $extra['functions'] = array('CHECKBOX' => '_makeChooseCheckbox');
+    $extra['columns_before'] = array('CHECKBOX' => '</A><INPUT type=checkbox value=Y name=controller onclick="checkAllDtMod(this,\'st_arr\');"><A>');
+    $extra['options']['search'] = false;
+    $extra['new'] = true;
 
 
     // $extra['search'] .= '<div class="row">';
