@@ -710,6 +710,8 @@ function do_cado_courses_files(){
             white-space: nowrap; /* Keeps icon and filename together */
         }
         .custom-file-download i {
+            background: #a1baf2ff;
+            color: black;
             margin-right: 6px;
             flex-shrink: 0;
         }
@@ -743,16 +745,17 @@ function do_cado_courses_files(){
         .upload-box{
             display:none; 
             /* padding:10px;  */
-            background: #f50303ff; 
+            background: #ff0000ff; 
             border:1px solid #e60b0bff; 
             border-radius:4px; 
+            text-align: center;
             /* margin-top:10px;            */
         }
         .upload-text{
             font-family: Arial, sans-serif;
             color: white; 
             font-size: 12px;
-            font-weight:bold;            
+            font-weight:bold;
         }
         .inserez-text{
             font-family: Arial, sans-serif;
