@@ -606,7 +606,7 @@ define("_primaryEmergencyContact", "Contact d'urgence primaire");
 define("_relationshipToStudent", "Relation avec l'étudiant");
 define("_lookup", "CHERCHER");
 define("_homePhone", "Téléphone fixe");
-define("_workPhone", "Téléphone de travail");
+define("_workPhone", "Téléphone travail");
 define("_cellMobilePhone", "Cellulaire / Téléphone portable");
 define("_portalUser", "portail utilisateur");
 define("_secondaryEmergencyContact", "Contact d'urgence secondaire");
