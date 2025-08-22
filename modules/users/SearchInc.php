@@ -126,7 +126,7 @@ if (User('PROFILE') == 'admin') {
                 else
                     $columns = array('FULL_NAME' =>_parent,
                      'USERNAME' =>_username,
-                     'PROFILE' =>_profile,
+                    //  'PROFILE' =>_profile,
                      'STAFF_ID' =>_userId,
                     );
             }
