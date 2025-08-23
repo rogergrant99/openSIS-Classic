@@ -314,7 +314,7 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                             $rel_stu[] = 'IS_EMERGENCY=NULL';
                         } else {
                             if ($col != 'USER_NAME' && $col != 'RELATIONSHIP' && $col != 'PASSWORD' && $col != 'IS_EMERGENCY' && $col != 'IS_EMERGENCY_HIDDEN') {
-                                $set_arr[] = $col . "='" . $col_v . "'";
+                                $set_arr[] = $col . "='" . addslashes($col_v) . "'";
                             }
                         }
 
@@ -642,7 +642,7 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         if ($col != 'ID' && $col_v != '') {
                             $fields[] = $col;
 
-                            $field_vals[] = "'" . $col_v . "'";
+                            $field_vals[] = "'" . addslashes($col_v) . "'";
 
                             $go = 'true';
                         }
@@ -1137,6 +1137,17 @@ if (!isset($_REQUEST['modfunc'])) {
                                    sa.TYPE=\'Mail\' AND sa.STUDENT_ID=\'' . UserStudentID() . '\'  AND sa.SYEAR=\'' . UserSyear() . '\' AND sa.SCHOOL_ID=\'' . UserSchool() . '\' '));
 
         $sec_par_id = DBGet(DBQuery('SELECT * FROM students_join_people WHERE STUDENT_ID=' . UserStudentID() . ' AND EMERGENCY_TYPE=\'Secondary\''));
+// ROGER
+$h_addr[1]['ADDRESS_ID']=stripslashes($h_addr[1]['ADDRESS_ID']);
+$h_addr[1]['ADDRESS']=stripslashes($h_addr[1]['ADDRESS']);
+$h_addr[1]['CITY']=stripslashes($h_addr[1]['CITY']);
+$h_addr[1]['STREET']=stripslashes($h_addr[1]['STREET']);
+$h_addr[1]['STATE']=stripslashes($h_addr[1]['STATE']);
+$p_addr[1]['ADDRESS_ID']=stripslashes($p_addr[1]['ADDRESS_ID']);
+$p_addr[1]['ADDRESS']=stripslashes($p_addr[1]['ADDRESS']);
+$p_addr[1]['CITY']=stripslashes($p_addr[1]['CITY']);
+$p_addr[1]['STREET']=stripslashes($p_addr[1]['STREET']);
+$p_addr[1]['STATE']=stripslashes($p_addr[1]['STATE']);
 
         if (count($sec_par_id) > 0) {
             $s_addr = DBGet(DBQuery('SELECT p.STAFF_ID as CONTACT_ID,p.FIRST_NAME,p.MIDDLE_NAME,p.LAST_NAME,p.HOME_PHONE,p.WORK_PHONE,p.CELL_PHONE,p.EMAIL,p.CUSTODY,p.PROFILE_ID,
@@ -1145,6 +1156,9 @@ if (!isset($_REQUEST['modfunc'])) {
 
             $s_addr[1]['RELATIONSHIP'] = $sec_par_id[1]['RELATIONSHIP'];
 
+$s_addr[1]['ADDRESS']=stripslashes($s_addr[1]['ADDRESS']);
+$s_addr[1]['ADDRESS_ID']=stripslashes($s_addr[1]['ADDRESS_ID']);
+$s_addr[1]['STREET']=stripslashes($s_addr[1]['STREET']);
             $s_user_profs_ids_arr = array();
             $s_user_profs_ids = DBGet(DBQuery('SELECT id FROM user_profiles WHERE profile = \'' . 'parent' . '\''));
 
@@ -1270,6 +1284,10 @@ if (!isset($_REQUEST['modfunc'])) {
             echo '<FIELDSET><h5 class="text-primary">' . _studentSMailingAddress . '</h5>';
             echo '<hr/>';
 
+$m_addr[1]['ADDRESS']=stripslashes($m_addr[1]['ADDRESS']);
+$m_addr[1]['CITY']=stripslashes($m_addr[1]['CITY']);
+$m_addr[1]['STREET']=stripslashes($m_addr[1]['STREET']);
+$m_addr[1]['STATE']=stripslashes($m_addr[1]['STATE']);
 
 
             if ($m_addr[1]['ADDRESS_ID'] != '' && $h_addr[1]['ADDRESS_ID'] != '') {
