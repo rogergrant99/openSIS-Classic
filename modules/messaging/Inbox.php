@@ -901,8 +901,8 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
     ';
     $list=explode(',', $to);
     foreach ($list as $key => $toAddr){
-            // mail($toAddr,"Message de CADO",$EXTmsgBody,$headers);
-            mail('webmaster.cado@gmail.com',$toAddr,$EXTmsgBody,$headers);
+            mail($toAddr,"Message de CADO",$EXTmsgBody,$headers);
+            // mail('webmaster.cado@gmail.com',$toAddr,$EXTmsgBody,$headers);
     }
     // HTML Purifier
     // Configure HTML Purifier
