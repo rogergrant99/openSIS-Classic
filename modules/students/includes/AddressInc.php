@@ -430,16 +430,16 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         /*$res_pass_chk = DBQuery('SELECT * FROM login_authentication WHERE PASSWORD=\'' . $password . '\'');*/
 
                         // count password in db start
-                        $countpass = 0;
-                        $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
-                        foreach ($all_users as $val) {
-                            $user_pass = $val['PASSWORD'];
-                            $pass_status = VerifyHash($user_password, $user_pass);
-                            if ($pass_status == 1) {
-                                $countpass = $countpass + 1;
-                            }
-                        }
-                        // end
+                        // $countpass = 0;
+                        // $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
+                        // foreach ($all_users as $val) {
+                        //     $user_pass = $val['PASSWORD'];
+                        //     $pass_status = VerifyHash($user_password, $user_pass);
+                        //     if ($pass_status == 1) {
+                        //         $countpass = $countpass + 1;
+                        //     }
+                        // }
+                        // // end
 
                         $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME=\'' . $user_name_val . '\'');
 
@@ -481,16 +481,16 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         $num_pass = DBGet($res_pass_chk);*/
 
                         // count password in db start
-                        $countpass = 0;
-                        $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
-                        foreach ($all_users as $val) {
-                            $user_pass = $val['PASSWORD'];
-                            $pass_status = VerifyHash($user_password, $user_pass);
-                            if ($pass_status == 1) {
-                                $countpass = $countpass + 1;
-                            }
-                        }
-                        // end
+                        // $countpass = 0;
+                        // $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
+                        // foreach ($all_users as $val) {
+                        //     $user_pass = $val['PASSWORD'];
+                        //     $pass_status = VerifyHash($user_password, $user_pass);
+                        //     if ($pass_status == 1) {
+                        //         $countpass = $countpass + 1;
+                        //     }
+                        // }
+                        // // end
 
 
                         if (count($num_user) == 0) {
@@ -528,16 +528,16 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         $num_pass = DBGet($res_pass_chk);*/
 
                         // count password in db start
-                        $countpass = 0;
-                        $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
-                        foreach ($all_users as $val) {
-                            $user_pass = $val['PASSWORD'];
-                            $pass_status = VerifyHash($user_password, $user_pass);
-                            if ($pass_status == 1) {
-                                $countpass = $countpass + 1;
-                            }
-                        }
-                        // end
+                        // $countpass = 0;
+                        // $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
+                        // foreach ($all_users as $val) {
+                        //     $user_pass = $val['PASSWORD'];
+                        //     $pass_status = VerifyHash($user_password, $user_pass);
+                        //     if ($pass_status == 1) {
+                        //         $countpass = $countpass + 1;
+                        //     }
+                        // }
+                        // // end
 
                         if (count($num_user) == 0) {
                             /*if (count($num_pass) == 0)*/
@@ -792,17 +792,17 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         $num_pass = DBGet($res_pass_chk);*/
 
                         // count password in db start
-                        $user_new_password = $type['PRIMARY']['PASSWORD'];
-                        $countpass = 0;
-                        $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
-                        foreach ($all_users as $val) {
-                            $user_pass = $val['PASSWORD'];
-                            $pass_status = VerifyHash($user_new_password, $user_pass);
-                            if ($pass_status == 1) {
-                                $countpass = $countpass + 1;
-                            }
-                        }
-                        // end
+                        // $user_new_password = $type['PRIMARY']['PASSWORD'];
+                        // $countpass = 0;
+                        // $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
+                        // foreach ($all_users as $val) {
+                        //     $user_pass = $val['PASSWORD'];
+                        //     $pass_status = VerifyHash($user_new_password, $user_pass);
+                        //     if ($pass_status == 1) {
+                        //         $countpass = $countpass + 1;
+                        //     }
+                        // }
+                        // // end
 
                         $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $type['PRIMARY']['USER_NAME'] . '\'');
                         $num_user = DBGet($res_user_chk);
@@ -850,18 +850,18 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         /*$res_pass_chk = DBQuery('SELECT * FROM login_authentication WHERE PASSWORD = \'' . md5($type['SECONDARY']['PASSWORD']) . '\'');
                         $num_pass = DBGet($res_pass_chk);*/
 
-                        // count password in db start
-                        $user_new_password = $type['SECONDARY']['PASSWORD'];
-                        $countpass = 0;
-                        $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
-                        foreach ($all_users as $val) {
-                            $user_pass = $val['PASSWORD'];
-                            $pass_status = VerifyHash($user_new_password, $user_pass);
-                            if ($pass_status == 1) {
-                                $countpass = $countpass + 1;
-                            }
-                        }
-                        // end
+                        // // count password in db start
+                        // $user_new_password = $type['SECONDARY']['PASSWORD'];
+                        // $countpass = 0;
+                        // $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
+                        // foreach ($all_users as $val) {
+                        //     $user_pass = $val['PASSWORD'];
+                        //     $pass_status = VerifyHash($user_new_password, $user_pass);
+                        //     if ($pass_status == 1) {
+                        //         $countpass = $countpass + 1;
+                        //     }
+                        // }
+                        // // end
 
                         $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $type['SECONDARY']['USER_NAME'] . '\'');
                         $num_user = DBGet($res_user_chk);
@@ -909,18 +909,18 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         /*$res_pass_chk = DBQuery('SELECT * FROM login_authentication WHERE PASSWORD = \'' . md5($type['OTHER']['PASSWORD']) . '\'');
                         $num_pass = DBGet($res_pass_chk);*/
 
-                        // count password in db start
-                        $user_new_password = $type['OTHER']['PASSWORD'];
-                        $countpass = 0;
-                        $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
-                        foreach ($all_users as $val) {
-                            $user_pass = $val['PASSWORD'];
-                            $pass_status = VerifyHash($user_new_password, $user_pass);
-                            if ($pass_status == 1) {
-                                $countpass = $countpass + 1;
-                            }
-                        }
-                        // end
+                        // // count password in db start
+                        // $user_new_password = $type['OTHER']['PASSWORD'];
+                        // $countpass = 0;
+                        // $all_users = DBGet(DBQuery("SELECT * FROM login_authentication"));
+                        // foreach ($all_users as $val) {
+                        //     $user_pass = $val['PASSWORD'];
+                        //     $pass_status = VerifyHash($user_new_password, $user_pass);
+                        //     if ($pass_status == 1) {
+                        //         $countpass = $countpass + 1;
+                        //     }
+                        // }
+                        // // end
 
                         $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $type['OTHER']['USER_NAME'] . '\'');
                         $num_user = DBGet($res_user_chk);
