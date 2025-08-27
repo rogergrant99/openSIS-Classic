@@ -678,7 +678,7 @@ if (!isset($_REQUEST['modfunc'])) {
                 // echo $keyname;
                 $inbox_info[$key]['TO_NAME'].=$name[1]['NAME'];
                 // echo $numberOfName; echo ' - '; echo $keyname; echo ' + ';
-                if($keyname ==0 && $numberOfName>1 )$inbox_info[$key]['TO_NAME'].= ' , ';
+                if($numberOfName>0 )$inbox_info[$key]['TO_NAME'].= ' , ';
             }
         }
     }
