@@ -30,7 +30,7 @@ include('../../RedirectModulesInc.php');
 $coursesWithType = 0;
 $courses = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,COURSE_ID,CP_TITLE as SHORT from course_details where syear=' . UserSyear() . ' ORDER by SHORT'));
 
-echo '<h2>Liste des types de devoir par cours</h2>';
+echo '<h2>Liste des compétences par cours</h2>';
 echo '<p><strong>Nombre de cours total:</strong> ' . count($courses) . '</p>';
 
 // Start HTML table
@@ -68,7 +68,7 @@ foreach($courses as $individual) {
         }
         echo implode('<br>', $typeList);
     } else {
-        echo '<em style="color: #888;">Pas de types de devoir</em>';
+        echo '<em style="color: #888;">Pas de compétences</em>';
     }
     echo '</td>';
     
@@ -93,8 +93,8 @@ echo '</table>';
 // Summary information
 echo '<div style="margin: 20px 0; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #007cba;">';
 echo '<h3>Sommaire</h3>';
-echo '<p><strong>Cours avec types de devoirs:</strong> ' . $coursesWithType . ' sur ' . count($courses) . '</p>';
-echo '<p><strong>Cours sans types de devoirs:</strong> ' . (count($courses) - $coursesWithType) . '</p>';
+echo '<p><strong>Cours avec compétences:</strong> ' . $coursesWithType . ' sur ' . count($courses) . '</p>';
+echo '<p><strong>Cours sans compétences:</strong> ' . (count($courses) - $coursesWithType) . '</p>';
 
 if(count($courses) > 0) {
     $percentageWithTypes = round(($coursesWithType / count($courses)) * 100, 1);

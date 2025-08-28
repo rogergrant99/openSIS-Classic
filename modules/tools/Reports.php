@@ -44,7 +44,7 @@ if (!$_REQUEST['modfunc']) {
      }
      if(count($courses)){
         if ((!isset($conv_st_date) || !isset($conv_end_date))) {
-            echo '<center><font color="red"><b><h5>Les types de devoir ont déja été attribués</h5></b></font></center>';
+            echo '<center><font color="red"><b><h5>Les compétences ont déja été attribués</h5></b></font></center>';
         }
     }
      else{
@@ -52,9 +52,9 @@ if (!$_REQUEST['modfunc']) {
         echo '<div class="row">';
         echo '<div class="col-md-8 col-md-offset-2">';
         echo "<FORM class=\"form-horizontal\" name=log id=log action=Modules.php?modname=$_REQUEST[modname]&modfunc=teachers method=POST>";
-        PopTable('header',  'Attribuer les types de devoirs a tous les professeurs');
+        PopTable('header',  'Attribuer les compétences a tous les professeurs');
         echo '<h5 class="text-center">Cette fonction est irréversible, procédez avec prudence</h5>';
-        $btn = '<input type="submit" class="btn btn-primary" value="Atribuer les types de devoirs de l\'an passé aux professeurs" name="generate2" onclick="self_disable(this);">';
+        $btn = '<input type="submit" class="btn btn-primary" value="Atribuer les compétences de l\'an passé aux professeurs" name="generate2" onclick="self_disable(this);">';
         PopTable('footer', $btn);
         echo '</FORM>';
         echo '</div>';
