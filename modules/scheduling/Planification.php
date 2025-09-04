@@ -67,6 +67,7 @@ if(!$course_id && User('PROFILE') != 'teacher'){
 
 // Set teacher course
 if (User('PROFILE') == 'teacher'){
+    if(!UserCourse()) return;
     $course_RET = DBGet(DBQuery('SELECT course_id,grade_level,teacher_id FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . UserCourse() . ''));
     if($course_RET[1]['GRADE_LEVEL'] >= '2' && $course_RET[1]['GRADE_LEVEL'] <= '7'){
         $primaire=$course_RET[1]['GRADE_LEVEL'];
