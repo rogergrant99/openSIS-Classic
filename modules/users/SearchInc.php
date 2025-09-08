@@ -50,6 +50,7 @@ if (User('PROFILE') == 'admin') {
 
         echo '<div class="row">';
         echo '<div class="col-md-6">';
+        echo '<div class="form-group"><label class="control-label col-lg-4">'._userId.'</label><div class="col-lg-8"><INPUT type=text placeholder="'._userId.'" class=form-control name=user_id></div></div>';        
         echo '<div class="form-group"><label class="control-label col-lg-4">'._username.'</label><div class="col-lg-8"><INPUT type=text placeholder="'._username.'" class=form-control name=username></div></div>';
         echo '</div><div class="col-md-6">';
         $profiles = DBGet(DBQuery('SELECT * FROM user_profiles WHERE profile = \'' . 'parent' . '\''));

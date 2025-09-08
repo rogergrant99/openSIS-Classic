@@ -50,6 +50,8 @@ AND ssm.SCHOOL_ID IN (' .  GetUserSchools(UserID(), true) . ') AND ssm.SYEAR=' .
 				$sql .= 'AND UPPER(la.USERNAME) LIKE \'' . singleQuoteReplace("'", "\'", strtoupper($_REQUEST['username'])) . '%\' ';
 			if ($_REQUEST['last'])
 				$sql .= 'AND UPPER(s.LAST_NAME) LIKE \'' . singleQuoteReplace("'", "\'", strtoupper($_REQUEST['last'])) . '%\' ';
+			if ($_REQUEST['user_id'])
+				$sql .= 'AND STAFF_ID = ' . $_REQUEST['user_id'] . '';
 			if ($_REQUEST['first'])
 				$sql .= 'AND UPPER(s.FIRST_NAME) LIKE \'' . singleQuoteReplace("'", "\'", strtoupper($_REQUEST['first'])) . '%\' ';
 			if ($_REQUEST['profile']) {
