@@ -102,7 +102,7 @@ if (User('PROFILE') == 'teacher'){
     $editable=' class="editable" ';
 }
 else{
-    $editable=' readonly class="editable-student" ';    
+    $editable=' readonly class="editable" ';    
 }
 
 // Add files
@@ -566,7 +566,7 @@ function do_cado_courses_files(){
         .editable-student {
             /* background-color: #fff; */
             cursor: text;
-            min-height: 75px;
+            min-height: 95px;
             padding: 0px;
             border: none;
             width: 100%;
