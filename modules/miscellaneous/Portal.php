@@ -519,7 +519,7 @@ function GetGroupAverage($course_period_id,$mp,$year,$title){
 }
 function check_planif($course_id,$start_time){
     $course_RET = DBGet(DBQuery('SELECT GRADE_LEVEL,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
-    if($course_RET[1]['GRADE_LEVEL'] >= '2' && $course_RET[1]['GRADE_LEVEL'] <= '7'){
+    if($course_RET[1]['GRADE_LEVEL'] >= '1' && $course_RET[1]['GRADE_LEVEL'] <= '7'){
         $grade_level=$course_RET[1]['GRADE_LEVEL'];
         $course_id=0;
     }
