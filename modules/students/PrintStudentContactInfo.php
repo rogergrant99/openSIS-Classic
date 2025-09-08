@@ -61,7 +61,7 @@ if ($_REQUEST['modfunc'] == 'save') {
 				// 'CELL_PHONE' => _cellPhone,
 				'EMAIL_ID' => _emailAddress,
 				'USERNAME' => 'Login portail',
-				// 'CONTACT' => "ID",
+				'CONTACT' => "Numéro contact",
 				// 'PROFILE_ID' => "PROFILE",
 			);
 			$singular = _studentContact;
