@@ -458,8 +458,8 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'update') {
             $sql = "INSERT INTO staff ";
 
 
-            $fields = 'CURRENT_SCHOOL_ID,';
-            $values = UserSchool() . ',';
+            $fields = 'CURRENT_SCHOOL_ID,IS_DISABLE,';
+            $values = UserSchool() . ",'N',";
 
             if (count($_REQUEST['month_staff'])) {
                 foreach ($_REQUEST['month_staff'] as $column => $value) {
