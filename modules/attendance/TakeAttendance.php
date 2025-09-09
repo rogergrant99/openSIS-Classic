@@ -336,11 +336,15 @@ if ($_SESSION['PROFILE'] == 'teacher' && $codes_RET_count[1]['CODES'] == 0)
 else if ($_SESSION['PROFILE'] == 'teacher' && $codes_RET_count[1]['CODES'] != 0)
 {
     unset($_REQUEST['username']);
+    // Filter out disabled students
+    $extra['WHERE'] = (isset($extra['WHERE']) ? $extra['WHERE'] . ' AND ' : '') . "AND (s.is_disable IS NULL OR s.is_disable = '' OR s.is_disable = '0' OR s.is_disable = 'N' OR s.is_disable = 'No')";
     $stu_RET = GetStuListAttn($extra);
 }
 else
 {
     unset($_REQUEST['username']);
+    // Filter out disabled students
+    $extra['WHERE'] = (isset($extra['WHERE']) ? $extra['WHERE'] . ' AND ' : '') . "AND (s.is_disable IS NULL OR s.is_disable = '' OR s.is_disable = '0' OR s.is_disable = 'N' OR s.is_disable = 'No')";
     $stu_RET = GetStuListAttn($extra);
 }
 $date_note = $date != date('Y-m-d') ? ' <span class="text-danger m-l-10"><i class="icon-info22"></i> '._theSelectedDateIsNotToday.'</span>' : '';
