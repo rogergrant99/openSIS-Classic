@@ -189,7 +189,12 @@ function CadoStudentFix()
     $grade_levels=DBGet(DBQuery('SELECT ID from school_gradelevels'));
     $dates=DBGet(DBQuery('SELECT SCHOOL_ID,START_DATE,END_DATE,MARKING_PERIOD_ID,SHORT_NAME from marking_periods where SYEAR = '.$syear.' and SHORT_NAME = \'FY\' '));
     foreach($grade_levels as $individual) {
-        $students=DBGet(DBQuery('SELECT STUDENT_ID,GRADE_ID from student_enrollment where syear= ' .$syear . ' and grade_id= ' .$individual['ID']. ''));
+        // Modified query to exclude disabled students
+        $students=DBGet(DBQuery('SELECT se.STUDENT_ID,se.GRADE_ID from student_enrollment se 
+                                INNER JOIN students s ON se.STUDENT_ID = s.STUDENT_ID 
+                                WHERE se.syear= ' .$syear . ' 
+                                AND se.grade_id= ' .$individual['ID']. ' 
+                                AND (s.IS_DISABLE IS NULL OR s.IS_DISABLE != \'Y\')'));
         foreach($students as $student) {
             $courses=DBGet(DBQuery('SELECT COURSE_PERIOD_ID as NEW_COURSE_PERIOD_ID ,COURSE_ID as C_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .($syear-1) . ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as OLD_COURSE_PERIOD_ID, (SELECT GRADE_LEVEL from courses where syear= ' .$syear . ' and  COURSE_ID=C_ID ) as GRADE_LEVEL  from course_details where SYEAR=' .$syear . ''));
             foreach($courses as $course) {
