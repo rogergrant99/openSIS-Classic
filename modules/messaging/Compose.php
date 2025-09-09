@@ -105,7 +105,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="input-group">';
 
     if (User('PROFILE') == 'teacher' ){
-        $to_bcc = 'admin';
+        $to_bcc = 'admin@cado.ca';
         $course_RET = DBGet(DBQuery('SELECT short_name,grade_level FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_period_id=' . UserCoursePeriod() . ''));
         $level= $course_RET[1]['GRADE_LEVEL'] ;
         $level_pri_contacts=DBGet(DBQuery('SELECT CONCAT(st.first_name," ",st.last_name)AS STUDENT_NAME,st.student_id,CONCAT(p.first_name," ",p.last_name)AS CONTACT,p.STAFF_ID,la.username AS email FROM students st LEFT JOIN students_join_people sjp ON st.student_id=sjp.student_id AND sjp.emergency_type="Primary" LEFT JOIN people p ON sjp.person_id=p.staff_id LEFT JOIN login_authentication la ON p.staff_id=la.user_id WHERE st.is_disable IS NULL AND st.STUDENT_ID IN(SELECT STUDENT_ID FROM schedule WHERE dropped="N")AND st.student_id IN(SELECT stu.student_id FROM student_enrollment se LEFT JOIN students stu ON se.student_id=stu.student_id WHERE se.grade_id=' . $level . ' AND syear= \'' . UserSyear() . '\'  AND stu.is_disable IS NULL) ORDER BY st.first_name'));
@@ -144,7 +144,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
                  DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
         }
         $index=count($primaryContactlist)+1;
-        $primaryContactlist[$index]['EMAIL']='admin';
+        $primaryContactlist[$index]['EMAIL']='admin@cado.ca';
         $primaryContactlist[$index]['STUDENT_NAME']='admin';
         $primaryContactlist[$index]['CONTACT']='CADO';
         // echo '<pre>'; print_r($primaryContactlist); echo '</pre>';
@@ -186,7 +186,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     }
     if (User('PROFILE') == 'admin' ){
         $teacherList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . '))order by first_name'));
-        $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and is_disable ='N' and staff_id order by last_name"));
+        $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and (is_disable ='N' OR is_disable IS NULL) and staff_id order by last_name"));
         DBQuery('delete from mail_groupmembers where group_id="2"');
         foreach ($member_select as $member)
                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(2,\'' . $member['EMAIL'] . '\',2,\'' . UserSchool(). '\')');
@@ -218,10 +218,10 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'parent'){
-        $to_bcc = 'admin';
+        $to_bcc = 'admin@cado.ca';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . ' AND STUDENT_ID=' . UserStudentID(). '))order by last_name'));
         $index=count($groupList)+1;
-        $groupList[$index]['EMAIL']='admin';
+        $groupList[$index]['EMAIL']='admin@cado.ca';
         $groupList[$index]['GROUP_NAME']='admin CADO';
         echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_teacher ."</OPTION>";
         foreach ($groupList as $groupArr) {
