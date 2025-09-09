@@ -186,7 +186,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     }
     if (User('PROFILE') == 'admin' ){
         $teacherList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . '))order by first_name'));
-        $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and (is_disable ='N' OR is_disable IS NULL) and staff_id order by last_name"));
+        $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and is_disable ='N' and staff_id order by last_name"));
         DBQuery('delete from mail_groupmembers where group_id="2"');
         foreach ($member_select as $member)
                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(2,\'' . $member['EMAIL'] . '\',2,\'' . UserSchool(). '\')');
