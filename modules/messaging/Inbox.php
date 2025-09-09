@@ -741,168 +741,225 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
         'X-Mailer: PHP/' . phpversion();
     
     $EXTmsgBody='<!DOCTYPE html>
-        <html lang="fr" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="x-apple-disable-message-reformatting">
-            <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
-            <title>Message de CADO</title>
-            <!--[if mso]>
-            <noscript>
-                <xml>
-                    <o:OfficeDocumentSettings>
-                        <o:AllowPNG/>
-                        <o:PixelsPerInch>96</o:PixelsPerInch>
-                    </o:OfficeDocumentSettings>
-                </xml>
-            </noscript>
-            <![endif]-->
-            <style type="text/css">
-                /* Reset styles */
-                body, table, td, p, a, li, blockquote {
-                    -webkit-text-size-adjust: 100%;
-                    -ms-text-size-adjust: 100%;
-                }
-                table, td {
-                    mso-table-lspace: 0pt;
-                    mso-table-rspace: 0pt;
-                }
-                img {
-                    -ms-interpolation-mode: bicubic;
-                    border: 0;
-                    height: auto;
-                    line-height: 100%;
-                    outline: none;
-                    text-decoration: none;
-                }
-                
-                /* Client-specific styles */
-                .ReadMsgBody { width: 100%; }
-                .ExternalClass { width: 100%; }
-                .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
-                    line-height: 100%;
-                }
-                
-                /* Responsive styles */
-                @media only screen and (max-width: 600px) {
-                    .email-container {
-                        width: 100% !important;
-                        margin: auto !important;
-                    }
-                    .content-padding {
-                        padding: 30px 20px !important;
-                    }
-                    .header-padding {
-                        padding: 30px 20px !important;
-                    }
-                    .button-container {
-                        padding: 15px 25px !important;
-                    }
-                }
-            </style>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif; background-color: #f5f7fa; color: #333333; width: 100% !important; min-width: 100%; -webkit-font-smoothing: antialiased;">
-            <!-- Preheader text -->
-            <div style="display: none; font-size: 1px; color: #f5f7fa; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
-                Nouveau message reçu sur le portail CADO - Connectez-vous pour le consulter
-            </div>
-            
-            <!-- Email wrapper -->
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; padding: 0;">
-                <tr>
-                    <td style="padding: 20px 0;">
-                        <!-- Email container -->
-                        <table class="email-container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
-                            
-                            <!-- Header -->
-                            <tr>
-                                <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;" class="header-padding">
-                                    <!-- Logo container -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="text-align: center;">
-                                                <div style="background-color: rgba(255,255,255,0.1); display: inline-block; padding: 15px 25px; border-radius: 50px; margin-bottom: 20px;">
-                                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-                                                        <path d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    </svg>
-                                                </div>
-                                                <h1 style="color: white; font-size: 32px; font-weight: 700; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1); font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">Message de CADO</h1>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            
-                            <!-- Content -->
-                            <tr>
-                                <td style="padding: 50px 40px;" class="content-padding">
-                                    <!-- Message content -->
-                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                        <tr>
-                                            <td style="text-align: center;">
-                                                <div style="background-color: #f8f9ff; border-left: 4px solid #667eea; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: left;">
-                                                    <h2 style="color: #333333; font-size: 24px; font-weight: 600; margin: 0 0 15px 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">Nouveau message reçu</h2>
-                                                    <p style="color: #666666; font-size: 16px; line-height: 1.6; margin: 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
-                                                        Vous avez reçu un message sur le portail de CADO. Veuillez vous connecter au portail pour récupérer le message.
-                                                    </p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Button -->
-                                        <tr>
-                                            <td style="text-align: center; padding: 40px 0;">
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
-                                                    <tr>
-                                                        <td style="border-radius: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
-                                                            <a href="https://opensis.cado.ca/" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 15px 35px; border-radius: 50px; font-size: 16px; font-weight: 600; display: inline-block; font-family: "Segoe UI", Tahoma, Geneva, Verdana, Arial, sans-serif;" class="button-container">
-                                                                Se connecter au portail
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </td>
-                                        </tr>
-                                        
-                                        <!-- Note -->
-                                        <tr>
-                                            <td>
-                                                <div style="background-color: #f8f9ff; padding: 20px; border-radius: 8px; text-align: center; margin-top: 30px;">
-                                                    <p style="color: #666666; font-size: 14px; margin: 0; line-height: 1.5; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
+<html lang="fr" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+    <title>Message de CADO</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:AllowPNG/>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <!--[if gte mso 9]>
+    <style type="text/css">
+        .fallback-text { display: none !important; }
+    </style>
+    <![endif]-->
+    <style type="text/css">
+        /* Reset styles */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        /* Client-specific styles */
+        .ReadMsgBody { width: 100%; }
+        .ExternalClass { width: 100%; }
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+            line-height: 100%;
+        }
+        
+        /* Gmail and Outlook fixes */
+        u + .body .gmail-fix { display: none; }
+        
+        /* Button fallback for Outlook */
+        .button-fallback {
+            mso-hide: all;
+            display: none;
+        }
+        
+        /* Responsive styles */
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                width: 100% !important;
+                margin: auto !important;
+            }
+            .content-padding {
+                padding: 30px 20px !important;
+            }
+            .header-padding {
+                padding: 30px 20px !important;
+            }
+            .button-container {
+                padding: 15px 25px !important;
+            }
+        }
+    </style>
+</head>
+<body class="body" style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f7fa; color: #333333; width: 100% !important; min-width: 100%; -webkit-font-smoothing: antialiased;">
+    <!-- Preheader text -->
+    <div style="display: none; font-size: 1px; color: #f5f7fa; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+        Nouveau message reçu sur le portail CADO - Connectez-vous pour le consulter
+    </div>
+    
+    <!-- Email wrapper -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0; padding: 0; background-color: #f5f7fa;">
+        <tr>
+            <td style="padding: 20px 0;">
+                <!-- Email container -->
+                <table class="email-container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: 0 auto; background-color: #ffffff;">
+                    
+                    <!-- Header with VML gradient fallback -->
+                    <tr>
+                        <td style="background-color: #667eea; padding: 40px 30px; text-align: center;" class="header-padding">
+                            <!--[if gte mso 9]>
+                            <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:200px;">
+                                <v:fill type="gradient" color="#667eea" color2="#764ba2" angle="135" />
+                                <v:textbox inset="0,0,0,0">
+                            <![endif]-->
+                            <div>
+                                <!-- Icon container with text fallback -->
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                        <td style="text-align: center;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                                <tr>
+                                                    <td style="background-color: rgba(255,255,255,0.1); padding: 15px 25px; text-align: center; margin-bottom: 20px;">
+                                                        <!-- Email icon using HTML entities as fallback -->
+                                                        <span style="font-size: 40px; color: #ffffff; line-height: 1; font-family: Arial, sans-serif;">✉</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                            <h1 style="color: #ffffff; font-size: 32px; font-weight: bold; margin: 20px 0 0 0; font-family: Arial, sans-serif;">Message de CADO</h1>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <!--[if gte mso 9]>
+                                </v:textbox>
+                            </v:rect>
+                            <![endif]-->
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 50px 40px;" class="content-padding">
+                            <!-- Message content -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="background-color: #f8f9ff; padding: 25px; text-align: left;">
+                                                    <!-- Border simulation using nested table -->
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td style="width: 4px; background-color: #667eea;"></td>
+                                                            <td style="padding-left: 20px;">
+                                                                <h2 style="color: #333333; font-size: 24px; font-weight: bold; margin: 0 0 15px 0; font-family: Arial, sans-serif;">Nouveau message reçu</h2>
+                                                                <p style="color: #666666; font-size: 16px; line-height: 24px; margin: 0; font-family: Arial, sans-serif;">
+                                                                    Vous avez reçu un message sur le portail de CADO. Veuillez vous connecter au portail pour récupérer le message.
+                                                                </p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Button with VML fallback for Outlook -->
+                                <tr>
+                                    <td style="text-align: center; padding: 40px 0;">
+                                        <!--[if mso]>
+                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://opensis.cado.ca/" style="height:50px;v-text-anchor:middle;width:280px;" arcsize="50%" stroke="f" fillcolor="#667eea">
+                                            <w:anchorlock/>
+                                            <center style="color:#ffffff;font-family:Arial, sans-serif;font-size:16px;font-weight:bold;">Se connecter au portail</center>
+                                        </v:roundrect>
+                                        <![endif]-->
+                                        <!--[if !mso]><!-->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                                            <tr>
+                                                <td style="background-color: #667eea; text-align: center;">
+                                                    <a href="https://opensis.cado.ca/" style="background-color: #667eea; color: #ffffff; text-decoration: none; padding: 15px 35px; font-size: 16px; font-weight: bold; display: inline-block; font-family: Arial, sans-serif; border: none;">
+                                                        Se connecter au portail
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!--<![endif]-->
+                                    </td>
+                                </tr>
+                                
+                                <!-- Note -->
+                                <tr>
+                                    <td>
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9ff;">
+                                            <tr>
+                                                <td style="padding: 20px; text-align: center;">
+                                                    <p style="color: #666666; font-size: 14px; margin: 0; line-height: 21px; font-family: Arial, sans-serif;">
                                                         <strong>Note:</strong> Ce message a été généré automatiquement. Veuillez ne pas répondre à cet email.
                                                     </p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            
-                            <!-- Footer -->
-                            <tr>
-                                <td style="background-color: #f8f9ff; padding: 30px; text-align: center; border-top: 1px solid #e8ecf0;">
-                                    <p style="color: #888888; font-size: 14px; margin: 0 0 10px 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
-                                        © 2025 CADO Portal - Tous droits réservés
-                                    </p>
-                                    <p style="color: #aaaaaa; font-size: 12px; margin: 0; font-family: `Segoe UI`, Tahoma, Geneva, Verdana, Arial, sans-serif;">
-                                        Système de notification automatique
-                                    </p>
-                                </td>
-                            </tr>
-                            
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>
-    ';
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8f9ff; padding: 30px; text-align: center;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="border-top: 1px solid #e8ecf0; padding-top: 20px;">
+                                        <p style="color: #888888; font-size: 14px; margin: 0 0 10px 0; font-family: Arial, sans-serif;">
+                                            © 2025 CADO Portal - Tous droits réservés
+                                        </p>
+                                        <p style="color: #aaaaaa; font-size: 12px; margin: 0; font-family: Arial, sans-serif;">
+                                            Système de notification automatique
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>';
     $list=explode(',', $to);
     foreach ($list as $key => $toAddr){
-            mail($toAddr,"Message de CADO",$EXTmsgBody,$headers);
-            // mail('webmaster.cado@gmail.com',$toAddr,$EXTmsgBody,$headers);
+            // mail($toAddr,"Message de CADO",$EXTmsgBody,$headers);
+             mail('webmaster.cado@gmail.com',$toAddr,$EXTmsgBody,$headers);
     }
     // HTML Purifier
     // Configure HTML Purifier
