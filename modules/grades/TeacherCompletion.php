@@ -100,10 +100,10 @@ if (count($teacher_RET)) {
                 if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
                 {
                     $i++;
-                    $staff_RET[$i]  = '<font size="4" color=green><b><center>';
-                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i]  = '<strong style="font-size: 14px; color: black;">';
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp';
                     $staff_RET[$i] .= $staff_id['FULL_NAME'];
-                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+                    $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp';
                     $staff_RET[$i] .= '</b></center>';
                     break;
                 }
@@ -117,9 +117,9 @@ if (count($teacher_RET)) {
                 if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
                 {
                     $j++;
-                    $list_RET[$j][$i] = '<font size="4"><u><center><b>';
+                    $list_RET[$j][$i] = '<div class="course-item text-center"><u>';
                     $list_RET[$j][$i] .= $course['SHORT_NAME'];
-                    $list_RET[$j][$i] .= '</b></font><font size="2">';
+                    $list_RET[$j][$i] .= '</u></font><font size="1"><br>';
                     $bad_weght=check_weight($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
                     $bad_config=check_config($course['COURSE_PERIOD_ID'],$staff_id['STAFF_ID'],$cur_mp,$course['COURSE_ID']);
                     $one_day = 60 * 60 * 24;

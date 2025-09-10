@@ -342,89 +342,315 @@ function dateFr($format, $timestamp = null) {
     
     return $result;
 }
-function check_all_planif(){
+function check_all_planif() {
     echo '<div class="panel panel-default">';
-    $TI = DBQuery('SELECT DISTINCT STAFF_ID,CONCAT(LAST_NAME,\', \',FIRST_NAME) AS FULL_NAME,LAST_NAME,FIRST_NAME FROM staff  WHERE PROFILE_ID="2" AND is_disable!="Y" OR is_disable IS NULL ORDER BY LOWER(FULL_NAME) ');
-    $teacher_RET= DBGet($TI);
-    //echo '<pre>'; print_r($teacher_RET); echo '</pre>'; 
-    echo "<FORM class=\"no-margin\" action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . " method=POST>";
-    DrawHeader(_teacherCompletion, '<div class="form-inline"><div class="form-group"><label class="control-label ml-20 mr-20">-</label>' . $teacher_select.'</div></div>');
-    echo '</FORM>';
+    
+    // Get all active teachers
+    $teachers = getActiveTeachers();
+    
+    // Render teacher selection form
+    renderTeacherSelectionForm();
+    
     echo '<hr class="no-margin"/>';
-    $sql = 'SELECT DISTINCT s.STAFF_ID,CONCAT(s.LAST_NAME,\', \',s.FIRST_NAME) AS FULL_NAME,cp.TITLE,cp.COURSE_PERIOD_ID,cp.SHORT_NAME,cp.COURSE_ID AS COURSE_ID , cp.COURSE_WEIGHT as WEIGHT FROM staff s,school_periods sp,course_periods cp
-            WHERE cp.GRADE_SCALE_ID IS NOT NULL AND cp.TEACHER_ID=s.STAFF_ID AND cp.MARKING_PERIOD_ID IN (' . GetAllMP($mp_type, $cur_mp) . ') AND cp.SYEAR=\'' . UserSyear() . '\' AND cp.SCHOOL_ID=\'' . UserSchool() . '\' AND s.PROFILE=\'teacher\'
-            ' . (($_REQUEST['period']) ? ' AND cp.COURSE_PERIOD_ID=\'' . $_REQUEST[period] . '\'' : 'ORDER BY  LOWER(cp.SHORT_NAME)') . '	
-            ';
-    $courses_RET = DBGet(DBQuery($sql));
-    // echo '<pre>'; print_r($courses_RET); echo '</pre>';
-
-    if (count($teacher_RET)) {
-        unset($i);
-        foreach ($teacher_RET as $staff_id ) {
-            if (count($courses_RET)) {
-                unset($j);
-                foreach ($courses_RET as $course ) {
-                    if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
-                    {
-                        $i++;
-                        $staff_RET[$i]  = '<font size="4" color=green><b><center>';
-                        $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
-                        $staff_RET[$i] .= $staff_id['FULL_NAME'];
-                        $staff_RET[$i] .= '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
-                        $staff_RET[$i] .= '</b></center>';
-                        break;
-                    }
-                    $j++;
-                }
-            }
-            if (count($courses_RET)) {
-                unset($j);
-                foreach ($courses_RET as $course ) {
-                    if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
-                    {
-                        $j++;
-                        $list_RET[$j][$i] = '<font size="4"><i> <u><center><b>';
-                        $list_RET[$j][$i] .= $course['SHORT_NAME'];
-                        $list_RET[$j][$i] .= '</b></font><font size="2">';
-                        $one_day = 60 * 60 * 24;
-                        $one_week = 60 * 60 * 24 * 7;
-                        $start_time_cur = strtotime(date('Y-m-d'));
-                        while (date('N', $start_time_cur) != 1) {
-                            $start_time_cur = $start_time_cur - $one_day;
-                        }
-                        $bad_planif_this= check_planif($course['COURSE_ID'],$start_time_cur);
-                        $bad_planif_next= check_planif($course['COURSE_ID'],$start_time_cur+$one_week);
-                        if($bad_planif_this)
-                            $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur), ENT_QUOTES, 'UTF-8');
-                        else 
-                        $list_RET[$j][$i]  .= '<br><i class="fa fa-check fa-lg text-success"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur), ENT_QUOTES, 'UTF-8');
-                        if($bad_planif_next)
-                            $list_RET[$j][$i] .= '<br><b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur + $one_week), ENT_QUOTES, 'UTF-8');
-                        else 
-                        $list_RET[$j][$i]  .= '<br><i class="fa fa-check fa-lg text-success"></i>' . htmlspecialchars(dateFr('d-M',$start_time_cur + $one_week), ENT_QUOTES, 'UTF-8');
-            
-                    }
-                }
-            }
-        }
+    
+    // Get courses for current marking period
+    $courses = getCoursesForCurrentPeriod();
+    
+    if (empty($teachers)) {
+        echo '<p>No teachers found.</p>';
+        echo '</div>';
+        return;
     }
-    $options['search']=false;
-    ListOutput($list_RET, $staff_RET, _teacherWhoHasnTEnteredGrades, "","","",$options);
+    
+    // Build display data
+    $displayData = buildTeacherPlanningDisplay($teachers, $courses);
+    
+    // Output the results
+    $options = ['search' => false];
+    ListOutput(
+        $displayData['courses'], 
+        $displayData['teachers'], 
+        _teacherWhoHasnTEnteredGrades, 
+        "", "", "", 
+        $options
+    );
+    
     echo '</div>';
 }
 
-function check_planif($course_id,$start_time){
-    $course_RET = DBGet(DBQuery('SELECT GRADE_LEVEL,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
-    if($course_RET[1]['GRADE_LEVEL'] >= '1' && $course_RET[1]['GRADE_LEVEL'] <= '7'){
-        $grade_level=$course_RET[1]['GRADE_LEVEL'];
-        $course_id=0;
+/**
+ * Get all active teachers from the database
+ * @return array List of active teachers
+ */
+function getActiveTeachers() {
+    $query = "
+        SELECT DISTINCT 
+            STAFF_ID,
+            CONCAT(LAST_NAME, ', ', FIRST_NAME) AS FULL_NAME,
+            LAST_NAME,
+            FIRST_NAME 
+        FROM staff  
+        WHERE PROFILE_ID = '2' 
+            AND (is_disable != 'Y' OR is_disable IS NULL)
+        ORDER BY LOWER(FULL_NAME)
+    ";
+    
+    $result = DBQuery($query);
+    return DBGet($result);
+}
+
+/**
+ * Render the teacher selection form
+ */
+function renderTeacherSelectionForm() {
+    $modname = strip_tags(trim($_REQUEST['modname'] ?? ''));
+    
+    echo "<form class=\"no-margin\" action=\"Modules.php?modname={$modname}\" method=\"POST\">";
+    
+    $teacherSelectHtml = '<div class="form-inline">' .
+                        '<div class="form-group">' .
+                        '<label class="control-label ml-20 mr-20">-</label>' . 
+                        ($teacher_select ?? '') . 
+                        '</div></div>';
+    
+    DrawHeader(_teacherCompletion, $teacherSelectHtml);
+    echo '</form>';
+}
+
+/**
+ * Get courses for the current marking period
+ * @return array List of courses
+ */
+function getCoursesForCurrentPeriod() {
+    global $mp_type, $cur_mp;
+    
+    $query = "
+        SELECT DISTINCT 
+            s.STAFF_ID,
+            CONCAT(s.LAST_NAME, ', ', s.FIRST_NAME) AS FULL_NAME,
+            cp.TITLE,
+            cp.COURSE_PERIOD_ID,
+            cp.SHORT_NAME,
+            cp.COURSE_ID,
+            cp.COURSE_WEIGHT as WEIGHT 
+        FROM staff s
+        JOIN course_periods cp ON cp.TEACHER_ID = s.STAFF_ID
+        JOIN school_periods sp ON 1=1
+        WHERE cp.GRADE_SCALE_ID IS NOT NULL 
+            AND cp.MARKING_PERIOD_ID IN (" . GetAllMP($mp_type, $cur_mp) . ")
+            AND cp.SYEAR = '" . UserSyear() . "'
+            AND cp.SCHOOL_ID = '" . UserSchool() . "'
+            AND s.PROFILE = 'teacher'
+    ";
+    
+    // Add period filter if specified
+    if (!empty($_REQUEST['period'])) {
+        $query .= " AND cp.COURSE_PERIOD_ID = '" . $_REQUEST['period'] . "'";
+    } else {
+        $query .= " ORDER BY LOWER(cp.SHORT_NAME)";
     }
-    else
-        $grade_level=0;
-    $RET = DBGet(DBQuery('select * from planification where start_date=\'' . date('Y-m-d',$start_time) . '\' and is_primary=' . $grade_level  . '  and course_id=\'' . $course_id . '\''));
-    if(count($RET))
-        return false;
-    return true;
+    
+    return DBGet(DBQuery($query));
+}
+
+/**
+ * Build the display data structure for teachers and their courses
+ * @param array $teachers List of teachers
+ * @param array $courses List of courses
+ * @return array Display data with teachers and courses
+ */
+function buildTeacherPlanningDisplay($teachers, $courses) {
+    $staffDisplay = [];
+    $courseDisplay = [];
+    
+    $teacherIndex = 0;
+    
+    foreach ($teachers as $teacher) {
+        $teacherCourses = getTeacherCourses($teacher, $courses);
+        
+        if (!empty($teacherCourses)) {
+            $teacherIndex++;
+            
+            // Add teacher header
+            $staffDisplay[$teacherIndex] = formatTeacherHeader($teacher['FULL_NAME']);
+            
+            // Add courses for this teacher
+            $courseIndex = 0;
+            foreach ($teacherCourses as $course) {
+                $courseIndex++;
+                $courseDisplay[$courseIndex][$teacherIndex] = formatCourseDisplay($course);
+            }
+        }
+    }
+    
+    return [
+        'teachers' => $staffDisplay,
+        'courses' => $courseDisplay
+    ];
+}
+
+/**
+ * Get courses for a specific teacher
+ * @param array $teacher Teacher data
+ * @param array $allCourses All available courses
+ * @return array Courses for the teacher
+ */
+function getTeacherCourses($teacher, $allCourses) {
+    $teacherCourses = [];
+    
+    foreach ($allCourses as $course) {
+        if ($teacher['FULL_NAME'] === $course['FULL_NAME']) {
+            $teacherCourses[] = $course;
+        }
+    }
+    
+    return $teacherCourses;
+}
+
+/**
+ * Format teacher header for display
+ * @param string $fullName Teacher's full name
+ * @return string Formatted HTML
+ */
+function formatTeacherHeader($fullName) {
+    return '<div class="teacher-header text-center">' .
+           '<strong style="font-size: 14px; color: black;">&nbsp&nbsp&nbsp&nbsp' .
+           htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') .
+           '</strong>&nbsp&nbsp&nbsp&nbsp</div>';
+}
+
+/**
+ * Format course display with planning status
+ * @param array $course Course data
+ * @return string Formatted HTML
+ */
+function formatCourseDisplay($course) {
+    $html = '<div class="course-item text-center">';
+    $html .= '<u>' . htmlspecialchars($course['SHORT_NAME'], ENT_QUOTES, 'UTF-8') . '</u>';
+    $html .= '<div style="font-size: 12px;">';
+    
+    // Get current week and next week timestamps
+    $timeData = getCurrentAndNextWeekTimestamps();
+    
+    // Check planning status for both weeks
+    $currentWeekMissing = check_planif($course['COURSE_ID'], $timeData['current_week']);
+    $nextWeekMissing = check_planif($course['COURSE_ID'], $timeData['next_week']);
+    
+    // Display current week status
+    $html .= '<br>' . getPlanningStatusIcon($currentWeekMissing);
+    $html .= htmlspecialchars(dateFr('d-M', $timeData['current_week']), ENT_QUOTES, 'UTF-8');
+    
+    // Display next week status
+    $html .= '<br>' . getPlanningStatusIcon($nextWeekMissing);
+    $html .= htmlspecialchars(dateFr('d-M', $timeData['next_week']), ENT_QUOTES, 'UTF-8');
+    
+    $html .= '</div></div>';
+    
+    return $html;
+}
+
+/**
+ * Get timestamps for current week (Monday) and next week (Monday)
+ * @return array Timestamps for current and next week
+ */
+function getCurrentAndNextWeekTimestamps() {
+    $oneDay = 24 * 60 * 60; // seconds in a day
+    $oneWeek = 7 * $oneDay; // seconds in a week
+    
+    // Get current week's Monday
+    $currentWeekStart = strtotime(date('Y-m-d'));
+    while (date('N', $currentWeekStart) != 1) {
+        $currentWeekStart -= $oneDay;
+    }
+    
+    return [
+        'current_week' => $currentWeekStart,
+        'next_week' => $currentWeekStart + $oneWeek
+    ];
+}
+
+/**
+ * Get the appropriate icon for planning status
+ * @param bool $isMissing Whether planning is missing
+ * @return string HTML icon
+ */
+function getPlanningStatusIcon($isMissing) {
+    if ($isMissing) {
+        return '<i class="fa fa-times fa-lg text-danger" title="Planning missing"></i> ';
+    } else {
+        return '<i class="fa fa-check fa-lg text-success" title="Planning complete"></i> ';
+    }
+}
+
+/**
+ * Check if planning is missing for a specific course and date
+ * @param int $courseId Course ID
+ * @param int $startTime Unix timestamp for the start date
+ * @return bool True if planning is missing, false if present
+ */
+function check_planif($courseId, $startTime) {
+    // Get course details
+    $courseDetails = getCourseDetails($courseId);
+    
+    if (empty($courseDetails)) {
+        return true; // No course found, consider planning missing
+    }
+    
+    $gradeLevel = $courseDetails['GRADE_LEVEL'];
+    $isPrimaryGrade = ($gradeLevel >= 1 && $gradeLevel <= 7);
+    
+    // Determine search parameters
+    $searchCourseId = $isPrimaryGrade ? 0 : $courseId;
+    $searchGradeLevel = $isPrimaryGrade ? $gradeLevel : 0;
+    
+    // Check for existing planning
+    $planningExists = checkPlanningExists(
+        date('Y-m-d', $startTime),
+        $searchGradeLevel,
+        $searchCourseId
+    );
+    
+    return !$planningExists; // Return true if planning is missing
+}
+
+/**
+ * Get course details from database
+ * @param int $courseId Course ID
+ * @return array|null Course details or null if not found
+ */
+function getCourseDetails($courseId) {
+    $query = "
+        SELECT GRADE_LEVEL, TEACHER_ID 
+        FROM course_details 
+        WHERE course_id = " . intval($courseId) . "
+            AND syear = " . UserSyear() . "
+        ORDER BY SHORT_NAME
+    ";
+    
+    $result = DBGet(DBQuery($query));
+    // echo '<pre>'; print_r($result); echo '</pre>';
+    return !empty($result) ? $result[1] : null;
+}
+
+/**
+ * Check if planning exists for given parameters
+ * @param string $date Date in Y-m-d format
+ * @param int $gradeLevel Grade level (0 for non-primary)
+ * @param int $courseId Course ID (0 for primary grades)
+ * @return bool True if planning exists
+ */
+function checkPlanningExists($date, $gradeLevel, $courseId) {
+    $query = '
+        SELECT COUNT(*) as count 
+        FROM planification 
+        WHERE start_date = "' . $date . '"
+            AND is_primary = ' . intval($gradeLevel) . '
+            AND course_id = ' . intval($courseId) .'
+    ';
+    
+    $result = DBGet(DBQuery($query));
+    // echo '<pre>'; print_r($result); echo '</pre>';
+    return !empty($result) && $result[1]['COUNT'] > 0;
 }
 
 function do_cado_courses_files(){
