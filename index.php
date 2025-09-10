@@ -62,7 +62,7 @@ if (optional_param('dis', '', PARAM_ALPHAEXT) == 'fl_count') {
 }
 
 if (optional_param('dis', '', PARAM_ALPHAEXT) == 'assoc_mis') {
-    $error[] = "No student is associated with the parent. Please contact the school administration.";
+    $error[] = "Aucun élève n'est associé au parent. Veuillez contacter l'administration de l'école.";
 }
 
 if (isset($_GET['ins']))
@@ -238,7 +238,7 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
                 $max_syear = DBGet(DBQuery('SELECT MAX(SYEAR) as SYEAR FROM student_enrollment se,students_join_people sjp WHERE se.STUDENT_ID=sjp.STUDENT_ID AND sjp.PERSON_ID=' . $login_uniform['USER_ID']));
                 $max_syear = $max_syear[1]['SYEAR'];
                 if ($max_syear == '') {
-                    $error[] = "No student is associated with the parent. Please contact the school administration.";
+                    $error[] = "Aucun élève n'est associé au parent. Veuillez contacter l'administration de l'école.";
                     session_destroy();
                     header("location:index.php?modfunc=logout&dis=assoc_mis");
                 }
@@ -524,16 +524,16 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
             else {
                 $check_acess = DBGet(DBQuery('SELECT OPENSIS_ACCESS FROM staff_school_info WHERE STAFF_ID=' . $login_RET[1]['STAFF_ID']));
                 if ($check_acess[1]['OPENSIS_ACCESS'] == 'N')
-                    $error[] = "You do not have portal access. Contact the school administration to enable it.";
+                    $error[] = "Vous n'avez pas accès au portail. Contactez l'administration de l'école pour l'activer.";
                 else
-                    $error[] = "Your account has been disabled. Contact the school administration to enable your account.";
+                    $error[] = "Votre compte a été désactivé. Contactez l'administration de l'école pour le réactiver.";
             }
         }
         if (isset($student_RET) && count($student_RET) > 0) {
             if ($ad_f_cnt && $ad_f_cnt != 0 && $student_RET[1]['FAILED_LOGIN'] < $ad_f_cnt)
                 $error[] = "" . _eitherYourAccountIsInactiveOrYourAccessPermissionHasBeenRevoked . "." . _pleaseContactTheSchoolAdministration . ".";
             else
-                $error[] = "Your account has been disabled. Contact the school administration to enable your account.";
+                $error[] = "Votre compte a été désactivé. Contactez l'administration de l'école pour le réactiver.";
         }
     } elseif ($student_RET) {
 
@@ -602,7 +602,11 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
 
         $faillog_time = date("Y-m-d h:i:s");
 
-        $openSIS2_uname = mysqli_real_escape_string($connection, trim(optional_param('USERNAME', 0, PARAM_ALPHAEXT)));
+        // $openSIS2_uname = mysqli_real_escape_string($connection, trim(optional_param('USERNAME', 0, PARAM_ALPHAEXT)));
+        $username_raw = optional_param('USERNAME', '', PARAM_RAW);
+        // Sanitize to allow only safe username characters
+        $openSIS2_uname = preg_replace('/[^a-zA-Z0-9@._-]/', '', trim($username_raw));
+        $openSIS2_uname = mysqli_real_escape_string($connection, $openSIS2_uname);        
         $ip = sqlSecurityFilter($ip);
         DBQuery("INSERT INTO login_records (USER_NAME,FAILLOG_TIME,IP_ADDRESS,SYEAR,STATUS) values('" . $openSIS2_uname . "','$faillog_time','$ip','$_SESSION[UserSyear]','Failed')");
 

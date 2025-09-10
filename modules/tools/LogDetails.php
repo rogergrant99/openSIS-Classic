@@ -373,6 +373,10 @@ if ($_REQUEST['modfunc'] == 'generate') {
 
         foreach($alllogs_RET as $k => $v)
         {
+            // Convertir les heures UTC vers EST
+            if (!empty($v['LOGIN_TIME'])) {
+                $alllogs_RET[$k]['LOGIN_TIME'] = convertUTCtoEST($v['LOGIN_TIME']);
+            }
             if($v['PROFILE']!='Student' && $v['PROFILE']!='parent')
             {
                 $profile = DBGet(DBQuery('SELECT PROFILE_ID FROM staff WHERE STAFF_ID='.$v['STAFF_ID'].''));
@@ -503,6 +507,12 @@ function con_date_end($date) {
 function _makeChooseCheckbox($value, $title) {
     global $THIS_RET;
     return "<input  type=checkbox name=unused[$THIS_RET[ID]] value=" . $THIS_RET[ID] . "   id=$THIS_RET[ID] onClick='setHiddenCheckboxStudents(\"log_arr[$THIS_RET[ID]]\",this,$THIS_RET[ID]);' />";
+}
+
+function convertUTCtoEST($utc_datetime) {
+    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
+    $date->setTimezone(new DateTimeZone('America/New_York'));
+    return $date->format('d M - H:i:s');
 }
 
 ?>

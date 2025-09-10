@@ -1639,7 +1639,7 @@ define("_pleaseSelectDateRange", "S'il vous plaît sélectionnez la plage de dat
 define("_generate", "PRODUIRE");
 define("_loginRecordWasFound", "entrée de connexion a été trouvé.");
 define("_loginRecordsWereFound", "Les entrées de connexion ont été trouvés.");
-define("_loginTime", "Durée de connexion");
+define("_loginTime", "Date de connexion");
 define("_loginRecord", "Enregistrement de connexion");
 define("_loginRecords", "Entrée de connexion");
 define("_failureCount", "Nombre d'échec");
