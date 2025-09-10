@@ -130,7 +130,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '<option value="parent"' . ($_REQUEST['profile_filter'] == 'parent' ? ' selected' : '') . '>Parent</option>';
         echo '<option value="teacher"' . ($_REQUEST['profile_filter'] == 'teacher' ? ' selected' : '') . '>Enseignant</option>';
         echo '<option value="admin"' . ($_REQUEST['profile_filter'] == 'admin' ? ' selected' : '') . '>Administrateur</option>';
-        echo '<option value="Super Administrator"' . ($_REQUEST['profile_filter'] == 'Super Administrator' ? ' selected' : '') . '>Super Administrateur</option>';
+        // echo '<option value="Super Administrator"' . ($_REQUEST['profile_filter'] == 'Super Administrator' ? ' selected' : '') . '>Super Administrateur</option>';
         echo '</select>';
         echo '</div>';
         
@@ -261,8 +261,8 @@ if ($_REQUEST['modfunc'] == 'generate') {
                 'Student' => 'étudiants',
                 'parent' => 'parents',
                 'teacher' => 'enseignants',
-                'admin' => 'administrateurs',
-                'Super Administrator' => 'super administrateurs'
+                'admin' => 'administrateurs'
+                // 'Super Administrator' => 'super administrateurs'
             );
             $chart_title .= ' - ' . ucfirst($profile_names[$_REQUEST['profile_filter']] ?? $_REQUEST['profile_filter']);
         }
