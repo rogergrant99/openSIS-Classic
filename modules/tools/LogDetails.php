@@ -68,13 +68,13 @@ if (!$_REQUEST['modfunc']) {
     echo '</div>'; //.row
 }
 
-
+// Traitement des dates sélectionnées
 if ($_REQUEST['day_start'] && $_REQUEST['month_start'] && $_REQUEST['year_start']) {
-    $conv_st_date=$_REQUEST['year_start'].'-'.$_REQUEST['month_start'].'-'.$_REQUEST['day_start'].' '.'00:00:00';
+    $conv_st_date = $_REQUEST['year_start'].'-'.$_REQUEST['month_start'].'-'.$_REQUEST['day_start'].' '.'00:00:00';
 }
 
 if ($_REQUEST['day_end'] && $_REQUEST['month_end'] && $_REQUEST['year_end']) {
-    $conv_end_date=$_REQUEST['year_end'].'-'.$_REQUEST['month_end'].'-'.$_REQUEST['day_end'].' '.'23:59:59';
+    $conv_end_date = $_REQUEST['year_end'].'-'.$_REQUEST['month_end'].'-'.$_REQUEST['day_end'].' '.'23:59:59';
 }
 
 if($_REQUEST['modfunc']=='del')
@@ -94,15 +94,26 @@ if($_REQUEST['modfunc']=='del')
 if ($_REQUEST['modfunc'] == 'generate') {
 
     if (isset($conv_st_date) && isset($conv_end_date)) {
-        // Profile filter section (moved to top for both chart and logs)
+        
+        // Affichage de la plage de dates sélectionnée
+        echo '<div class="row" style="margin: 15px 0;">';
+        echo '<div class="col-md-12">';
+        echo '<div class="alert alert-success">';
+        echo '<i class="fa fa-calendar"></i> <strong>Plage de dates sélectionnée:</strong> ';
+        echo 'Du ' . date('d/m/Y', strtotime($conv_st_date)) . ' au ' . date('d/m/Y', strtotime($conv_end_date));
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+        
+        // Section des filtres de profil (déplacée en haut pour les graphiques et journaux)
         echo '<div class="row" style="margin: 15px 0;">';
         echo '<div class="col-md-12">';
         echo '<div class="panel panel-default">';
-        // echo '<div class="panel-heading"><h5><i class="fa fa-filter"></i> Filtres</h5></div>';
+        echo '<div class="panel-heading"><h5><i class="fa fa-filter"></i> Filtres</h5></div>';
         echo '<div class="panel-body">';
         echo '<form method="post" action="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=generate" id="filterForm">';
         
-        // Hidden fields to preserve date range
+        // Champs cachés pour préserver la plage de dates
         echo '<input type="hidden" name="day_start" value="' . $_REQUEST['day_start'] . '">';
         echo '<input type="hidden" name="month_start" value="' . $_REQUEST['month_start'] . '">';
         echo '<input type="hidden" name="year_start" value="' . $_REQUEST['year_start'] . '">';
@@ -156,7 +167,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</div>'; // .col-md-12
         echo '</div>'; // .row
         
-        // JavaScript for clearing filters
+        // JavaScript pour effacer les filtres
         echo '<script>
         function clearFilters() {
             document.getElementById("profile_filter").value = "";
@@ -166,22 +177,22 @@ if ($_REQUEST['modfunc'] == 'generate') {
         }
         </script>';
 
-        // Build the common where clause with filters for both chart and logs
+        // Construction de la clause WHERE commune avec filtres pour les graphiques et journaux
         $where_clause = "LOGIN_TIME >='" . $conv_st_date . "' AND LOGIN_TIME <='" . $conv_end_date . "' AND SCHOOL_ID=" . UserSchool();
         
-        // Add profile filter
+        // Ajout du filtre de profil
         if (!empty($_REQUEST['profile_filter'])) {
             $profile_filter = mysqli_real_escape_string($connection, $_REQUEST['profile_filter']);
             $where_clause .= " AND PROFILE = '$profile_filter'";
         }
         
-        // Add status filter
+        // Ajout du filtre de statut
         if (!empty($_REQUEST['status_filter'])) {
             $status_filter = mysqli_real_escape_string($connection, $_REQUEST['status_filter']);
             $where_clause .= " AND STATUS = '$status_filter'";
         }
         
-        // Add failure count filter
+        // Ajout du filtre du nombre d'échecs
         if (isset($_REQUEST['failure_count_filter']) && $_REQUEST['failure_count_filter'] !== '') {
             $failure_count_filter = $_REQUEST['failure_count_filter'];
             if ($failure_count_filter === '4+') {
@@ -192,7 +203,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
             }
         }
 
-        // Generate login statistics for graph with filters applied
+        // Génération des statistiques de connexion pour le graphique avec filtres appliqués
         $stats_query = "SELECT DATE(LOGIN_TIME) as login_date, COUNT(*) as login_count 
                        FROM login_records 
                        WHERE $where_clause 
@@ -201,7 +212,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         
         $stats_RET = DBGet(DBQuery($stats_query));
         
-        // Prepare data for chart
+        // Préparation des données pour le graphique
         $chart_dates = array();
         $chart_counts = array();
         
@@ -212,7 +223,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
             }
         }
         
-        // Display filter summary
+        // Affichage du résumé des filtres
         if (!empty($_REQUEST['profile_filter']) || !empty($_REQUEST['status_filter']) || isset($_REQUEST['failure_count_filter']) && $_REQUEST['failure_count_filter'] !== '') {
             echo '<div class="alert alert-info">';
             echo '<strong>Filtres actifs:</strong> ';
@@ -238,12 +249,12 @@ if ($_REQUEST['modfunc'] == 'generate') {
             echo '</div>';
         }
         
-        // Display the chart
+        // Affichage du graphique
         echo '<div class="row" style="margin-bottom: 20px;">';
         echo '<div class="col-md-12">';
         echo '<div class="panel panel-default">';
         
-        // Update chart title based on filters
+        // Mise à jour du titre du graphique basé sur les filtres
         $chart_title = 'Tableau d\'activité de connexion';
         if (!empty($_REQUEST['profile_filter'])) {
             $profile_names = array(
@@ -276,7 +287,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</div>';
         echo '</div>';
         
-        // Chart.js script (only if we have data)
+        // Script Chart.js (seulement si nous avons des données)
         if (!empty($chart_dates) && !empty($chart_counts)) {
             echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>';
             echo '<script>
@@ -334,17 +345,17 @@ if ($_REQUEST['modfunc'] == 'generate') {
             </script>';
         }
 
-        // Add tabs for switching between chart and detailed logs
+        // Ajout d'onglets pour basculer entre graphique et journaux détaillés
         echo '<div class="row">';
         echo '<div class="col-md-12">';
         echo '<ul class="nav nav-tabs" role="tablist">';
-        // echo '<li role="presentation" class="active"><a href="#chart-tab" aria-controls="chart-tab" role="tab" data-toggle="tab">Vue graphique</a></li>';
+        echo '<li role="presentation" class="active"><a href="#chart-tab" aria-controls="chart-tab" role="tab" data-toggle="tab">Vue graphique</a></li>';
         echo '<li role="presentation"><a href="#details-tab" aria-controls="details-tab" role="tab" data-toggle="tab">Journaux détaillés</a></li>';
         echo '</ul>';
         
         echo '<div class="tab-content">';
         
-        // Chart tab content
+        // Contenu de l'onglet graphique
         echo '<div role="tabpanel" class="tab-pane active" id="chart-tab">';
         echo '<div style="padding: 20px;">';
         echo '<div class="alert alert-info">';
@@ -361,16 +372,25 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</div>';
         echo '</div>';
         
-        // Detailed logs tab content
+        // Contenu de l'onglet journaux détaillés
         echo '<div role="tabpanel" class="tab-pane" id="details-tab">';
+        echo '<div style="padding: 20px;">';
+        
+        // Section des journaux détaillés avec application explicite de la plage de dates
+        echo '<div class="alert alert-primary">';
+        echo '<i class="fa fa-info-circle"></i> <strong>Journaux détaillés pour la période:</strong> ';
+        echo 'Du ' . date('d/m/Y H:i', strtotime($conv_st_date)) . ' au ' . date('d/m/Y H:i', strtotime($conv_end_date));
+        echo '</div>';
         
         echo "<FORM action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=del method=POST >";
         
-        // Use the same query with filters for detailed logs
+        // Utilisation de la même requête avec filtres pour les journaux détaillés
+        // La clause WHERE inclut déjà la plage de dates : LOGIN_TIME >='" . $conv_st_date . "' AND LOGIN_TIME <='" . $conv_end_date . "'
         $logs_query = "SELECT ID, FIRST_NAME,CONCAT('<INPUT type=checkbox name=log_arr[] value=',ID,' checked >') AS CHECKBOX,USER_NAME,LAST_NAME,LOGIN_TIME,PROFILE,STAFF_ID,FAILLOG_COUNT,FAILLOG_TIME,USER_NAME,IF(IP_ADDRESS LIKE '::1','127.0.0.1',IP_ADDRESS) as IP_ADDRESS,STATUS FROM login_records WHERE $where_clause ORDER BY LOGIN_TIME DESC";
         
         $alllogs_RET = DBGet(DBQuery($logs_query), array('CHECKBOX' => '_makeChooseCheckbox'));
 
+        // Traitement des données des journaux
         foreach($alllogs_RET as $k => $v)
         {
             // Convertir les heures UTC vers EST
@@ -401,9 +421,14 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '<br>';
         echo'<input type=hidden name=res_len id=res_len value=\''.$check_all_stu_list.'\'>'; 
 
-        // Display count of records found
-        echo '<div class="alert alert-info">';
-        echo '<strong>Résultats:</strong> ' . count($alllogs_RET) . ' enregistrements trouvés';
+        // Affichage du nombre d'enregistrements trouvés avec la plage de dates
+        echo '<div class="alert alert-success">';
+        echo '<strong>Résultats pour la plage de dates sélectionnée:</strong> ' . count($alllogs_RET) . ' enregistrements trouvés';
+        if (count($alllogs_RET) > 0) {
+            echo '<br><small>Les journaux affichés respectent strictement la plage de dates du ' . 
+                 date('d/m/Y à H:i', strtotime($conv_st_date)) . ' au ' . 
+                 date('d/m/Y à H:i', strtotime($conv_end_date)) . '</small>';
+        }
         echo '</div>';
 
         echo '<div class="panel panel-default">';
@@ -422,6 +447,9 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</div>';
         echo "</FORM>";
         
+        echo '</div>'; // End padding div
+        echo '</div>'; // End details-tab
+        echo '</div>'; // End tab-content
         echo '</div>'; // End col-md-12
         echo '</div>'; // End row
             
