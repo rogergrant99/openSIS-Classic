@@ -111,7 +111,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '<input type="hidden" name="year_end" value="' . $_REQUEST['year_end'] . '">';
         
         echo '<div class="row">';
-        echo '<div class="col-md-4">';
+        echo '<div class="col-md-3">';
         echo '<label for="profile_filter">Filtrer par profil:</label>';
         echo '<select name="profile_filter" id="profile_filter" class="form-control" onchange="this.form.submit();">';
         echo '<option value="">Tous les profils</option>';
@@ -123,7 +123,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</select>';
         echo '</div>';
         
-        echo '<div class="col-md-4">';
+        echo '<div class="col-md-3">';
         echo '<label for="status_filter">Filtrer par statut:</label>';
         echo '<select name="status_filter" id="status_filter" class="form-control" onchange="this.form.submit();">';
         echo '<option value="">Tous les statuts</option>';
@@ -132,7 +132,19 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</select>';
         echo '</div>';
         
-        echo '<div class="col-md-4">';
+        echo '<div class="col-md-3">';
+        echo '<label for="failure_count_filter">Nombre d\'échecs:</label>';
+        echo '<select name="failure_count_filter" id="failure_count_filter" class="form-control" onchange="this.form.submit();">';
+        echo '<option value="">Tous</option>';
+        echo '<option value="0"' . ($_REQUEST['failure_count_filter'] === '0' ? ' selected' : '') . '>Aucun échec (0)</option>';
+        echo '<option value="1"' . ($_REQUEST['failure_count_filter'] == '1' ? ' selected' : '') . '>1 échec</option>';
+        echo '<option value="2"' . ($_REQUEST['failure_count_filter'] == '2' ? ' selected' : '') . '>2 échecs</option>';
+        echo '<option value="3"' . ($_REQUEST['failure_count_filter'] == '3' ? ' selected' : '') . '>3 échecs</option>';
+        echo '<option value="4+"' . ($_REQUEST['failure_count_filter'] == '4+' ? ' selected' : '') . '>4 échecs ou plus</option>';
+        echo '</select>';
+        echo '</div>';
+        
+        echo '<div class="col-md-3">';
         echo '<label>&nbsp;</label><br>';
         echo '<button type="button" class="btn btn-default" onclick="clearFilters();">Effacer les filtres</button>';
         echo '</div>';
@@ -149,6 +161,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         function clearFilters() {
             document.getElementById("profile_filter").value = "";
             document.getElementById("status_filter").value = "";
+            document.getElementById("failure_count_filter").value = "";
             document.getElementById("filterForm").submit();
         }
         </script>';
@@ -166,6 +179,17 @@ if ($_REQUEST['modfunc'] == 'generate') {
         if (!empty($_REQUEST['status_filter'])) {
             $status_filter = mysqli_real_escape_string($connection, $_REQUEST['status_filter']);
             $where_clause .= " AND STATUS = '$status_filter'";
+        }
+        
+        // Add failure count filter
+        if (isset($_REQUEST['failure_count_filter']) && $_REQUEST['failure_count_filter'] !== '') {
+            $failure_count_filter = $_REQUEST['failure_count_filter'];
+            if ($failure_count_filter === '4+') {
+                $where_clause .= " AND FAILLOG_COUNT >= 4";
+            } else {
+                $failure_count_filter = intval($failure_count_filter);
+                $where_clause .= " AND FAILLOG_COUNT = $failure_count_filter";
+            }
         }
 
         // Generate login statistics for graph with filters applied
@@ -189,7 +213,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         }
         
         // Display filter summary
-        if (!empty($_REQUEST['profile_filter']) || !empty($_REQUEST['status_filter'])) {
+        if (!empty($_REQUEST['profile_filter']) || !empty($_REQUEST['status_filter']) || isset($_REQUEST['failure_count_filter']) && $_REQUEST['failure_count_filter'] !== '') {
             echo '<div class="alert alert-info">';
             echo '<strong>Filtres actifs:</strong> ';
             $filters = array();
@@ -198,6 +222,17 @@ if ($_REQUEST['modfunc'] == 'generate') {
             }
             if (!empty($_REQUEST['status_filter'])) {
                 $filters[] = 'Statut: ' . $_REQUEST['status_filter'];
+            }
+            if (isset($_REQUEST['failure_count_filter']) && $_REQUEST['failure_count_filter'] !== '') {
+                $failure_display = $_REQUEST['failure_count_filter'];
+                if ($failure_display === '0') {
+                    $failure_display = 'Aucun échec';
+                } elseif ($failure_display === '4+') {
+                    $failure_display = '4 échecs ou plus';
+                } else {
+                    $failure_display = $failure_display . ' échec' . ($failure_display > 1 ? 's' : '');
+                }
+                $filters[] = 'Nombre d\'échecs: ' . $failure_display;
             }
             echo implode(' | ', $filters);
             echo '</div>';
