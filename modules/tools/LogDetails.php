@@ -202,27 +202,30 @@ if ($_REQUEST['modfunc'] == 'generate') {
                 $where_clause .= " AND FAILLOG_COUNT = $failure_count_filter";
             }
         }
+// Génération des statistiques de connexion pour le graphique avec filtres appliqués
+$stats_query = "SELECT DATE(LOGIN_TIME) as login_date, 
+                       COUNT(*) as login_count,
+                       SUM(FAILLOG_COUNT) as total_failures 
+                FROM login_records 
+                WHERE $where_clause 
+                GROUP BY DATE(LOGIN_TIME) 
+                ORDER BY login_date ASC";
 
-        // Génération des statistiques de connexion pour le graphique avec filtres appliqués
-        $stats_query = "SELECT DATE(LOGIN_TIME) as login_date, COUNT(*) as login_count 
-                       FROM login_records 
-                       WHERE $where_clause 
-                       GROUP BY DATE(LOGIN_TIME) 
-                       ORDER BY login_date ASC";
-        
-        $stats_RET = DBGet(DBQuery($stats_query));
-        
-        // Préparation des données pour le graphique
-        $chart_dates = array();
-        $chart_counts = array();
-        
-        if ($stats_RET) {
-            foreach ($stats_RET as $stat) {
-                $chart_dates[] = "'" . dateFr('d M', strtotime($stat['LOGIN_DATE'])) . "'";
-                $chart_counts[] = $stat['LOGIN_COUNT'];
-            }
-        }
-        
+$stats_RET = DBGet(DBQuery($stats_query));
+
+// Préparation des données pour le graphique
+$chart_dates = array();
+$chart_counts = array();
+$chart_failures = array();
+
+if ($stats_RET) {
+    foreach ($stats_RET as $stat) {
+        $chart_dates[] = "'" . dateFr('d M', strtotime($stat['LOGIN_DATE'])) . "'";
+        $chart_counts[] = $stat['LOGIN_COUNT'];
+        $chart_failures[] = $stat['TOTAL_FAILURES'] ?? 0; // Utilise 0 si NULL
+    }
+}
+
         // Affichage du résumé des filtres
         if (!empty($_REQUEST['profile_filter']) || !empty($_REQUEST['status_filter']) || isset($_REQUEST['failure_count_filter']) && $_REQUEST['failure_count_filter'] !== '') {
             echo '<div class="alert alert-info">';
@@ -249,11 +252,31 @@ if ($_REQUEST['modfunc'] == 'generate') {
             echo '</div>';
         }
         
-        // Affichage du graphique
-        echo '<div class="row" style="margin-bottom: 20px;">';
-        echo '<div class="col-md-12">';
-        echo '<div class="panel panel-default">';
-        
+// echo '<div style="padding: 20px;">';
+// echo '<div class="alert alert-info">';
+// echo '<strong>Résumé du tableau de connexion2:</strong> ';
+// if ($stats_RET && !empty($chart_counts)) {
+//     $total_logins = array_sum($chart_counts);
+//     $total_failures = array_sum($chart_failures);
+//     $avg_logins = round($total_logins / count($chart_counts), 2);
+//     $avg_failures = round($total_failures / count($chart_failures), 2);
+//     $max_logins = max($chart_counts);
+//     $max_failures = max($chart_failures);
+    
+//     echo "Nombre total de connexions: $total_logins | ";
+//     echo "Moyenne par jour: $avg_logins | ";
+//     echo "Pointe: $max_logins connexions<br>";
+//     echo "<span style='color: #dc3545;'><strong>Échecs:</strong> ";
+//     echo "Total: $total_failures | ";
+//     echo "Moyenne par jour: $avg_failures | ";
+//     echo "Pointe: $max_failures échecs</span>";
+// } else {
+//     echo "Aucune donnée de connexion disponible pour la période sélectionnée avec les filtres appliqués.";
+// }
+//  echo '</div>';
+//  echo '</div>';
+ echo '<div>';
+ echo '<div>';
         // Mise à jour du titre du graphique basé sur les filtres
         $chart_title = 'Tableau d\'activité de connexion';
         if (!empty($_REQUEST['profile_filter'])) {
@@ -288,62 +311,121 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo '</div>';
         
         // Script Chart.js (seulement si nous avons des données)
-        if (!empty($chart_dates) && !empty($chart_counts)) {
-            echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>';
-            echo '<script>
-            var ctx = document.getElementById("loginChart").getContext("2d");
-            var loginChart = new Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: [' . implode(',', $chart_dates) . '],
-                    datasets: [{
-                        label: "Connexions par jour",
-                        data: [' . implode(',', $chart_counts) . '],
-                        borderColor: "#007bff",
-                        backgroundColor: "rgba(0, 123, 255, 0.1)",
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: "#007bff",
-                        pointBorderColor: "#fff",
-                        pointBorderWidth: 2,
-                        pointRadius: 5
-                    }]
+if (!empty($chart_dates) && !empty($chart_counts)) {
+    echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>';
+    echo '<script>
+    var ctx = document.getElementById("loginChart").getContext("2d");
+    var loginChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [' . implode(',', $chart_dates) . '],
+            datasets: [{
+                label: "Connexions par jour",
+                data: [' . implode(',', $chart_counts) . '],
+                borderColor: "#007bff",
+                backgroundColor: "rgba(0, 123, 255, 0.1)",
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: "#007bff",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                yAxisID: "y"
+            }, {
+                label: "Nombre total d\'échecs",
+                data: [' . implode(',', $chart_failures) . '],
+                borderColor: "#dc3545",
+                backgroundColor: "rgba(220, 53, 69, 0.1)",
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: "#dc3545",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                yAxisID: "y1",
+                borderDash: [5, 5] // Ligne pointillée pour différencier
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: "index",
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "top"
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: "top"
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            },
-                            grid: {
-                                color: "#e9ecef"
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            if (context.datasetIndex === 0) {
+                                // Pour les connexions, afficher aussi les échecs du même jour
+                                var failures = [' . implode(',', $chart_failures) . '][context.dataIndex];
+                                return "Échecs ce jour: " + failures;
                             }
-                        },
-                        x: {
-                            grid: {
-                                color: "#e9ecef"
-                            }
-                        }
-                    },
-                    elements: {
-                        point: {
-                            hoverRadius: 8
+                            return null;
                         }
                     }
                 }
-            });
-            </script>';
+            },
+            scales: {
+                y: {
+                    type: "linear",
+                    display: true,
+                    position: "left",
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: "#007bff"
+                    },
+                    grid: {
+                        color: "#e9ecef"
+                    },
+                    title: {
+                        display: true,
+                        text: "Nombre de connexions",
+                        color: "#007bff"
+                    }
+                },
+                y1: {
+                    type: "linear",
+                    display: true,
+                    position: "right",
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        color: "#dc3545"
+                    },
+                    grid: {
+                        drawOnChartArea: false, // Évite la superposition des grilles
+                    },
+                    title: {
+                        display: true,
+                        text: "Nombre d\'échecs",
+                        color: "#dc3545"
+                    }
+                },
+                x: {
+                    grid: {
+                        color: "#e9ecef"
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    hoverRadius: 8
+                }
+            }
         }
+    });
+    </script>';
+}
+
 
         // Ajout d'onglets pour basculer entre graphique et journaux détaillés
         echo '<div class="row">';
@@ -368,6 +450,24 @@ if ($_REQUEST['modfunc'] == 'generate') {
         } else {
             echo "Aucune donnée de connexion disponible pour la période sélectionnée avec les filtres appliqués.";
         }
+if ($stats_RET && !empty($chart_counts)) {
+    $total_logins = array_sum($chart_counts);
+    $total_failures = array_sum($chart_failures);
+    $avg_logins = round($total_logins / count($chart_counts), 2);
+    $avg_failures = round($total_failures / count($chart_failures), 2);
+    $max_logins = max($chart_counts);
+    $max_failures = max($chart_failures);
+    
+    echo "Nombre total de connexions: $total_logins | ";
+    echo "Moyenne par jour: $avg_logins | ";
+    echo "Pointe: $max_logins connexions<br>";
+    echo "<span style='color: #dc3545;'><strong>Échecs:</strong> ";
+    echo "Total: $total_failures | ";
+    echo "Moyenne par jour: $avg_failures | ";
+    echo "Pointe: $max_failures échecs</span>";
+} else {
+    echo "Aucune donnée de connexion disponible pour la période sélectionnée avec les filtres appliqués.";
+}
         echo '</div>';
         echo '</div>';
         echo '</div>';
