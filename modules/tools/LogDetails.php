@@ -363,11 +363,11 @@ if (!empty($chart_dates) && !empty($chart_counts)) {
                 tooltip: {
                     callbacks: {
                         afterLabel: function(context) {
-                            if (context.datasetIndex === 0) {
-                                // Pour les connexions, afficher aussi les échecs du même jour
-                                var failures = [' . implode(',', $chart_failures) . '][context.dataIndex];
-                                return "Échecs ce jour: " + failures;
-                            }
+                            // if (context.datasetIndex === 0) {
+                            //     // Pour les connexions, afficher aussi les échecs du même jour
+                            //     // var failures = [' . implode(',', $chart_failures) . '][context.dataIndex];
+                            //     // return "Échecs ce jour: " + failures;
+                            // }
                             return null;
                         }
                     }
