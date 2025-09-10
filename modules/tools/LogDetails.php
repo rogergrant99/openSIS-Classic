@@ -29,7 +29,7 @@
 include('../../RedirectModulesInc.php');
 if (!$_REQUEST['modfunc']) {
 
-    $start_date = date('Y-m') . '-01';
+    $start_date = dateFr('Y-m') . '-01';
     $end_date = DBDate('mysql');
     echo '<div class="row">';
     echo '<div class="col-md-8 col-md-offset-2">';
@@ -96,20 +96,20 @@ if ($_REQUEST['modfunc'] == 'generate') {
     if (isset($conv_st_date) && isset($conv_end_date)) {
         
         // Affichage de la plage de dates sélectionnée
-        echo '<div class="row" style="margin: 15px 0;">';
-        echo '<div class="col-md-12">';
-        echo '<div class="alert alert-success">';
-        echo '<i class="fa fa-calendar"></i> <strong>Plage de dates sélectionnée:</strong> ';
-        echo 'Du ' . date('d/m/Y', strtotime($conv_st_date)) . ' au ' . date('d/m/Y', strtotime($conv_end_date));
-        echo '</div>';
-        echo '</div>';
-        echo '</div>';
+        // echo '<div class="row" style="margin: 15px 0;">';
+        // echo '<div class="col-md-12">';
+        // echo '<div class="alert alert-success">';
+        // echo '<i class="fa fa-calendar"></i> <strong>Plage de dates sélectionnée:</strong> ';
+        // echo 'Du ' . date('d/m/Y', strtotime($conv_st_date)) . ' au ' . date('d/m/Y', strtotime($conv_end_date));
+        // echo '</div>';
+        // echo '</div>';
+        // echo '</div>';
         
         // Section des filtres de profil (déplacée en haut pour les graphiques et journaux)
         echo '<div class="row" style="margin: 15px 0;">';
         echo '<div class="col-md-12">';
         echo '<div class="panel panel-default">';
-        echo '<div class="panel-heading"><h5><i class="fa fa-filter"></i> Filtres</h5></div>';
+        // echo '<div class="panel-heading"><h5><i class="fa fa-filter"></i> Filtres</h5></div>';
         echo '<div class="panel-body">';
         echo '<form method="post" action="Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=generate" id="filterForm">';
         
@@ -218,7 +218,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         
         if ($stats_RET) {
             foreach ($stats_RET as $stat) {
-                $chart_dates[] = "'" . date('M d', strtotime($stat['LOGIN_DATE'])) . "'";
+                $chart_dates[] = "'" . dateFr('d M', strtotime($stat['LOGIN_DATE'])) . "'";
                 $chart_counts[] = $stat['LOGIN_COUNT'];
             }
         }
@@ -379,7 +379,7 @@ if ($_REQUEST['modfunc'] == 'generate') {
         // Section des journaux détaillés avec application explicite de la plage de dates
         echo '<div class="alert alert-primary">';
         echo '<i class="fa fa-info-circle"></i> <strong>Journaux détaillés pour la période:</strong> ';
-        echo 'Du ' . date('d/m/Y H:i', strtotime($conv_st_date)) . ' au ' . date('d/m/Y H:i', strtotime($conv_end_date));
+        echo 'Du ' . dateFr('d M', strtotime($conv_st_date)) . ' au ' . dateFr('d M', strtotime($conv_end_date));
         echo '</div>';
         
         echo "<FORM action=Modules.php?modname=" . strip_tags(trim($_REQUEST[modname])) . "&modfunc=del method=POST >";
@@ -422,14 +422,14 @@ if ($_REQUEST['modfunc'] == 'generate') {
         echo'<input type=hidden name=res_len id=res_len value=\''.$check_all_stu_list.'\'>'; 
 
         // Affichage du nombre d'enregistrements trouvés avec la plage de dates
-        echo '<div class="alert alert-success">';
-        echo '<strong>Résultats pour la plage de dates sélectionnée:</strong> ' . count($alllogs_RET) . ' enregistrements trouvés';
-        if (count($alllogs_RET) > 0) {
-            echo '<br><small>Les journaux affichés respectent strictement la plage de dates du ' . 
-                 date('d/m/Y à H:i', strtotime($conv_st_date)) . ' au ' . 
-                 date('d/m/Y à H:i', strtotime($conv_end_date)) . '</small>';
-        }
-        echo '</div>';
+        // echo '<div class="alert alert-success">';
+        // echo '<strong>Résultats pour la plage de dates sélectionnée:</strong> ' . count($alllogs_RET) . ' enregistrements trouvés';
+        // if (count($alllogs_RET) > 0) {
+        //     echo '<br><small>Les journaux affichés respectent strictement la plage de dates du ' . 
+        //          date('d/m/Y à H:i', strtotime($conv_st_date)) . ' au ' . 
+        //          date('d/m/Y à H:i', strtotime($conv_end_date)) . '</small>';
+        // }
+        // echo '</div>';
 
         echo '<div class="panel panel-default">';
         ListOutput($alllogs_RET, array('CHECKBOX' => '</A><INPUT type=checkbox value=Y name=controller  onclick="checkAllDtMod(this,\'log_arr\');"><A>','LOGIN_TIME' => _loginTime,
@@ -543,4 +543,72 @@ function convertUTCtoEST($utc_datetime) {
     return $date->format('d M - H:i:s');
 }
 
+function dateFr($format, $timestamp = null) {
+    // Use current time if no timestamp provided
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    // French month names
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    // French abbreviated month names
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    // French day names
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    // French abbreviated day names
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Get the formatted date using regular date() function
+    $result = date($format, $timestamp);
+    
+    // Replace English names with French ones
+    $result = str_replace([
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ], $result);
+    
+    $result = str_replace([
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ], [
+        'janv', 'févr', 'mars', 'avr', 'mai', 'juin',
+        'juil', 'août', 'sept', 'oct', 'nov', 'déc'
+    ], $result);
+    
+    $result = str_replace([
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+        'Thursday', 'Friday', 'Saturday'
+    ], [
+        'dimanche', 'lundi', 'mardi', 'mercredi',
+        'jeudi', 'vendredi', 'samedi'
+    ], $result);
+    
+    $result = str_replace([
+        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+    ], [
+        'dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'
+    ], $result);
+    
+    return $result;
+}
 ?>
