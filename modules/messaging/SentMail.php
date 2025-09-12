@@ -269,6 +269,7 @@ if (!isset($_REQUEST['modfunc'])) {
     foreach ($outbox_info as $id => $value) {
         $extra['columns_before']['CHECKBOX'] = "<INPUT type=checkbox name=mail[" . $value['MAIL_ID'] . "] value=Y>";
         $outbox_info[$id] = $extra['columns_before'] + $value;
+        $outbox_info[$id]['MAIL_DATETIME'] = convertUTCtoEST($value['MAIL_DATETIME']);
     }
     if (count($outbox_info) != 0) {
         if (isset($userName)){
@@ -380,6 +381,11 @@ function output_file($file, $name, $mime_type = '', $mod_file) {
     } else
         die('Error - can not open file.');
     die();
+}
+function convertUTCtoEST($utc_datetime) {
+    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
+    $date->setTimezone(new DateTimeZone('America/New_York'));
+    return $date->format('d M - H:i:s');
 }
 ?>
 

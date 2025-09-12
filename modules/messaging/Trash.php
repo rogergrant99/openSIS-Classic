@@ -297,6 +297,7 @@ if (!isset($_REQUEST['modfunc'])) {
     foreach ($trash_info as $id => $value) {
         $extra['columns_before']['CHECKBOX'] = "<INPUT type=checkbox name=mail[" . $value['MAIL_ID'] . "_" . $value['STATUS'] . "] value=Y>";
         $trash_info[$id] = $extra['columns_before'] + $value;
+        $trash_info[$id]['MAIL_DATETIME'] = convertUTCtoEST($value['MAIL_DATETIME']);
     }
     if (is_countable($trash_info) && count($trash_info) != 0) {
         if (isset($userName)){
@@ -309,6 +310,11 @@ if (!isset($_REQUEST['modfunc'])) {
     echo "</div>";
     echo '</FORM>';
     //PopTable('footer');
+}
+function convertUTCtoEST($utc_datetime) {
+    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
+    $date->setTimezone(new DateTimeZone('America/New_York'));
+    return $date->format('d M - H:i:s');
 }
 ?>
 

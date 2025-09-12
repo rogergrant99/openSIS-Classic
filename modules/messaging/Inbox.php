@@ -484,7 +484,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
             echo '<div class="media-left"><img class="img-circle" src="assets/images/placeholder.jpg" alt="" /></div>';
         echo '<div class="media-body">';
         echo '<div class="pull-right"><div class="input-group-btn">';
-        echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . $v['MAIL_DATETIME'] . '</a>';
+        echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . convertUTCtoEST($v['MAIL_DATETIME']) . '</a>';
         echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&msgbody=' .   base64_encode(base64_encode($msg)) . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . $name . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
         echo '</div></div>';
         //echo '<i class="icon-calendar3"></i> '.$v['MAIL_DATETIME'].' <a href="" class="btn btn-default btn-xs btn-icon"><i class="icon-undo2"></i></a>';
@@ -714,6 +714,7 @@ if (!isset($_REQUEST['modfunc'])) {
     foreach ($inbox_info as $id => $value) {
         $extra['columns_before']['CHECKBOX'] = "<INPUT type=checkbox name=mail[" . $value['MAIL_ID'] . "] value=Y>";
         $inbox_info[$id] = $extra['columns_before'] + $value;
+        $inbox_info[$id]['MAIL_DATETIME'] = convertUTCtoEST($value['MAIL_DATETIME']);
     }
     if (count($inbox_info) != 0) {
         $custom_header = '<h6 class="panel-title text-pink">' . _inbox . '</h6><div class="heading-elements"><button type=submit class="btn btn-default heading-btn" onclick=\'formload_ajax("sav");\' ><i class="fa fa-trash-o"></i> ' . _delete . '</button></div>';
@@ -1277,4 +1278,9 @@ function output_file($file, $name, $mime_type = '', $mod_file)
 function encodeURIComponent($str) {
     $revert = array('%21'=>'!', '%2A'=>'*', '%27'=>"'", '%28'=>'(', '%29'=>')');
     return strtr(rawurlencode($str), $revert);
+}
+function convertUTCtoEST($utc_datetime) {
+    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
+    $date->setTimezone(new DateTimeZone('America/New_York'));
+    return $date->format('d M - H:i:s');
 }
