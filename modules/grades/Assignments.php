@@ -169,7 +169,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                     if ($column == 'POINTS' && $value != '' && $table == 'gradebook_assignments') {
 
                         // $grade_assign_qr = DBGet(DBQuery("SELECT COUNT(STUDENT_ID) AS TOT FROM   student_report_card_grades WHERE COURSE_PERIOD_ID='$course_period_id'"));
-                        $grade_assign_qr = DBGet(DBQuery("SELECT COUNT(STUDENT_ID) AS TOT FROM   gradebook_grades WHERE ASSIGNMENT_ID = '" . $_REQUEST['assignment_id'] . "'"));
+                        $grade_assign_qr = DBGet(DBQuery("SELECT COUNT(STUDENT_ID) AS TOT FROM   gradebook_grades WHERE ASSIGNMENT_ID = '" . $_REQUEST['assignment_id'] . "' and points is not null "));
                         if ($grade_assign_qr[1]['TOT'] > 0) {
                             $f = 1;
                             ShowErrPhp('' . _cannotModifyThePointsBecauseGradeHasBeenAssignedToTheStudentForThisAssignment . '.');
