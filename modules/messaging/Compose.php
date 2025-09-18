@@ -118,71 +118,91 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
             $level_name='Tous les parents du secondaire ';
             $level_name .= $level-7;
         }
-        DBQuery('delete from mail_groupmembers where group_id='. $level+10 .'');
-        DBQuery('delete from mail_group where group_id='. $level+10  .'');
-        DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . $level+10 . ',"'  . $level_name .  '" ,\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
-        foreach ($level_pri_contacts as $member){
-            if(str_contains($member['EMAIL'], "@")) 
-                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . $level+10 . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        foreach ($level_sec_contacts as $member){
-            if(str_contains($member['EMAIL'], "@")) 
-                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . $level+10 . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-
-        $primaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
-        $secondaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id)) as CONTACT2 , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
-        DBQuery('delete from mail_groupmembers where group_id='. UserCoursePeriod() .'');
-        DBQuery('delete from mail_group where group_id='. UserCoursePeriod() .'');
-        DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',"Tous les parents de ' . $course_RET[1]['SHORT_NAME'] . '",\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
-        foreach ($primaryContactlist as $member){
-           if(str_contains($member['EMAIL'], "@")) 
-                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        foreach ($secondaryContactlist as $member){
-           if(str_contains($member['EMAIL'], "@")) 
-                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        $index=count($primaryContactlist)+1;
-        $primaryContactlist[$index]['EMAIL']='admin@cado.ca';
-        $primaryContactlist[$index]['STUDENT_NAME']='admin';
-        $primaryContactlist[$index]['CONTACT']='CADO';
-        // echo '<pre>'; print_r($primaryContactlist); echo '</pre>';
-        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
-        $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where group_id ='" . UserCoursePeriod() . "' OR  group_id ='" . $level+10 . "'  AND SCHOOL_ID= '".UserSchool()."'"));
-        foreach ($groupList as $groupArr) {
-            $option = $groupArr['GROUP_NAME'];
-            $value = $groupArr['GROUP_ID'];
-            if ($_REQUEST['sel_group'] == $value)
-                echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
-            else
-                echo "<OPTION value=\"$option\">$option</OPTION>";
-        }
-
-        foreach ($primaryContactlist as $key_index =>  $groupArr) {
-            $option = $groupArr['EMAIL'];
-            if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
-                // echo 'yes';
-                $option .= ',';
-                $option .= $secondaryContactlist[$key_index]['EMAIL'];
-            } 
-            $value = $groupArr['STUDENT_NAME'];
-            $value .= '&nbsp(';
-            $value .= $groupArr['CONTACT']; 
-            if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
-                $value .= ' - ';
-                $value .= $secondaryContactlist[$key_index]['CONTACT2']; 
+        if($level <= 7){
+            DBQuery('delete from mail_groupmembers where group_id='. $level+10 .'');
+            DBQuery('delete from mail_group where group_id='. $level+10  .'');
+            DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . $level+10 . ',"'  . $level_name .  '" ,\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
+            foreach ($level_pri_contacts as $member){
+                if(str_contains($member['EMAIL'], "@")) 
+                    DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . $level+10 . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
             }
-            if(!$option)
-                $value .= '&nbsp***courriel manquant*** ';                    
-            $value .= ')';
-            if ($_REQUEST['sel_group'] == $value)
-                echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
-            else
-                echo "<OPTION value=\"$option\">$value</OPTION>";
+            foreach ($level_sec_contacts as $member){
+                if(str_contains($member['EMAIL'], "@")) 
+                    DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . $level+10 . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+            }
+
+            $primaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+            $secondaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id)) as CONTACT2 , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+            DBQuery('delete from mail_groupmembers where group_id='. UserCoursePeriod() .'');
+            DBQuery('delete from mail_group where group_id='. UserCoursePeriod() .'');
+            DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',"Tous les parents de ' . $course_RET[1]['SHORT_NAME'] . '",\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
+            foreach ($primaryContactlist as $member){
+            if(str_contains($member['EMAIL'], "@")) 
+                    DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+            }
+            foreach ($secondaryContactlist as $member){
+            if(str_contains($member['EMAIL'], "@")) 
+                    DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+            }
+            $index=count($primaryContactlist)+1;
+            $primaryContactlist[$index]['EMAIL']='admin@cado.ca';
+            $primaryContactlist[$index]['STUDENT_NAME']='admin';
+            $primaryContactlist[$index]['CONTACT']='CADO';
+            // echo '<pre>'; print_r($primaryContactlist); echo '</pre>';
+            echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
+            $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where group_id ='" . UserCoursePeriod() . "' OR  group_id ='" . $level+10 . "'  AND SCHOOL_ID= '".UserSchool()."'"));
+            foreach ($groupList as $groupArr) {
+                $option = $groupArr['GROUP_NAME'];
+                $value = $groupArr['GROUP_ID'];
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$option</OPTION>";
+            }
+
+            foreach ($primaryContactlist as $key_index =>  $groupArr) {
+                $option = $groupArr['EMAIL'];
+                if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
+                    // echo 'yes';
+                    $option .= ',';
+                    $option .= $secondaryContactlist[$key_index]['EMAIL'];
+                } 
+                $value = $groupArr['STUDENT_NAME'];
+                $value .= '&nbsp(';
+                $value .= $groupArr['CONTACT']; 
+                if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
+                    $value .= ' - ';
+                    $value .= $secondaryContactlist[$key_index]['CONTACT2']; 
+                }
+                if(!$option)
+                    $value .= '&nbsp***courriel manquant*** ';                    
+                $value .= ')';
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$value</OPTION>";
+            }
+            echo '</SELECT>';
+            echo '<span class="input-group-btn">';
+        }else{
+            echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
+            $option = 'admin@cado.ca';
+            $value .= 'admin';
+            $value .= 'CADO';
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$option</OPTION>";
+
+            echo '</SELECT>';
+            echo '<span class="input-group-btn">';
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$value</OPTION>";
+            echo '</SELECT>';
+            echo '<span class="input-group-btn">';
         }
-        echo '</SELECT>';
-        echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'admin' ){
         $teacherList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . '))order by first_name'));
