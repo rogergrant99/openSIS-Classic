@@ -82,7 +82,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="input-group">';
     if (isset($_REQUEST['modto']) && $_REQUEST['m'] == 'reply') {
         $to_user = $_REQUEST['modto'];
-        $name = html_entity_decode($_REQUEST['fullname']);
+        $name =  base64_decode($_REQUEST['fullname']);
         $mail_subject = base64_decode($_REQUEST['sub']);
         $content = '<br><br><br><hr></hr>';
         $content .= base64_decode(base64_decode($_REQUEST['msgbody']));
