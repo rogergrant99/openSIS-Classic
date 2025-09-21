@@ -145,21 +145,26 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
            if(str_contains($member['EMAIL'], "@")) 
                  DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
         }
+        if($level >7){
+            $primaryContactlist=$secondaryContactlist=[];
+        }
         $index=count($primaryContactlist)+1;
         $primaryContactlist[$index]['EMAIL']='admin@cado.ca';
         $primaryContactlist[$index]['STUDENT_NAME']='admin';
         $primaryContactlist[$index]['CONTACT']='CADO';
         // echo '<pre>'; print_r($primaryContactlist); echo '</pre>';
-        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_student ."</OPTION>";
+        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_recipient ."</OPTION>";
         $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where group_id ='" . UserCoursePeriod() . "' OR  group_id ='" . $level+10 . "'  AND SCHOOL_ID= '".UserSchool()."'"));
-        foreach ($groupList as $groupArr) {
-            $option = $groupArr['GROUP_NAME'];
-            $value = $groupArr['GROUP_ID'];
-            if ($_REQUEST['sel_group'] == $value)
-                echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
-            else
-                echo "<OPTION value=\"$option\">$option</OPTION>";
-        }
+       if($level <8){
+            foreach ($groupList as $groupArr) {
+                $option = $groupArr['GROUP_NAME'];
+                $value = $groupArr['GROUP_ID'];
+                if ($_REQUEST['sel_group'] == $value)
+                    echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
+                else
+                    echo "<OPTION value=\"$option\">$option</OPTION>";
+            }
+       }
 
         foreach ($primaryContactlist as $key_index =>  $groupArr) {
             $option = $groupArr['EMAIL'];
@@ -220,12 +225,17 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         echo '<span class="input-group-btn">';
     }
     if (User('PROFILE') == 'parent'){
+        $student_id=$_SESSION['student_id'];
+        $grade_level= DBGet(DBQuery('select grade_id from student_enrollment where syear=' . UserSyear() . ' and student_id=' . $student_id. ''));
+        $grade_level = $grade_level[1]['GRADE_ID'];
         $to_bcc = 'admin@cado.ca';
         $groupList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . ' AND STUDENT_ID=' . UserStudentID(). '))order by last_name'));
+        if($grade_level >7)
+            $groupList=[];
         $index=count($groupList)+1;
         $groupList[$index]['EMAIL']='admin@cado.ca';
         $groupList[$index]['GROUP_NAME']='admin CADO';
-        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_teacher ."</OPTION>";
+        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_recipient ."</OPTION>";
         foreach ($groupList as $groupArr) {
             $option = $groupArr['EMAIL'];
             $value = $groupArr['GROUP_NAME'];

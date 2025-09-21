@@ -2050,6 +2050,7 @@ define("_ageAu30Sept","Âge au 30 septembre");
 define("_non","Non");
 define("_objet","Objet");
 define("_select_teacher","Choisir le professeur");
+define("_select_recipient","Choisir le destinataire");
 define("_select_student","Choisir l'étudiant");
 define("_noSubject", "Aucun sujet");
 define("_reponse", "Réponse à : ");
