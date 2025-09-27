@@ -35,7 +35,8 @@ echo '<div class="panel-body">';
     # Letting user know if they have weighted the course period but have not set any
     # weights to the assignment types
     $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
-    if($markingPeriod[1][MARKING_PERIOD_ID] != $_REQUEST['mp'])
+
+    if($markingPeriod[1][MARKING_PERIOD_ID] != UserMP())
     {
         $assignment_type_list_sql = 'SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
                 FROM (
