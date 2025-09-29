@@ -1344,7 +1344,7 @@ let hasUnsavedChanges = false;
 let currentEditableElement = null;
 let isEditingCell = false; // Track editing state
 
-const AUTO_SAVE_DELAY = 100; // 1 second after user stops typing
+const AUTO_SAVE_DELAY = 2000; // 1 second after user stops typing
 
 // Enhanced event listeners for editable cells
 editableCells.forEach(cell => {
