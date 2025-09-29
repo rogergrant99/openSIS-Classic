@@ -99,10 +99,10 @@ if(! $_REQUEST['_openSIS_PDF'] && ! $primaire){
 // Teacher  or student
 if (User('PROFILE') == 'teacher'){
     $course_id = UserCourse();
-    $editable='true';
+    $editable=' class="editable" ';
 }
 else{
-    $editable='false';    
+    $editable=' readonly class="editable" ';    
 }
 
 // Add files
@@ -145,11 +145,10 @@ if ($_POST && isset($_POST['delete_file'])){
 
 // Save content
 if ($_POST && isset($_POST['content'])) {
-    $week = $_POST['week'];
-    $field = $_POST['field'];
-    $content = $_POST['content']; 
-    $content = strip_tags($content, '<b><strong><i><em><u><br><p><ul><ol><li><span><div>');    
-    $_SESSION['schedule_data'][$week][$field] = $content;
+    $week =  $_POST['week'];
+    $field =  $_POST['field'];
+    $content = $_POST['content'];
+    $_SESSION['schedule_data'][$week][$field]=$content;
     if( $week  === 'week1' && $field){
         $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week1_sec) . '\'   and course_id=\'' . $temp_course_id . '\'  and is_primary=\'' . $primaire . '\''));
         if(!count($RET) && $content)
@@ -189,14 +188,6 @@ if($week1_sec){
         $updated_by=$get_teacher[1]['FULLNAME'];
     }
     $_SESSION['schedule_data']['week1'] = unserialize($raw_content);
-     // echo '<pre>'; print_r($_SESSION['schedule_data']['week1']);echo '</pre>'; 
-    foreach($_SESSION['schedule_data']['week1'] as $key =>  $line){
-       $line = ltrim($line);
-       $_SESSION['schedule_data']['week1'][$key] = str_replace(["\r\n", "\r", "\n"], '<br>', $line);
-    }
-     //echo '<pre>'; print_r($_SESSION['schedule_data']['week1']);echo '</pre>'; 
-    // echo nl2br("foo isn't\n bar");
-    //  print_r($_SESSION['schedule_data']['week1']);
 }
 
 // Initialize default data if not set (only for non-AJAX requests)
@@ -206,7 +197,7 @@ if (!isset($_SESSION['schedule_data'])) {
             'semaine' => '',
             'lundi_date' => '',
             'lundi_notions' => '',
-            'lundi_devoirs' => '',
+            'lundi_devoirs' => 'kjsdnlksndsalknd',
             'lundi_materiel' => '',
             'mardi_date' => '',
             'mardi_notions' => '',
@@ -737,6 +728,9 @@ function do_cado_courses_files(){
 
 
 ?>
+
+<!DOCTYPE html>
+<html lang="fr">
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -744,10 +738,11 @@ function do_cado_courses_files(){
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planificateur Hebdomadaire</title>
     <style>
-        body {
+        /* body {
             font-family: Arial, sans-serif;
-            margin: 0px;
-        }
+            margin: 20px;
+            background-color: #f5f5f5;
+        } */
         
         h1 {
             text-align: center;
@@ -756,7 +751,7 @@ function do_cado_courses_files(){
         }
         
         .week-section {
-            margin-bottom: 0px;
+            margin-bottom: 40px;
         }
         
         table {
@@ -793,7 +788,7 @@ function do_cado_courses_files(){
             background-color: #5090c1;
             /* font-weight: bold; */
             text-align: center;
-            width: 6%;
+            width: 7%;
             color: white;
         }
         
@@ -885,35 +880,16 @@ function do_cado_courses_files(){
         }
 
         .auto-save-status.saving {
-            display: flex;
-            align-items: center;
-            color: black;
-            margin-left: auto; /* This pushes the element to the right */
             color: #ffc107;
         }
 
         .auto-save-status.saved {
-            display: flex;
-            align-items: center;
-            color: black;
-            margin-left: auto; /* This pushes the element to the right */
             color: #28a745;
         }
 
         .auto-save-status.error {
             color: #dc3545;
         }
-
-        .auto-save-indicator {
-            display: flex;
-            align-items: center;
-            color: black;
-            margin-left: auto; /* This pushes the element to the right */
-           font-size: 12px;
-            text-align: right;
-            color: #28a745;
-        }
-
         .plus-sign {
             background: #24b245ff;
             /* 
@@ -934,88 +910,6 @@ function do_cado_courses_files(){
             background: #18de43ff;
             /* border: 1px solid #000000ff; */
         }
-        .content-cell {
-            width: 28.33%;
-            padding: 2px;
-        }
-    .format-btn.active {
-        background: #007bff;
-        color: white;
-        border-color: #0056b3;
-    }
-    .formatting-toolbar {
-        gap: 4px;
-        /* border: 1px solid #dee2e6; */
-        border-radius: 4px;
-        padding: 1px;
-        margin-bottom: 0px;
-        display: flex;
-        align-items: center;
-        color: black;
-    }
-
-    .format_item {
-        display: flex;
-        align-items: center;
-        color: black;
-        margin-left: auto; /* This pushes the element to the right */
-        align-self: center;
-    }
-        .formatting-toolbar.active {
-            display: flex;
-            align-items: left;
-            color: black;
-        }
-
-        .format-btn {
-            flex-shrink: 0;
-            background: #fff;
-            border: 1px solid #b0b4b7ff;
-            border-radius: 3px;
-            /* padding: 4px 8px; */
-            margin: 0 2px;
-            cursor: pointer;
-            font-size: 10px;
-            min-width: 30px;
-            display: none;
-        }
-
-        .format-btn:hover {
-            background: #e9ecef;
-        }
-
-        .format-btn.active {
-            background: #007bff;
-            color: white;
-        }
-        /* Specific styling for text-heavy buttons */
-        .format-btn.list-btn {
-            min-width: 60px; /* More space for list buttons */
-            font-size: 11px; /* Slightly smaller font for longer text */
-        }
-
-        /* Support for formatted content */
-        .editable b, .editable strong {
-            font-weight: bold;
-        }
-
-        .editable i, .editable em {
-            font-style: italic;
-        }
-
-        .editable u {
-            text-decoration: underline;
-        }
-
-        .editable ul, .editable ol {
-            margin: 0.5em 0;
-            padding-left: 1.5em;
-        }
-
-        .editable li {
-            margin: 0.2em 0;
-        }
-
 
         .minus-sign {
             background: #d3192bff;
@@ -1120,26 +1014,12 @@ function do_cado_courses_files(){
             <?php
             if(! $_REQUEST['_openSIS_PDF'] && User('PROFILE') == "teacher"){
             echo '
+                        <div class="auto-save-status" id="autoSaveStatus">
+                        <div> <i>'; if($updated_by){echo 'Dernière sauvegarde par :'; echo $updated_by;} else echo'Sauvegarde automatique&nbsp'; echo '</i> 
+                        <span class="auto-save-indicator"></span>
+                        <span id="autoSaveText"></span></div>
 
             ';
-            }
-            ?>
-
-<body>
-            <?php
-            if(! $_REQUEST['_openSIS_PDF'] && User('PROFILE') == "teacher"){
-                echo'<div class="formatting-toolbar" id="formattingToolbar">
-                    <button class="format-btn" id="italicBtn" onclick="formatText(\'italic\')">I</button>
-                    <button class="format-btn" id="boldBtn" onclick="formatText(\'bold\')">B</button>
-                    <button class="format-btn" id="underlineBtn" onclick="formatText(\'underline\')">U</button>
-                    <button class="format-btn list-btn" id="ulBtn" onclick="insertList(\'ul\')">• Liste</button>
-                    <button class="format-btn list-btn" id="olBtn" onclick="insertList(\'ol\')">1. Liste</button>
-                ';
-                echo '<p class="format_item auto-save-status" id="autoSaveStatus">'; 
-                if($updated_by){echo 'Dernière sauvegarde par -'; 
-                    echo $updated_by;} 
-                else echo'Sauvegarde automatique&nbsp'; 
-                echo '</i>  <span class="auto-save-indicator"><span id="autoSaveText"></span></span>';
             }else{
             echo '
                         <div  class="auto-save-status hidden" id="autoSaveStatus">
@@ -1148,9 +1028,9 @@ function do_cado_courses_files(){
 
             ';
             }
-        ?>
-        
-    </div>
+            ?>
+
+<body>
         <!-- Week 1 -->
         <div class="week-section">
             <table>
@@ -1164,690 +1044,175 @@ function do_cado_courses_files(){
                     <th>Devoirs/Étude</th>
                     <th>Matériel</th>
                 </tr>
-        
-            <!-- Lundi -->
-            <tr>
-                <td class="day-header">Lundi</td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1"
-                         data-field="lundi_notions"><?php echo $data['week1']['lundi_notions']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="lundi_devoirs"><?php echo $data['week1']['lundi_devoirs']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="lundi_materiel"><?php echo $data['week1']['lundi_materiel']; ?></div>
-                </td>
-            </tr>
-            
-            <!-- Mardi -->
-            <tr>
-                <td class="day-header">Mardi</td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="mardi_notions"><?php echo $data['week1']['mardi_notions']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="mardi_devoirs"><?php echo $data['week1']['mardi_devoirs']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="mardi_materiel"><?php echo $data['week1']['mardi_materiel']; ?></div>
-                </td>
-            </tr>
-            
-            <!-- Mercredi -->
-            <tr>
-                <td class="day-header">Mercredi</td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="mercredi_notions"><?php echo $data['week1']['mercredi_notions']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="mercredi_devoirs"><?php echo $data['week1']['mercredi_devoirs']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="mercredi_materiel"><?php echo $data['week1']['mercredi_materiel']; ?></div>
-                </td>
-            </tr>
-            
-            <!-- Jeudi -->
-            <tr>
-                <td class="day-header">Jeudi</td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="jeudi_notions"><?php echo $data['week1']['jeudi_notions']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="jeudi_devoirs"><?php echo $data['week1']['jeudi_devoirs']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="jeudi_materiel"><?php echo $data['week1']['jeudi_materiel']; ?></div>
-                </td>
-            </tr>
-            
-            <!-- Vendredi -->
-            <tr>
-                <td class="day-header">Vendredi</td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="vendredi_notions"><?php echo $data['week1']['vendredi_notions']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="vendredi_devoirs"><?php echo $data['week1']['vendredi_devoirs']; ?></div>
-                </td>
-                <td class="content-cell">
-                    <div class="editable" 
-                         contenteditable="<?php echo $editable ?>"
-                         data-week="week1" 
-                         data-field="vendredi_materiel"><?php echo $data['week1']['vendredi_materiel']; ?></div>
-                </td>
-            </tr>
-        </table>
-    </div>
-
+                
+                <tr>
+                    <td class="day-header">Lundi</td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="lundi_notions"><?php echo htmlspecialchars($data['week1']['lundi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="lundi_devoirs"><?php echo htmlspecialchars($data['week1']['lundi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="lundi_materiel"><?php echo htmlspecialchars($data['week1']['lundi_materiel']); ?></textarea></td>
+                </tr>
+                
+                <tr>
+                    <td class="day-header">Mardi</td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mardi_notions"><?php echo htmlspecialchars($data['week1']['mardi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mardi_devoirs"><?php echo htmlspecialchars($data['week1']['mardi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mardi_materiel"><?php echo htmlspecialchars($data['week1']['mardi_materiel']); ?></textarea></td>
+                </tr>
+                
+                <tr>
+                    <td class="day-header">Mercredi</td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mercredi_notions"><?php echo htmlspecialchars($data['week1']['mercredi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mercredi_devoirs"><?php echo htmlspecialchars($data['week1']['mercredi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="mercredi_materiel"><?php echo htmlspecialchars($data['week1']['mercredi_materiel']); ?></textarea></td>
+                </tr>
+                
+                <tr>
+                    <td class="day-header">Jeudi</td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="jeudi_notions"><?php echo htmlspecialchars($data['week1']['jeudi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="jeudi_devoirs"><?php echo htmlspecialchars($data['week1']['jeudi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="jeudi_materiel"><?php echo htmlspecialchars($data['week1']['jeudi_materiel']); ?></textarea></td>
+                </tr>
+                
+                <tr>
+                    <td class="day-header">Vendredi</td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="vendredi_notions"><?php echo htmlspecialchars($data['week1']['vendredi_notions']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="vendredi_devoirs"><?php echo htmlspecialchars($data['week1']['vendredi_devoirs']); ?></textarea></td>
+                    <td><textarea <?php echo $editable ?>  data-week="week1" data-field="vendredi_materiel"><?php echo htmlspecialchars($data['week1']['vendredi_materiel']); ?></textarea></td>
+                </tr>
+            </table>
     <script>
-// Enhanced formatting toolbar functionality
-const editableCells = document.querySelectorAll('.editable');
-const autoSaveStatus = document.getElementById('autoSaveStatus');
-const autoSaveText = document.getElementById('autoSaveText');
-const formattingToolbar = document.getElementById('formattingToolbar');
-const boldBtn = document.getElementById('boldBtn');
-const italicBtn = document.getElementById('italicBtn');
-const underlineBtn = document.getElementById('underlineBtn');
-const ulBtn = document.getElementById('ulBtn');
-const olBtn = document.getElementById('olBtn');
+        const editableCells = document.querySelectorAll('.editable');
+        const autoSaveStatus = document.getElementById('autoSaveStatus');
+        const autoSaveText = document.getElementById('autoSaveText');
 
+        let savedSelection = null;
+        let savedRange = null;
 
-let autoSaveTimeout;
-let hasUnsavedChanges = false;
-let currentEditableElement = null;
-let isEditingCell = false; // Track editing state
-
-const AUTO_SAVE_DELAY = 1000; // 1 second after user stops typing
-
-// Enhanced event listeners for editable cells
-editableCells.forEach(cell => {
-    // Handle paste events to preserve formatting
-    cell.addEventListener('paste', function(e) {
-        e.preventDefault();
+        // Auto-save configuration
+        let autoSaveTimeout;
+        let autoSaveInterval;
+        let hasUnsavedChanges = false;
+        let dont_save = false;
         
-        const clipboardData = e.clipboardData || window.clipboardData;
-        let htmlContent = clipboardData.getData('text/html');
-        let textContent = clipboardData.getData('text/plain');
+        const AUTO_SAVE_DELAY = 3000; // 3 seconds after user stops typing
+        const AUTO_SAVE_INTERVAL = 30000; // 30 seconds periodic save
+
         
-        if (htmlContent) {
-            htmlContent = sanitizeHTML(htmlContent);
-            document.execCommand('insertHTML', false, htmlContent);
-        } else if (textContent) {
-            textContent = textContent.replace(/\n/g, '<br>');
-            document.execCommand('insertHTML', false, textContent);
-        }
-        
-        scheduleAutoSave(this);
-        setTimeout(() => updateToolbarButtons(), 50);
-    });
-    
-    cell.addEventListener('input', function() {
-        scheduleAutoSave(this);
-        setTimeout(() => updateToolbarButtons(), 10);
-    });
-    
-    cell.addEventListener('blur', function() {
-        // Delay the blur to allow toolbar interactions
-        setTimeout(() => {
-            // Check if the toolbar is being used
-            if (!formattingToolbar.matches(':hover') && !formattingToolbar.contains(document.activeElement)) {
+        editableCells.forEach(cell => {
+            cell.addEventListener('blur', function() {
                 saveCell(this);
-                hideFormattingToolbar();
-                isEditingCell = false;
-            }
-        }, 200);
-    });
-    
-    cell.addEventListener('focus', function() {
-        currentEditableElement = this;
-        isEditingCell = true;
-        showFormattingToolbar();
-        updateToolbarButtons();
-    });
-    
-    // Enhanced keydown event to catch keyboard shortcuts
-    cell.addEventListener('keydown', function(e) {
-        if (e.ctrlKey || e.metaKey) {
-            switch(e.key.toLowerCase()) {
-                case 'b': // Bold
-                case 'i': // Italic  
-                case 'u': // Underline
-                    setTimeout(() => updateToolbarButtons(), 50);
-                    break;
-            }
-        }
-    });
-    
-    // Enhanced keyup event for all keyboard interactions
-    cell.addEventListener('keyup', function(e) {
-        const shouldUpdate = [
-            'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
-            'PageUp', 'PageDown', 'Delete', 'Backspace', 'Enter',
-        ].includes(e.key) || 
-        (e.ctrlKey || e.metaKey) ||
-        (e.key.length === 1);
-        
-        if (shouldUpdate) {
-            setTimeout(() => updateToolbarButtons(), 10);
-        }
-    });
-    
-    // Mouse interactions
-    cell.addEventListener('mouseup', function() {
-        setTimeout(() => updateToolbarButtons(), 10);
-    });
-    
-    // Listen for any DOM mutations that might affect formatting
-    const observer = new MutationObserver(function(mutations) {
-        let shouldUpdate = false;
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' || 
-                (mutation.type === 'attributes' && ['style', 'class'].includes(mutation.attributeName))) {
-                shouldUpdate = true;
+            });
+            
+            // Auto-resize textareas
+            if (cell.tagName === 'TEXTAREA') {
+                cell.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+                
+                // Initial resize
+                cell.style.height = 'auto';
+                cell.style.height = cell.scrollHeight + 'px';
             }
         });
         
-        if (shouldUpdate && currentEditableElement === cell) {
-            setTimeout(() => updateToolbarButtons(), 10);
-        }
-    });
-    
-    observer.observe(cell, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-    });
-});
-
-// Listen for selection changes at document level
-document.addEventListener('selectionchange', function() {
-    if (currentEditableElement && document.activeElement === currentEditableElement) {
-        updateToolbarButtons();
-    }
-});
-
-// Prevent toolbar from hiding when clicking on it
-if (formattingToolbar) {
-    formattingToolbar.addEventListener('mousedown', function(e) {
-        e.preventDefault(); // Prevents focus loss from editable cell
-    });
-    
-    formattingToolbar.addEventListener('click', function(e) {
-        // Keep focus on the editable cell after toolbar interaction
-        if (currentEditableElement) {
-            currentEditableElement.focus();
-        }
-    });
-}
-
-function showFormattingToolbar() {
-    if (!isEditingCell) return;
-    // console.log('show');
-    boldBtn.style.display = 'block';  
-    italicBtn.style.display = 'block';  
-    underlineBtn.style.display = 'block';  
-    ulBtn.style.display = 'block';  
-    olBtn.style.display = 'block';  
-    
-    // formattingToolbar.classList.add('active');
-    updateToolbarButtons();
-}
-
-function hideFormattingToolbar() {
-    if (isEditingCell) return;
-    // console.log('hide');
-    boldBtn.style.display = 'none';  
-    italicBtn.style.display = 'none';  
-    underlineBtn.style.display = 'none';  
-    ulBtn.style.display = 'none';  
-    olBtn.style.display = 'none';  
-}
-// Click outside handler to hide toolbar
-document.addEventListener('click', function(e) {
-    // Check if click is outside all editable cells and the toolbar
-    const isOutsideEditable = !Array.from(editableCells).some(cell => cell.contains(e.target));
-    const isOutsideToolbar = !formattingToolbar || !formattingToolbar.contains(e.target);
-    
-    if (isOutsideEditable && isOutsideToolbar) {
-        isEditingCell = false;
-        hideFormattingToolbar();
-    }
-});
-
-
-
-function updateToolbarButtons() {
-    if (!currentEditableElement || !isEditingCell) return;
-    
-    // Get buttons by ID
-    
-    setTimeout(() => {
-        try {
-            let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
-            
-            try {
-                isBold = document.queryCommandState('bold');
-                isItalic = document.queryCommandState('italic');
-                isUnderline = document.queryCommandState('underline');
-                isUL = document.queryCommandState('insertUnorderedList');
-                isOL = document.queryCommandState('insertOrderedList');
-            } catch (e) {
-                const result = getFormattingFromDOM();
-                isBold = result.isBold;
-                isItalic = result.isItalic;
-                isUnderline = result.isUnderline;
-                isUL = result.isUL;
-                isOL = result.isOL;
-            }
-            
-            // Update button states
-            if (boldBtn) boldBtn.classList.toggle('active', isBold);
-            if (italicBtn) italicBtn.classList.toggle('active', isItalic);
-            if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
-            if (ulBtn) ulBtn.classList.toggle('active', isUL);
-            if (olBtn) olBtn.classList.toggle('active', isOL);
-            
-        } catch (error) {
-            console.log('Error updating toolbar buttons:', error);
-        }
-    }, 10);
-}
-
-// Fallback method to determine formatting by inspecting the DOM
-function getFormattingFromDOM() {
-    const selection = window.getSelection();
-    let element = null;
-    
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        element = range.commonAncestorContainer;
-        
-        if (element.nodeType === Node.TEXT_NODE) {
-            element = element.parentElement;
-        }
-    } else {
-        element = currentEditableElement;
-    }
-    
-    if (!element) {
-        return { isBold: false, isItalic: false, isUnderline: false, isUL: false, isOL: false };
-    }
-    
-    let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
-    let current = element;
-    
-    while (current && current !== currentEditableElement && current !== document.body) {
-        const tagName = current.tagName ? current.tagName.toUpperCase() : '';
-        const style = window.getComputedStyle ? window.getComputedStyle(current) : current.style;
-        
-        if (!isBold && (tagName === 'B' || tagName === 'STRONG' || 
-            (style && (style.fontWeight === 'bold' || parseInt(style.fontWeight) >= 700)))) {
-            isBold = true;
+        function saveCell(element) {
+            const week = element.getAttribute('data-week');
+            const field = element.getAttribute('data-field');
+            const value = element.value;
+            // Send AJAX request to save data  
+            saveContent(week,field,value);
         }
         
-        if (!isItalic && (tagName === 'I' || tagName === 'EM' || 
-            (style && style.fontStyle === 'italic'))) {
-            isItalic = true;
+        function showSaveStatus() {
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 2000);
         }
-        
-        if (!isUnderline && (tagName === 'U' || 
-            (style && style.textDecoration && style.textDecoration.includes('underline')))) {
-            isUnderline = true;
+
+        function showErrorStatus(message) {
+            const status = document.getElementById('errorStatus');
+            status.textContent = `Erreur: ${message}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
         }
-        
-        if (!isUL && tagName === 'UL') isUL = true;
-        if (!isOL && tagName === 'OL') isOL = true;
-        
-        current = current.parentElement;
-    }
-    
-    return { isBold, isItalic, isUnderline, isUL, isOL };
-}
 
+        // Sauvegarder le contenu
+        function saveContent(week,field,content) {
+            //const content = 'doit';
+            const formData = new FormData();
 
+            updateAutoSaveStatus('saving', 'Sauvegarde manuelle...');
 
-function updateToolbarButtonsFallback() {
-    if (!currentEditableElement) return;
-    
-    const selection = window.getSelection();
-    if (selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    let element = range.commonAncestorContainer;
-    
-    // If the common ancestor is a text node, get its parent element
-    if (element.nodeType === Node.TEXT_NODE) {
-        element = element.parentElement;
-    }
-    
-    // Get buttons by ID
-    const boldBtn = document.getElementById('boldBtn');
-    const italicBtn = document.getElementById('italicBtn');
-    const underlineBtn = document.getElementById('underlineBtn');
-    const ulBtn = document.getElementById('ulBtn');
-    const olBtn = document.getElementById('olBtn');
-    
-    // Check if cursor/selection is within formatted elements
-    const isBold = isWithinTag(element, ['B', 'STRONG']);
-    const isItalic = isWithinTag(element, ['I', 'EM']);
-    const isUnderline = isWithinTag(element, ['U']);
-    const isInUL = isWithinTag(element, ['UL']);
-    const isInOL = isWithinTag(element, ['OL']);
-    
-    // Update button states
-    if (boldBtn) boldBtn.classList.toggle('active', isBold);
-    if (italicBtn) italicBtn.classList.toggle('active', isItalic);
-    if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
-    if (ulBtn) ulBtn.classList.toggle('active', isInUL);
-    if (olBtn) olBtn.classList.toggle('active', isInOL);
-}
-
-// Enhanced formatting functions
-function formatText(command) {
-    if (currentEditableElement && isEditingCell) {
-        currentEditableElement.focus();
-        document.execCommand(command, false, null);
-        scheduleAutoSave(currentEditableElement);
-        
-        setTimeout(() => updateToolbarButtons(), 10);
-        setTimeout(() => updateToolbarButtons(), 50);
-        setTimeout(() => updateToolbarButtons(), 100);
-    }
-}
-
-
-function insertList(listType) {
-    if (currentEditableElement && isEditingCell) {
-        currentEditableElement.focus();
-        if (listType === 'ul') {
-            document.execCommand('insertUnorderedList', false, null);
-        } else if (listType === 'ol') {
-            document.execCommand('insertOrderedList', false, null);
-        }
-        scheduleAutoSave(currentEditableElement);
-        
-        setTimeout(() => updateToolbarButtons(), 10);
-        setTimeout(() => updateToolbarButtons(), 50);
-        setTimeout(() => updateToolbarButtons(), 100);
-    }
-}
-
-function isWithinTag(element, tagNames) {
-    let current = element;
-    
-    while (current && current !== currentEditableElement) {
-        if (tagNames.includes(current.tagName)) {
-            return true;
-        }
-        current = current.parentElement;
-    }
-    
-    return false;
-}
-
-
-function sanitizeHTML(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    
-    // More permissive allowed tags
-    const allowedTags = [
-        'b', 'strong', 'i', 'em', 'u', 'br', 'p', 'ul', 'ol', 'li', 
-        'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'a', 'img', 'table', 'tr', 'td', 'th', 'tbody', 'thead',
-        'blockquote', 'pre', 'code', 'hr', 'small', 'sub', 'sup',
-        'del', 'ins', 'mark', 'abbr', 'cite', 'q', 'style'
-    ];
-    
-    // More permissive allowed attributes
-    const allowedAttributes = [
-        'style', 'class', 'id', 'href', 'src', 'alt', 'title',
-        'width', 'height', 'target', 'rel', 'data-*'
-    ];
-
-    // Validate CSS content in style tags (basic validation)
-    const isValidCSS = (css) => {
-        // Very permissive CSS validation - allows your specific patterns
-        const dangerousPatterns = [
-            /javascript:/i,
-            /expression\s*\(/i,
-            /url\s*\(\s*["']?\s*javascript:/i,
-            /@import/i
-        ];
-        return !dangerousPatterns.some(pattern => pattern.test(css));
-    };
-
-    const allElements = tempDiv.getElementsByTagName('*');
-    for (let i = allElements.length - 1; i >= 0; i--) {
-        const element = allElements[i];
-        
-        if (!allowedTags.includes(element.tagName.toLowerCase())) {
-            // Instead of removing completely, unwrap the element (keep content)
-            element.outerHTML = element.innerHTML;
-        } else {
-            // Special handling for style tags
-            if (element.tagName.toLowerCase() === 'style') {
-                if (!isValidCSS(element.textContent)) {
-                    element.remove();
-                    continue;
+            formData.append('week', week);
+            formData.append('field', field);
+            formData.append('content', content);
+            // console.log('Full href:', window.location.href);
+            // console.log('Pathname only:', window.location.pathname);
+            // console.log('Search params:', window.location.search);
+            // console.log('Hash:', window.location.hash);
+            //post('Modules.php?modname=scheduling/Planification.php',{content});
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    lastSavedContent = content;
+                    hasUnsavedChanges = false;
+                    const now = new Date().toLocaleTimeString('fr-FR');
+                    updateAutoSaveStatus('saved', `à ${now}`);
+                } else {
+                    throw new Error('Network response was not ok');
                 }
-            }
-            
-            const attributes = Array.from(element.attributes);
-            attributes.forEach(attr => {
-                const attrName = attr.name.toLowerCase();
-                const isAllowed = allowedAttributes.some(allowed => {
-                    if (allowed.endsWith('*')) {
-                        return attrName.startsWith(allowed.slice(0, -1));
-                    }
-                    return allowed === attrName;
-                });
-                
-                // Special validation for style attributes
-                if (attrName === 'style' && isAllowed) {
-                    if (!isValidCSS(attr.value)) {
-                        element.removeAttribute(attr.name);
-                    }
-                } else if (!isAllowed) {
-                    element.removeAttribute(attr.name);
-                }
+            })
+            .catch(error => {
+                console.error('Manual save error:', error);
+                updateAutoSaveStatus('error', 'Erreur de sauvegarde manuelle');
             });
         }
-    }
-    
-    return tempDiv.innerHTML;
-}
 
-function scheduleAutoSave(element) {
-    hasUnsavedChanges = true;
-    updateAutoSaveStatus('saving', '');
-    
-    if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-    }
-    
-    autoSaveTimeout = setTimeout(() => {
-        saveCell(element);
-    }, AUTO_SAVE_DELAY);
-}
+        // Delete file
+        function deleteFile(delete_file) {
+            const formData = new FormData();
+            // console.log('File :', delete_file);
+            post('Modules.php?modname=scheduling/Planification.php',{delete_file});
+        }
 
-// Enhanced formatting functions that ensure toolbar updates
-function formatText(command) {
-    if (currentEditableElement) {
-        currentEditableElement.focus();
-        document.execCommand(command, false, null);
-        scheduleAutoSave(currentEditableElement);
+        function updateAutoSaveStatus(status, message) {
+            autoSaveStatus.className = `auto-save-status ${status}`;
+            autoSaveText.textContent = message;
+        }
         
-        // Multiple updates with different delays to catch all scenarios
-        setTimeout(() => updateToolbarButtons(), 10);
-        setTimeout(() => updateToolbarButtons(), 50);
-        setTimeout(() => updateToolbarButtons(), 100);
-    }
-}
+        function post(path, params, method='post') {
+            // The rest of this code assumes you are not using a library.
+            // It can be made less verbose if you use one.
+            const form = document.createElement('form');
+            form.method = method;
+            form.action = path;
 
-function insertList(listType) {
-    if (currentEditableElement) {
-        currentEditableElement.focus();
-        if (listType === 'ul') {
-            document.execCommand('insertUnorderedList', false, null);
-        } else if (listType === 'ol') {
-            document.execCommand('insertOrderedList', false, null);
+            for (const key in params) {
+                if (params.hasOwnProperty(key)) {
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = key;
+                hiddenField.value = params[key];
+                form.appendChild(hiddenField);
+                }
+            }
+            document.body.appendChild(form);
+            form.submit();
         }
-        scheduleAutoSave(currentEditableElement);
-        
-        // Update toolbar buttons after applying formatting
-        setTimeout(() => updateToolbarButtons(), 10);
-    }
-}
-
-document.addEventListener('keydown', function(e) {
-    // Only process if we're in an editable cell
-    if (!currentEditableElement || !currentEditableElement.contains(document.activeElement) && 
-        document.activeElement !== currentEditableElement) {
-        return;
-    }
-    
-    // Handle Ctrl/Cmd + formatting shortcuts
-    if (e.ctrlKey || e.metaKey) {
-        switch(e.key.toLowerCase()) {
-            case 'b':
-            case 'i':
-            case 'u':
-                // Let the browser handle the formatting, then update our toolbar
-                setTimeout(() => updateToolbarButtons(), 10);
-                setTimeout(() => updateToolbarButtons(), 50);
-                break;
+        if(document.readyState === 'complete') {
+            post('Modules.php?modname=scheduling/Planification.php','auto_save');
         }
-    }
-});
-
-function saveCell(element) {
-    const week = element.getAttribute('data-week');
-    const field = element.getAttribute('data-field');
-    const value = element.innerHTML;
-    saveContent(week, field, value);
-}
-
-function showErrorStatus(message) {
-    const status = document.getElementById('errorStatus');
-    status.textContent = `Erreur: ${message}`;
-    status.style.display = 'block';
-    setTimeout(() => {
-        status.style.display = 'none';
-    }, 3000);
-}
-
-// Save content function
-function saveContent(week, field, content) {
-    const formData = new FormData();
-    
-    formData.append('week', week);
-    formData.append('field', field);
-    formData.append('content', content);
-    
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            hasUnsavedChanges = false;
-            const now = new Date().toLocaleTimeString('fr-FR');
-            updateAutoSaveStatus('saved', `-  ${now}`);
-        } else {
-            throw new Error('Network response was not ok');
+        function showUploading() {
+            document.getElementById('upload-status').style.display = 'block';
         }
-    })
-    .catch(error => {
-        console.error('Save error:', error);
-        updateAutoSaveStatus('error', 'Erreur de sauvegarde');
-    });
-}
-
-// Delete file function
-function deleteFile(delete_file) {
-    const formData = new FormData();
-    post('Modules.php?modname=scheduling/Planification.php', {delete_file});
-}
-
-function updateAutoSaveStatus(status, message) {
-    if (autoSaveStatus && autoSaveText) {
-        autoSaveStatus.className = `auto-save-status ${status}`;
-        autoSaveText.textContent = message;
-        
-        // Make sure auto-save status is visible when there's activity
-        if (status === 'saving' || status === 'saved' || status === 'error') {
-            autoSaveStatus.style.display = 'flex';
-        }
-    }
-}
-
-
-function post(path, params, method = 'post') {
-    const form = document.createElement('form');
-    form.method = method;
-    form.action = path;
-
-    for (const key in params) {
-        if (params.hasOwnProperty(key)) {
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = key;
-            hiddenField.value = params[key];
-            form.appendChild(hiddenField);
-        }
-    }
-    document.body.appendChild(form);
-    form.submit();
-}
-
-function showUploading() {
-    document.getElementById('upload-status').style.display = 'block';
-}
 </script>
 <?php
 if(! $_REQUEST['_openSIS_PDF'])
