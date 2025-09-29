@@ -50,3 +50,10 @@ CREATE TABLE `planification` (
   `updated_by` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=502 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+/* Use when auto type assigments are wrong.*/
+
+UPDATE gradebook_assignment_types gat
+JOIN course_periods cp ON gat.course_period_id = cp.course_period_id
+SET gat.course_id = cp.course_id  WHERE gat.last_updated > "2025-08-29 11:00:06";
