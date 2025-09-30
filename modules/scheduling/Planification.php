@@ -1330,7 +1330,13 @@ function do_cado_courses_files(){
         const editableCells = document.querySelectorAll('.editable');
         const autoSaveStatus = document.getElementById('autoSaveStatus');
         const autoSaveText = document.getElementById('autoSaveText');
+        const boldBtn = document.getElementById('boldBtn');
+        const italicBtn = document.getElementById('italicBtn');
+        const underlineBtn = document.getElementById('underlineBtn');
+        const ulBtn = document.getElementById('ulBtn');
+        const olBtn = document.getElementById('olBtn');
 
+        let isEditingCell = false; // Track editing state
         let savedSelection = null;
         let savedRange = null;
 
@@ -1348,7 +1354,12 @@ function do_cado_courses_files(){
             cell.addEventListener('blur', function() {
                 saveCell(this);
             });
-            
+                cell.addEventListener('focus', function() {
+        currentEditableElement = this;
+        isEditingCell = true;
+        showFormattingToolbar();
+        updateToolbarButtons();
+    });
             // Auto-resize textareas
             if (cell.tagName === 'TEXTAREA') {
                 cell.addEventListener('input', function() {
@@ -1361,7 +1372,144 @@ function do_cado_courses_files(){
                 cell.style.height = cell.scrollHeight + 'px';
             }
         });
-        
+
+        function formatText(command) {
+            if (currentEditableElement) {
+                currentEditableElement.focus();
+                document.execCommand(command, false, null);
+                scheduleAutoSave(currentEditableElement);
+                
+                // Multiple updates with different delays to catch all scenarios
+                setTimeout(() => updateToolbarButtons(), 10);
+                setTimeout(() => updateToolbarButtons(), 50);
+                setTimeout(() => updateToolbarButtons(), 100);
+            }
+        }        
+        function showFormattingToolbar() {
+            if (!isEditingCell) return;
+            // console.log('show');
+            boldBtn.style.display = 'block';  
+            italicBtn.style.display = 'block';  
+            underlineBtn.style.display = 'block';  
+            ulBtn.style.display = 'block';  
+            olBtn.style.display = 'block';  
+            
+            // formattingToolbar.classList.add('active');
+            updateToolbarButtons();
+        }
+
+        function hideFormattingToolbar() {
+            if (isEditingCell) return;
+            // console.log('hide');
+            boldBtn.style.display = 'none';  
+            italicBtn.style.display = 'none';  
+            underlineBtn.style.display = 'none';  
+            ulBtn.style.display = 'none';  
+            olBtn.style.display = 'none';  
+        }
+        function insertList(listType) {
+            if (currentEditableElement && isEditingCell) {
+                currentEditableElement.focus();
+                if (listType === 'ul') {
+                    document.execCommand('insertUnorderedList', false, null);
+                } else if (listType === 'ol') {
+                    document.execCommand('insertOrderedList', false, null);
+                }
+                scheduleAutoSave(currentEditableElement);
+                
+                setTimeout(() => updateToolbarButtons(), 10);
+                setTimeout(() => updateToolbarButtons(), 50);
+                setTimeout(() => updateToolbarButtons(), 100);
+            }
+        }
+        function updateToolbarButtons() {
+            if (!currentEditableElement || !isEditingCell) return;
+            
+            // Get buttons by ID
+            
+            setTimeout(() => {
+                try {
+                    let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
+                    
+                    try {
+                        isBold = document.queryCommandState('bold');
+                        isItalic = document.queryCommandState('italic');
+                        isUnderline = document.queryCommandState('underline');
+                        isUL = document.queryCommandState('insertUnorderedList');
+                        isOL = document.queryCommandState('insertOrderedList');
+                    } catch (e) {
+                        const result = getFormattingFromDOM();
+                        isBold = result.isBold;
+                        isItalic = result.isItalic;
+                        isUnderline = result.isUnderline;
+                        isUL = result.isUL;
+                        isOL = result.isOL;
+                    }
+                    
+                    // Update button states
+                    if (boldBtn) boldBtn.classList.toggle('active', isBold);
+                    if (italicBtn) italicBtn.classList.toggle('active', isItalic);
+                    if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
+                    if (ulBtn) ulBtn.classList.toggle('active', isUL);
+                    if (olBtn) olBtn.classList.toggle('active', isOL);
+                    
+                } catch (error) {
+                    console.log('Error updating toolbar buttons:', error);
+                }
+            }, 10);
+        }
+
+        function getFormattingFromDOM() {
+            const selection = window.getSelection();
+            let element = null;
+            
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                element = range.commonAncestorContainer;
+                
+                if (element.nodeType === Node.TEXT_NODE) {
+                    element = element.parentElement;
+                }
+            } else {
+                element = currentEditableElement;
+            }
+            
+            if (!element) {
+                return { isBold: false, isItalic: false, isUnderline: false, isUL: false, isOL: false };
+            }
+            
+            let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
+            let current = element;
+            
+            while (current && current !== currentEditableElement && current !== document.body) {
+                const tagName = current.tagName ? current.tagName.toUpperCase() : '';
+                const style = window.getComputedStyle ? window.getComputedStyle(current) : current.style;
+                
+                if (!isBold && (tagName === 'B' || tagName === 'STRONG' || 
+                    (style && (style.fontWeight === 'bold' || parseInt(style.fontWeight) >= 700)))) {
+                    isBold = true;
+                }
+                
+                if (!isItalic && (tagName === 'I' || tagName === 'EM' || 
+                    (style && style.fontStyle === 'italic'))) {
+                    isItalic = true;
+                }
+                
+                if (!isUnderline && (tagName === 'U' || 
+                    (style && style.textDecoration && style.textDecoration.includes('underline')))) {
+                    isUnderline = true;
+                }
+                
+                if (!isUL && tagName === 'UL') isUL = true;
+                if (!isOL && tagName === 'OL') isOL = true;
+                
+                current = current.parentElement;
+            }
+            
+            return { isBold, isItalic, isUnderline, isUL, isOL };
+        }
+
+
         function saveCell(element) {
             const week = element.getAttribute('data-week');
             const field = element.getAttribute('data-field');
@@ -1460,6 +1608,40 @@ function do_cado_courses_files(){
         function showUploading() {
             document.getElementById('upload-status').style.display = 'block';
         }
+        // Click outside handler to hide toolbar
+        document.addEventListener('click', function(e) {
+            // Check if click is outside all editable cells and the toolbar
+            const isOutsideEditable = !Array.from(editableCells).some(cell => cell.contains(e.target));
+            const isOutsideToolbar = !formattingToolbar || !formattingToolbar.contains(e.target);
+            
+            if (isOutsideEditable && isOutsideToolbar) {
+                isEditingCell = false;
+                hideFormattingToolbar();
+            }
+             updateToolbarButtons();
+        });
+        document.addEventListener('keydown', function(e) {
+            
+            // // Only process if we're in an editable cell
+            if (!currentEditableElement || !currentEditableElement.contains(document.activeElement) && 
+                document.activeElement !== currentEditableElement) {
+                return;
+            }
+            updateToolbarButtons();            
+            // Handle Ctrl/Cmd + formatting shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'b':
+                    case 'i':
+                    case 'u':
+                        // Let the browser handle the formatting, then update our toolbar
+                        setTimeout(() => updateToolbarButtons(), 10);
+                        setTimeout(() => updateToolbarButtons(), 50);
+                        break;
+                }
+            }
+        });
+
 </script>
 <?php
 if(! $_REQUEST['_openSIS_PDF'])
