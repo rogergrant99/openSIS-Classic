@@ -1327,573 +1327,139 @@ function do_cado_courses_files(){
     </div>
 
     <script>
-// Enhanced formatting toolbar functionality
-const editableCells = document.querySelectorAll('.editable');
-const autoSaveStatus = document.getElementById('autoSaveStatus');
-const autoSaveText = document.getElementById('autoSaveText');
-const formattingToolbar = document.getElementById('formattingToolbar');
-const boldBtn = document.getElementById('boldBtn');
-const italicBtn = document.getElementById('italicBtn');
-const underlineBtn = document.getElementById('underlineBtn');
-const ulBtn = document.getElementById('ulBtn');
-const olBtn = document.getElementById('olBtn');
+        const editableCells = document.querySelectorAll('.editable');
+        const autoSaveStatus = document.getElementById('autoSaveStatus');
+        const autoSaveText = document.getElementById('autoSaveText');
 
+        let savedSelection = null;
+        let savedRange = null;
 
-let autoSaveTimeout;
-let hasUnsavedChanges = false;
-let currentEditableElement = null;
-let isEditingCell = false; // Track editing state
-
-const AUTO_SAVE_DELAY = 100; // 1 second after user stops typing
-
-// Enhanced event listeners for editable cells
-editableCells.forEach(cell => {
-    // Handle paste events to preserve formatting
-    cell.addEventListener('paste', function(e) {
-        e.preventDefault();
+        // Auto-save configuration
+        let autoSaveTimeout;
+        let autoSaveInterval;
+        let hasUnsavedChanges = false;
+        let dont_save = false;
         
-        const clipboardData = e.clipboardData || window.clipboardData;
-        let htmlContent = clipboardData.getData('text/html');
-        let textContent = clipboardData.getData('text/plain');
+        const AUTO_SAVE_DELAY = 3000; // 3 seconds after user stops typing
+        const AUTO_SAVE_INTERVAL = 30000; // 30 seconds periodic save
+
         
-        if (htmlContent) {
-            htmlContent = sanitizeHTML(htmlContent);
-            document.execCommand('insertHTML', false, htmlContent);
-        } else if (textContent) {
-            textContent = textContent.replace(/\n/g, '<br>');
-            document.execCommand('insertHTML', false, textContent);
-        }
-        
-        scheduleAutoSave(this);
-        setTimeout(() => updateToolbarButtons(), 50);
-    });
-    
-    cell.addEventListener('input', function() {
-        scheduleAutoSave(this);
-        setTimeout(() => updateToolbarButtons(), 10);
-    });
-    
-    cell.addEventListener('blur', function() {
-        // Delay the blur to allow toolbar interactions
-        setTimeout(() => {
-            // Check if the toolbar is being used
-            if (!formattingToolbar.matches(':hover') && !formattingToolbar.contains(document.activeElement)) {
+        editableCells.forEach(cell => {
+            cell.addEventListener('blur', function() {
                 saveCell(this);
-                hideFormattingToolbar();
-                isEditingCell = false;
-            }
-        }, 200);
-    });
-    
-    cell.addEventListener('focus', function() {
-        currentEditableElement = this;
-        isEditingCell = true;
-        showFormattingToolbar();
-        updateToolbarButtons();
-    });
-    
-    // Enhanced keydown event to catch keyboard shortcuts
-    cell.addEventListener('keydown', function(e) {
-        if (e.ctrlKey || e.metaKey) {
-            switch(e.key.toLowerCase()) {
-                case 'b': // Bold
-                case 'i': // Italic  
-                case 'u': // Underline
-                    setTimeout(() => updateToolbarButtons(), 50);
-                    break;
-            }
-        }
-    });
-    
-    // Enhanced keyup event for all keyboard interactions
-    cell.addEventListener('keyup', function(e) {
-        const shouldUpdate = [
-            'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
-            'PageUp', 'PageDown', 'Delete', 'Backspace', 'Enter',
-        ].includes(e.key) || 
-        (e.ctrlKey || e.metaKey) ||
-        (e.key.length === 1);
-        
-        if (shouldUpdate) {
-            setTimeout(() => updateToolbarButtons(), 10);
-        }
-    });
-    
-    // Mouse interactions
-    cell.addEventListener('mouseup', function() {
-        setTimeout(() => updateToolbarButtons(), 10);
-    });
-    
-    // Listen for any DOM mutations that might affect formatting
-    const observer = new MutationObserver(function(mutations) {
-        let shouldUpdate = false;
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' || 
-                (mutation.type === 'attributes' && ['style', 'class'].includes(mutation.attributeName))) {
-                shouldUpdate = true;
+            });
+            
+            // Auto-resize textareas
+            if (cell.tagName === 'TEXTAREA') {
+                cell.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+                
+                // Initial resize
+                cell.style.height = 'auto';
+                cell.style.height = cell.scrollHeight + 'px';
             }
         });
         
-        if (shouldUpdate && currentEditableElement === cell) {
-            setTimeout(() => updateToolbarButtons(), 10);
-        }
-    });
-    
-    observer.observe(cell, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['style', 'class']
-    });
-});
-
-// Listen for selection changes at document level
-document.addEventListener('selectionchange', function() {
-    if (currentEditableElement && document.activeElement === currentEditableElement) {
-        updateToolbarButtons();
-    }
-});
-
-// Prevent toolbar from hiding when clicking on it
-if (formattingToolbar) {
-    formattingToolbar.addEventListener('mousedown', function(e) {
-        e.preventDefault(); // Prevents focus loss from editable cell
-    });
-    
-    formattingToolbar.addEventListener('click', function(e) {
-        // Keep focus on the editable cell after toolbar interaction
-        if (currentEditableElement) {
-            currentEditableElement.focus();
-        }
-    });
-}
-
-function showFormattingToolbar() {
-    if (!isEditingCell) return;
-    // console.log('show');
-    boldBtn.style.display = 'block';  
-    italicBtn.style.display = 'block';  
-    underlineBtn.style.display = 'block';  
-    ulBtn.style.display = 'block';  
-    olBtn.style.display = 'block';  
-    
-    // formattingToolbar.classList.add('active');
-    updateToolbarButtons();
-}
-
-function hideFormattingToolbar() {
-    if (isEditingCell) return;
-    // console.log('hide');
-    boldBtn.style.display = 'none';  
-    italicBtn.style.display = 'none';  
-    underlineBtn.style.display = 'none';  
-    ulBtn.style.display = 'none';  
-    olBtn.style.display = 'none';  
-}
-// Click outside handler to hide toolbar
-document.addEventListener('click', function(e) {
-    // Check if click is outside all editable cells and the toolbar
-    const isOutsideEditable = !Array.from(editableCells).some(cell => cell.contains(e.target));
-    const isOutsideToolbar = !formattingToolbar || !formattingToolbar.contains(e.target);
-    
-    if (isOutsideEditable && isOutsideToolbar) {
-        isEditingCell = false;
-        hideFormattingToolbar();
-    }
-});
-
-
-
-function updateToolbarButtons() {
-    if (!currentEditableElement || !isEditingCell) return;
-    
-    // Get buttons by ID
-    
-    setTimeout(() => {
-        try {
-            let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
-            
-            try {
-                isBold = document.queryCommandState('bold');
-                isItalic = document.queryCommandState('italic');
-                isUnderline = document.queryCommandState('underline');
-                isUL = document.queryCommandState('insertUnorderedList');
-                isOL = document.queryCommandState('insertOrderedList');
-            } catch (e) {
-                const result = getFormattingFromDOM();
-                isBold = result.isBold;
-                isItalic = result.isItalic;
-                isUnderline = result.isUnderline;
-                isUL = result.isUL;
-                isOL = result.isOL;
-            }
-            
-            // Update button states
-            if (boldBtn) boldBtn.classList.toggle('active', isBold);
-            if (italicBtn) italicBtn.classList.toggle('active', isItalic);
-            if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
-            if (ulBtn) ulBtn.classList.toggle('active', isUL);
-            if (olBtn) olBtn.classList.toggle('active', isOL);
-            
-        } catch (error) {
-            console.log('Error updating toolbar buttons:', error);
-        }
-    }, 10);
-}
-
-// Fallback method to determine formatting by inspecting the DOM
-function getFormattingFromDOM() {
-    const selection = window.getSelection();
-    let element = null;
-    
-    if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        element = range.commonAncestorContainer;
-        
-        if (element.nodeType === Node.TEXT_NODE) {
-            element = element.parentElement;
-        }
-    } else {
-        element = currentEditableElement;
-    }
-    
-    if (!element) {
-        return { isBold: false, isItalic: false, isUnderline: false, isUL: false, isOL: false };
-    }
-    
-    let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
-    let current = element;
-    
-    while (current && current !== currentEditableElement && current !== document.body) {
-        const tagName = current.tagName ? current.tagName.toUpperCase() : '';
-        const style = window.getComputedStyle ? window.getComputedStyle(current) : current.style;
-        
-        if (!isBold && (tagName === 'B' || tagName === 'STRONG' || 
-            (style && (style.fontWeight === 'bold' || parseInt(style.fontWeight) >= 700)))) {
-            isBold = true;
+        function saveCell(element) {
+            const week = element.getAttribute('data-week');
+            const field = element.getAttribute('data-field');
+            const value = element.innerHTML;
+            // Send AJAX request to save data  
+            saveContent(week,field,value);
         }
         
-        if (!isItalic && (tagName === 'I' || tagName === 'EM' || 
-            (style && style.fontStyle === 'italic'))) {
-            isItalic = true;
+        function showSaveStatus() {
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 2000);
         }
-        
-        if (!isUnderline && (tagName === 'U' || 
-            (style && style.textDecoration && style.textDecoration.includes('underline')))) {
-            isUnderline = true;
+
+        function showErrorStatus(message) {
+            const status = document.getElementById('errorStatus');
+            status.textContent = `Erreur: ${message}`;
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
         }
-        
-        if (!isUL && tagName === 'UL') isUL = true;
-        if (!isOL && tagName === 'OL') isOL = true;
-        
-        current = current.parentElement;
-    }
-    
-    return { isBold, isItalic, isUnderline, isUL, isOL };
-}
 
+        // Sauvegarder le contenu
+        function saveContent(week,field,content) {
+            //const content = 'doit';
+            const formData = new FormData();
 
+            updateAutoSaveStatus('saving', 'Sauvegarde manuelle...');
 
-function updateToolbarButtonsFallback() {
-    if (!currentEditableElement) return;
-    
-    const selection = window.getSelection();
-    if (selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    let element = range.commonAncestorContainer;
-    
-    // If the common ancestor is a text node, get its parent element
-    if (element.nodeType === Node.TEXT_NODE) {
-        element = element.parentElement;
-    }
-    
-    // Get buttons by ID
-    const boldBtn = document.getElementById('boldBtn');
-    const italicBtn = document.getElementById('italicBtn');
-    const underlineBtn = document.getElementById('underlineBtn');
-    const ulBtn = document.getElementById('ulBtn');
-    const olBtn = document.getElementById('olBtn');
-    
-    // Check if cursor/selection is within formatted elements
-    const isBold = isWithinTag(element, ['B', 'STRONG']);
-    const isItalic = isWithinTag(element, ['I', 'EM']);
-    const isUnderline = isWithinTag(element, ['U']);
-    const isInUL = isWithinTag(element, ['UL']);
-    const isInOL = isWithinTag(element, ['OL']);
-    
-    // Update button states
-    if (boldBtn) boldBtn.classList.toggle('active', isBold);
-    if (italicBtn) italicBtn.classList.toggle('active', isItalic);
-    if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
-    if (ulBtn) ulBtn.classList.toggle('active', isInUL);
-    if (olBtn) olBtn.classList.toggle('active', isInOL);
-}
-
-// Enhanced formatting functions
-function formatText(command) {
-    if (currentEditableElement && isEditingCell) {
-        currentEditableElement.focus();
-        document.execCommand(command, false, null);
-        scheduleAutoSave(currentEditableElement);
-        
-        setTimeout(() => updateToolbarButtons(), 10);
-        setTimeout(() => updateToolbarButtons(), 50);
-        setTimeout(() => updateToolbarButtons(), 100);
-    }
-}
-
-
-function insertList(listType) {
-    if (currentEditableElement && isEditingCell) {
-        currentEditableElement.focus();
-        if (listType === 'ul') {
-            document.execCommand('insertUnorderedList', false, null);
-        } else if (listType === 'ol') {
-            document.execCommand('insertOrderedList', false, null);
-        }
-        scheduleAutoSave(currentEditableElement);
-        
-        setTimeout(() => updateToolbarButtons(), 10);
-        setTimeout(() => updateToolbarButtons(), 50);
-        setTimeout(() => updateToolbarButtons(), 100);
-    }
-}
-
-function isWithinTag(element, tagNames) {
-    let current = element;
-    
-    while (current && current !== currentEditableElement) {
-        if (tagNames.includes(current.tagName)) {
-            return true;
-        }
-        current = current.parentElement;
-    }
-    
-    return false;
-}
-
-
-function sanitizeHTML(html) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = html;
-    
-    // More permissive allowed tags
-    const allowedTags = [
-        'b', 'strong', 'i', 'em', 'u', 'br', 'p', 'ul', 'ol', 'li', 
-        'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-        'a', 'img', 'table', 'tr', 'td', 'th', 'tbody', 'thead',
-        'blockquote', 'pre', 'code', 'hr', 'small', 'sub', 'sup',
-        'del', 'ins', 'mark', 'abbr', 'cite', 'q', 'style'
-    ];
-    
-    // More permissive allowed attributes
-    const allowedAttributes = [
-        'style', 'class', 'id', 'href', 'src', 'alt', 'title',
-        'width', 'height', 'target', 'rel', 'data-*'
-    ];
-
-    // Validate CSS content in style tags (basic validation)
-    const isValidCSS = (css) => {
-        // Very permissive CSS validation - allows your specific patterns
-        const dangerousPatterns = [
-            /javascript:/i,
-            /expression\s*\(/i,
-            /url\s*\(\s*["']?\s*javascript:/i,
-            /@import/i
-        ];
-        return !dangerousPatterns.some(pattern => pattern.test(css));
-    };
-
-    const allElements = tempDiv.getElementsByTagName('*');
-    for (let i = allElements.length - 1; i >= 0; i--) {
-        const element = allElements[i];
-        
-        if (!allowedTags.includes(element.tagName.toLowerCase())) {
-            // Instead of removing completely, unwrap the element (keep content)
-            element.outerHTML = element.innerHTML;
-        } else {
-            // Special handling for style tags
-            if (element.tagName.toLowerCase() === 'style') {
-                if (!isValidCSS(element.textContent)) {
-                    element.remove();
-                    continue;
+            formData.append('week', week);
+            formData.append('field', field);
+            formData.append('content', content);
+            formData.append('auto_save', 1);
+            // console.log('Full href:', window.location.href);
+            // console.log('Pathname only:', window.location.pathname);
+            // console.log('Search params:', window.location.search);
+            // console.log('Hash:', window.location.hash);
+            //post('Modules.php?modname=scheduling/Planification.php',{content});
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    lastSavedContent = content;
+                    hasUnsavedChanges = false;
+                    const now = new Date().toLocaleTimeString('fr-FR');
+                    updateAutoSaveStatus('saved', `à ${now}`);
+                } else {
+                    throw new Error('Network response was not ok');
                 }
-            }
-            
-            const attributes = Array.from(element.attributes);
-            attributes.forEach(attr => {
-                const attrName = attr.name.toLowerCase();
-                const isAllowed = allowedAttributes.some(allowed => {
-                    if (allowed.endsWith('*')) {
-                        return attrName.startsWith(allowed.slice(0, -1));
-                    }
-                    return allowed === attrName;
-                });
-                
-                // Special validation for style attributes
-                if (attrName === 'style' && isAllowed) {
-                    if (!isValidCSS(attr.value)) {
-                        element.removeAttribute(attr.name);
-                    }
-                } else if (!isAllowed) {
-                    element.removeAttribute(attr.name);
-                }
+            })
+            .catch(error => {
+                console.error('Manual save error:', error);
+                updateAutoSaveStatus('error', 'Erreur de sauvegarde manuelle');
             });
         }
-    }
-    
-    return tempDiv.innerHTML;
-}
 
-function scheduleAutoSave(element) {
-    hasUnsavedChanges = true;
-    updateAutoSaveStatus('saving', '');
-    // saveCell(element);
-    if (autoSaveTimeout) {
-        clearTimeout(autoSaveTimeout);
-    }
-    
-    autoSaveTimeout = setTimeout(() => {
-        saveCell(element);
-    }, AUTO_SAVE_DELAY);
-}
+        // Delete file
+        function deleteFile(delete_file) {
+            const formData = new FormData();
+            // console.log('File :', delete_file);
+            post('Modules.php?modname=scheduling/Planification.php',{delete_file});
+        }
 
-// Enhanced formatting functions that ensure toolbar updates
-function formatText(command) {
-    if (currentEditableElement) {
-        currentEditableElement.focus();
-        document.execCommand(command, false, null);
-        scheduleAutoSave(currentEditableElement);
+        function updateAutoSaveStatus(status, message) {
+            autoSaveStatus.className = `auto-save-status ${status}`;
+            autoSaveText.textContent = message;
+        }
         
-        // Multiple updates with different delays to catch all scenarios
-        setTimeout(() => updateToolbarButtons(), 10);
-        setTimeout(() => updateToolbarButtons(), 50);
-        setTimeout(() => updateToolbarButtons(), 100);
-    }
-}
+        function post(path, params, method='post') {
+            // The rest of this code assumes you are not using a library.
+            // It can be made less verbose if you use one.
+            const form = document.createElement('form');
+            form.method = method;
+            form.action = path;
 
-function insertList(listType) {
-    if (currentEditableElement) {
-        currentEditableElement.focus();
-        if (listType === 'ul') {
-            document.execCommand('insertUnorderedList', false, null);
-        } else if (listType === 'ol') {
-            document.execCommand('insertOrderedList', false, null);
+            for (const key in params) {
+                if (params.hasOwnProperty(key)) {
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = key;
+                hiddenField.value = params[key];
+                form.appendChild(hiddenField);
+                }
+            }
+            document.body.appendChild(form);
+            form.submit();
         }
-        scheduleAutoSave(currentEditableElement);
-        
-        // Update toolbar buttons after applying formatting
-        setTimeout(() => updateToolbarButtons(), 10);
-    }
-}
-
-document.addEventListener('keydown', function(e) {
-    // Only process if we're in an editable cell
-    if (!currentEditableElement || !currentEditableElement.contains(document.activeElement) && 
-        document.activeElement !== currentEditableElement) {
-        return;
-    }
-    
-    // Handle Ctrl/Cmd + formatting shortcuts
-    if (e.ctrlKey || e.metaKey) {
-        switch(e.key.toLowerCase()) {
-            case 'b':
-            case 'i':
-            case 'u':
-                // Let the browser handle the formatting, then update our toolbar
-                setTimeout(() => updateToolbarButtons(), 10);
-                setTimeout(() => updateToolbarButtons(), 50);
-                break;
+        if(document.readyState === 'complete') {
+            post('Modules.php?modname=scheduling/Planification.php','auto_save');
         }
-    }
-});
-
-function saveCell(element) {
-    const week = element.getAttribute('data-week');
-    const field = element.getAttribute('data-field');
-    const value = element.innerHTML;
-    saveContent(week, field, value);
-}
-
-function showErrorStatus(message) {
-    const status = document.getElementById('errorStatus');
-    status.textContent = `Erreur: ${message}`;
-    status.style.display = 'block';
-    setTimeout(() => {
-        status.style.display = 'none';
-    }, 3000);
-}
-
-// Save content function
-function saveContent(week, field, content) {
-    const formData = new FormData();
-    
-    formData.append('week', week);
-    formData.append('field', field);
-    formData.append('content', content);
-    formData.append('auto_save', 1);
-
-    
-    fetch(window.location.href, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            hasUnsavedChanges = false;
-            const now = new Date().toLocaleTimeString('fr-FR');
-            updateAutoSaveStatus('saved', `-  ${now}`);
-        } else {
-            throw new Error('Network response was not ok');
+        function showUploading() {
+            document.getElementById('upload-status').style.display = 'block';
         }
-    })
-    .catch(error => {
-        console.error('Save error:', error);
-        updateAutoSaveStatus('error', 'Erreur de sauvegarde');
-    });
-}
-
-// Delete file function
-function deleteFile(delete_file) {
-    const formData = new FormData();
-    post('Modules.php?modname=scheduling/Planification.php', {delete_file});
-}
-
-function updateAutoSaveStatus(status, message) {
-    if (autoSaveStatus && autoSaveText) {
-        autoSaveStatus.className = `auto-save-status ${status}`;
-        autoSaveText.textContent = message;
-        
-        // Make sure auto-save status is visible when there's activity
-        if (status === 'saving' || status === 'saved' || status === 'error') {
-            autoSaveStatus.style.display = 'flex';
-        }
-    }
-}
-
-
-function post(path, params, method = 'post') {
-    const form = document.createElement('form');
-    form.method = method;
-    form.action = path;
-
-    for (const key in params) {
-        if (params.hasOwnProperty(key)) {
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = key;
-            hiddenField.value = params[key];
-            form.appendChild(hiddenField);
-        }
-    }
-    document.body.appendChild(form);
-    form.submit();
-}
-
-function showUploading() {
-    document.getElementById('upload-status').style.display = 'block';
-}
 </script>
 <?php
 if(! $_REQUEST['_openSIS_PDF'])
