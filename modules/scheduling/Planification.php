@@ -148,7 +148,7 @@ if ($_POST && isset($_POST['delete_file'])){
 }
 
 // Save content
-if ($_POST && isset($_POST['auto_save']) && $_POST['week'] && $_POST['field'] &&  $_POST['content'] ) {
+if ($_POST && isset($_POST['auto_save'])) {
     $week = $_POST['week'];
     $field = $_POST['field'];
     $content = $_POST['content']; 
