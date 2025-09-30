@@ -1621,26 +1621,43 @@ function do_cado_courses_files(){
              updateToolbarButtons();
         });
         document.addEventListener('keydown', function(e) {
-            
-            // // Only process if we're in an editable cell
-            if (!currentEditableElement || !currentEditableElement.contains(document.activeElement) && 
-                document.activeElement !== currentEditableElement) {
-                return;
-            }
-            updateToolbarButtons();            
-            // Handle Ctrl/Cmd + formatting shortcuts
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key.toLowerCase()) {
-                    case 'b':
-                    case 'i':
-                    case 'u':
-                        // Let the browser handle the formatting, then update our toolbar
-                        setTimeout(() => updateToolbarButtons(), 10);
-                        setTimeout(() => updateToolbarButtons(), 50);
-                        break;
-                }
-            }
-        });
+                    
+                    // Only process if we're in an editable cell
+                    if (!currentEditableElement || !currentEditableElement.contains(document.activeElement) && 
+                        document.activeElement !== currentEditableElement) {
+                        return;
+                    }
+                    
+                    // Handle Ctrl/Cmd + formatting shortcuts
+                    if (e.ctrlKey || e.metaKey) {
+                        let command = null;
+                        switch(e.key.toLowerCase()) {
+                            case 'b':
+                                command = 'bold';
+                                break;
+                            case 'i':
+                                command = 'italic';
+                                break;
+                            case 'u':
+                                command = 'underline';
+                                break;
+                        }
+                        
+                        if (command) {
+                            e.preventDefault(); // Prevent default browser behavior
+                            document.execCommand(command, false, null);
+                            scheduleAutoSave(currentEditableElement);
+                            
+                            // Update toolbar buttons after command execution
+                            setTimeout(() => updateToolbarButtons(), 10);
+                            setTimeout(() => updateToolbarButtons(), 50);
+                            setTimeout(() => updateToolbarButtons(), 100);
+                        }
+                    }
+                    
+                    // Always update toolbar on any key press (for arrow keys, etc.)
+                    setTimeout(() => updateToolbarButtons(), 10);
+                });
 
 </script>
 <?php
