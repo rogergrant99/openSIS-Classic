@@ -148,7 +148,7 @@ if ($_POST && isset($_POST['delete_file'])){
 }
 
 // Save content
-if ($_POST && isset($_POST['content'])) {
+if ($_POST && isset($_POST['auto_save']) && $_POST['week'] && $_POST['field'] &&  $_POST['content'] ) {
     $week = $_POST['week'];
     $field = $_POST['field'];
     $content = $_POST['content']; 
@@ -1832,6 +1832,8 @@ function saveContent(week, field, content) {
     formData.append('week', week);
     formData.append('field', field);
     formData.append('content', content);
+    formData.append('auto_save', 1);
+
     
     fetch(window.location.href, {
         method: 'POST',
