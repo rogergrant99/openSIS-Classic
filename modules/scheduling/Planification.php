@@ -6,8 +6,12 @@ DrawBC("" . _scheduling . " > " . ProgramTitle());
 
 global $course_period_id,$course_id;
 
+$user_course = UserCourse();
+if( $_REQUEST['print_admin']){
+    $user_course = $_REQUEST['marking_period_id'];
+}
 // Admin only sees completion statue
-if (User('PROFILE') == 'admin'){
+if (User('PROFILE') == 'admin' && !$_REQUEST['print_admin']){
     check_all_planif();
     exit;
 }
@@ -66,9 +70,9 @@ if(!$course_id && User('PROFILE') != 'teacher'){
 }
 
 // Set teacher course
-if (User('PROFILE') == 'teacher'){
-    if(!UserCourse()) return;
-    $course_RET = DBGet(DBQuery('SELECT course_id,grade_level,teacher_id FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . UserCourse() . ''));
+if (User('PROFILE') == 'teacher' ||  $_REQUEST['print_admin'] ){
+    if(!$user_course) return;
+    $course_RET = DBGet(DBQuery('SELECT course_id,grade_level,teacher_id FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . $user_course . ''));
     if($course_RET[1]['GRADE_LEVEL'] >= '1' && $course_RET[1]['GRADE_LEVEL'] <= '7'){
         $primaire=$course_RET[1]['GRADE_LEVEL'];
         // $teacher_id=$course_RET[1]['TEACHER_ID'];
@@ -76,7 +80,7 @@ if (User('PROFILE') == 'teacher'){
         $course_id=0;
     }else{
         $primaire=0;
-        $course_id=$temp_course_id=UserCourse();
+        $course_id=$temp_course_id=$user_course;
     }
 }
 
@@ -98,7 +102,7 @@ if(! $_REQUEST['_openSIS_PDF'] && ! $primaire){
 
 // Teacher  or student
 if (User('PROFILE') == 'teacher'){
-    $course_id = UserCourse();
+    $course_id = $user_course;
     $editable='true';
 }
 else{
@@ -534,8 +538,29 @@ function formatTeacherHeader($fullName) {
  * @return string Formatted HTML
  */
 function formatCourseDisplay($course) {
-    $html = '<div class="course-item text-center">';
-    $html .= '<u>' . htmlspecialchars($course['SHORT_NAME'], ENT_QUOTES, 'UTF-8') . '</u>';
+    $one_day = 24 * 60 * 60;
+    $start_time_cur = strtotime(dateFr('Y-m-d'));
+    while (dateFr('N', $start_time_cur) != 1) {
+        $start_time_cur = $start_time_cur - $one_day;
+    }
+    $start = $_REQUEST['week_range'] = date('Y-m-d', $start_time_cur);
+    
+    $html = '<script>
+    function handleCourseClick(courseId, coursePeriodId, teacherId, weekDate) {
+        console.log(\'Course clicked:\', {
+            courseId: courseId,
+            coursePeriodId: coursePeriodId,
+            teacherId: teacherId,
+            weekDate: weekDate
+        });
+        window.open(\'ForExport.php?modname=scheduling/Planification.php&modfunc=print&marking_period_id=\' + courseId + \'&week_range=\' + weekDate + \'&print_admin=true&_openSIS_PDF=true&report=true\', \'_blank\');
+    }</script><div class="course-item text-center">';
+    
+    // Display course title (non-clickable)
+    $html .= '<span style="color: #333;">'
+        . htmlspecialchars($course['SHORT_NAME'], ENT_QUOTES, 'UTF-8')
+        . '</span>';
+    
     $html .= '<div style="font-size: 12px;">';
     
     // Get current week and next week timestamps
@@ -545,19 +570,38 @@ function formatCourseDisplay($course) {
     $currentWeekMissing = check_planif($course['COURSE_ID'], $timeData['current_week']);
     $nextWeekMissing = check_planif($course['COURSE_ID'], $timeData['next_week']);
     
-    // Display current week status
-    $html .= '<br>' . getPlanningStatusIcon($currentWeekMissing);
-    $html .= htmlspecialchars(dateFr('d-M', $timeData['current_week']), ENT_QUOTES, 'UTF-8');
+    // Format dates for display and use
+    $currentWeekDate = date('Y-m-d', $timeData['current_week']);
+    $nextWeekDate = date('Y-m-d', $timeData['next_week']);
+    $currentWeekDisplay = dateFr('d-M', $timeData['current_week']);
+    $nextWeekDisplay = dateFr('d-M', $timeData['next_week']);
     
-    // Display next week status
+    // Display current week status with clickable date
+    $html .= '<br>' . getPlanningStatusIcon($currentWeekMissing);
+    $html .= '<a href="javascript:void(0);" onclick="handleCourseClick('
+        . intval($course['COURSE_ID']) . ', '
+        . intval($course['COURSE_PERIOD_ID']) . ', '
+        . intval($course['STAFF_ID']) . ', '
+        . '\'' . $currentWeekDate . '\'' . ')" '
+        . 'style="text-decoration: underline; color: #007bff; cursor: pointer;">'
+        . htmlspecialchars($currentWeekDisplay, ENT_QUOTES, 'UTF-8')
+        . '</a>';
+    
+    // Display next week status with clickable date
     $html .= '<br>' . getPlanningStatusIcon($nextWeekMissing);
-    $html .= htmlspecialchars(dateFr('d-M', $timeData['next_week']), ENT_QUOTES, 'UTF-8');
+    $html .= '<a href="javascript:void(0);" onclick="handleCourseClick('
+        . intval($course['COURSE_ID']) . ', '
+        . intval($course['COURSE_PERIOD_ID']) . ', '
+        . intval($course['STAFF_ID']) . ', '
+        . '\'' . $nextWeekDate . '\'' . ')" '
+        . 'style="text-decoration: underline; color: #007bff; cursor: pointer;">'
+        . htmlspecialchars($nextWeekDisplay, ENT_QUOTES, 'UTF-8')
+        . '</a>';
     
     $html .= '</div></div>';
     
     return $html;
 }
-
 /**
  * Get timestamps for current week (Monday) and next week (Monday)
  * @return array Timestamps for current and next week
@@ -1300,7 +1344,7 @@ let hasUnsavedChanges = false;
 let currentEditableElement = null;
 let isEditingCell = false; // Track editing state
 
-const AUTO_SAVE_DELAY = 1000; // 1 second after user stops typing
+const AUTO_SAVE_DELAY = 100; // 1 second after user stops typing
 
 // Enhanced event listeners for editable cells
 editableCells.forEach(cell => {
@@ -1705,7 +1749,7 @@ function sanitizeHTML(html) {
 function scheduleAutoSave(element) {
     hasUnsavedChanges = true;
     updateAutoSaveStatus('saving', '');
-    
+    // saveCell(element);
     if (autoSaveTimeout) {
         clearTimeout(autoSaveTimeout);
     }
