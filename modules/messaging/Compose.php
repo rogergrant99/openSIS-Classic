@@ -82,13 +82,28 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     echo '<div class="input-group">';
     if (isset($_REQUEST['modto']) && $_REQUEST['m'] == 'reply') {
         $to_user = $_REQUEST['modto'];
+        //print_r($_REQUEST);
         $name =  base64_decode($_REQUEST['fullname']);
-        $mail_subject = base64_decode($_REQUEST['sub']);
+        // $mail_subject = base64_decode($_REQUEST['sub']);
+        // Query to get the original message date
+        $mail_id = $_REQUEST['mail_id']; // Make sure this is passed in the URL
+        $date_query = DBGet(DBQuery('SELECT mail_datetime as formatted_date , mail_Subject FROM msg_inbox WHERE mail_id=' . $mail_id . ''));
+         print_r($date_query);
+        $mail_subject = $date_query[1]['MAIL_SUBJECT'];
+        $message_date = convertUTCtoEST($date_query[1]['FORMATTED_DATE']) ;
         $content = '<br><br><br><hr></hr>';
+        $content .= '<blockquote style="border-left: 3px solid #ccc; margin-left: 0; padding-left: 15px; color: #666;">';
+        $content .= '<p style="font-size: 12px; color: #999; margin-bottom: 10px;">';
+        $content .= 'Le ' . $message_date . ', ' . htmlspecialchars(str_replace('+', ' ', $name)) . ' a écrit:</p>';
         $content .= base64_decode(base64_decode($_REQUEST['msgbody']));
+        $content .= '</blockquote>';
         $temp=$mail_subject ;
-        $mail_subject = 'RE: ';
-        $mail_subject .=$temp;
+        // Only add RE: if it doesn't already start with RE:
+        if (stripos($mail_subject, 'RE: ') !== 0) {
+            $mail_subject = 'RE: ' . $temp;
+        } else {
+            $mail_subject = $temp;
+        }
         $hidden='hidden';
         // // echo '<script>window.location="Modules.php?modname=messaging/Compose.php"</script>';
         // return false;
@@ -382,6 +397,13 @@ if ($_REQUEST['modfunc'] == 'choose_course') {
 }
 echo "</form>";
 echo "</div>"; //.panel
+
+function convertUTCtoEST($utc_datetime) {
+    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
+    $date->setTimezone(new DateTimeZone('America/New_York'));
+    return $date->format('d M - H:i:s');
+}
+
 
 function wysisyg_editor(){
     echo '<head>';

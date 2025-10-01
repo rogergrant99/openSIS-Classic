@@ -86,7 +86,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo "<table width='100%' style='width:650px'>
                <tr>
                <td align='left'><b>"._from.":</b> " . GetNameFromUserName($v['FROM_USER']) . "</td>
-               <td align='right'><b>"._dateTime.":</b> " . $v['MAIL_DATETIME'] .
+               <td align='right'><b>"._dateTime.":</b> " . convertUTCtoEST($v['MAIL_DATETIME']) .
         "</tr>";
         if ($v['TO_CC_MULTIPLE'] != '') {
             echo "<tr>

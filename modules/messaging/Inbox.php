@@ -485,7 +485,7 @@ if (isset($_REQUEST['modfunc']) && $_REQUEST['modfunc'] == 'body') {
         echo '<div class="media-body">';
         echo '<div class="pull-right"><div class="input-group-btn">';
         echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . convertUTCtoEST($v['MAIL_DATETIME']) . '</a>';
-        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&msgbody=' .   base64_encode(base64_encode($msg)) . '&m=reply&sub=' . base64_encode($sub) . '&fullname=' . base64_encode($name) . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
+        echo '<a href="Modules.php?modname=messaging/Compose.php&modto=' . $fromUser . '&msgbody=' .   base64_encode(base64_encode($msg)) . '&m=reply&sub=' . base64_encode($sub) . '&mail_id=' . $mail_id . '&fullname=' . base64_encode($name) . '" class="btn btn-primary btn-icon" data-toggle="tooltip" data-original-title="Reply"><i class="icon-undo2"></i></a>';
         echo '</div></div>';
         //echo '<i class="icon-calendar3"></i> '.$v['MAIL_DATETIME'].' <a href="" class="btn btn-default btn-xs btn-icon"><i class="icon-undo2"></i></a>';
         echo '<h6 class="media-heading text-bold">' . GetNameFromUserName($v['FROM_USER']) . '</h6>';

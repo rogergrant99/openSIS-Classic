@@ -77,7 +77,7 @@ echo $to_user;
         echo '<div class="media-left"><img class="img-circle" src="assets/images/placeholder.jpg" alt="" /></div>';
         echo '<div class="media-body">';
         echo '<div class="pull-right"><div class="input-group-btn">';
-        echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . $v['MAIL_DATETIME'] . '</a>';
+        echo '<a href="javascript:void(0);" class="btn btn-default btn-xs" disabled="disabled"><i class="icon-calendar3"></i> ' . convertUTCtoEST($v['MAIL_DATETIME']) . '</a>';
         echo '</div></div>';
 
         echo '<h6 class="media-heading text-bold">' . GetNameFromUserName($v['FROM_USER']) . '</h6>';
