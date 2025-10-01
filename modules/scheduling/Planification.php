@@ -25,7 +25,9 @@ if ($_REQUEST && isset($_REQUEST['week_range'])){
     $week1_sec = strtotime($_REQUEST['week_range']);
     $temp_course_id =  $course_id  = $_REQUEST['marking_period_id'];
     $primaire=0;
-    
+    if($course_id)
+        update_days($course_id);
+
 }
 else{
     if (!$_REQUEST['week_range']) {
@@ -50,6 +52,8 @@ if($_REQUEST['id']){
     $grade_level=$course_RET[1]['GRADE_LEVEL'];
     $primaire=0;
     $temp_course_id=$course_id;
+    if($course_id)
+        update_days($course_id);
 }
 
 // Set default course id on initial load
@@ -66,6 +70,8 @@ if(!$course_id && User('PROFILE') != 'teacher'){
     }else{
         $primaire=0;
         $temp_course_id=$course_id;
+        if($course_id)
+            update_days($course_id);
     }
 }
 
@@ -78,9 +84,12 @@ if (User('PROFILE') == 'teacher' ||  $_REQUEST['print_admin'] ){
         // $teacher_id=$course_RET[1]['TEACHER_ID'];
         $temp_course_id=0;
         $course_id=0;
+         update_days($course_id);
     }else{
         $primaire=0;
         $course_id=$temp_course_id=$user_course;
+        if($course_id)
+            update_days($course_id);
     }
 }
 
@@ -261,7 +270,27 @@ function CreateSelect($val, $name, $opt, $cap, $link){
     $html .= "</select>";
     return $html;
 }
+function update_days($course_id){
+        global $mondayClass,$tuesdayClass,$wednesdayClass,$thursdayClass,$fridayClass;
 
+        if(!$course_id){
+            $mondayClass=$tuesdayClass=$wednesdayClass=$thursdayClass=$fridayClass='';
+            return;
+        }
+
+        $days_RET = DBGet(DBQuery('SELECT cpv.days FROM course_details cd JOIN course_period_var cpv WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . $course_id . ' and cpv.course_period_id = cd.course_period_id'));
+        // echo '<pre>'; print_r($days_RET); echo '</pre>';
+        foreach($days_RET  as $key => $days){
+            $result .= $days['DAYS'];
+        }
+        $array = str_split($result);
+        $mondayClass = in_array('M', $array) ? '' : 'hidden-day';
+        $tuesdayClass = in_array('T', $array) ? '' : 'hidden-day';
+        $wednesdayClass = in_array('W', $array) ? '' : 'hidden-day';
+        $thursdayClass = in_array('H', $array) ? '' : 'hidden-day';
+        $fridayClass = in_array('F', $array) ? '' : 'hidden-day';
+
+}
 function _makeWeeks($start, $end, $link){
     $html = '';
     $one_day = 60 * 60 * 24;
@@ -1145,6 +1174,37 @@ function do_cado_courses_files(){
             background: #fdfeffff;
             /* font-weight:bold;             */
         }
+
+        .hidden-day td:not(.day-header) {
+            background-image: 
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(150, 150, 150, 0.3) 10px,
+                    rgba(150, 150, 150, 0.3) 12px
+                ),
+                repeating-linear-gradient(
+                    -45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(150, 150, 150, 0.3) 10px,
+                    rgba(150, 150, 150, 0.3) 12px
+                );
+            background-color: rgba(201, 202, 201, 0.4);
+            opacity: 0.6;
+        }
+        
+        .hidden-day .editable,
+        .hidden-day .editable-student {
+            pointer-events: none;
+        }
+
+        .hidden-day .editable,
+        .hidden-day .editable-student {
+            opacity: 0.5;
+            pointer-events: none;
+        }    
         @media (max-width: 768px) {
             .dl-panel {
                 gap: 6px;
@@ -1210,7 +1270,7 @@ function do_cado_courses_files(){
                 </tr>
         
             <!-- Lundi -->
-            <tr>
+            <tr class="<?php echo $mondayClass; ?>">
                 <td class="day-header">Lundi</td>
                 <td class="content-cell">
                     <div class="editable" 
@@ -1233,7 +1293,7 @@ function do_cado_courses_files(){
             </tr>
             
             <!-- Mardi -->
-            <tr>
+            <tr class="<?php echo $tuesdayClass; ?>">
                 <td class="day-header">Mardi</td>
                 <td class="content-cell">
                     <div class="editable" 
@@ -1256,7 +1316,7 @@ function do_cado_courses_files(){
             </tr>
             
             <!-- Mercredi -->
-            <tr>
+            <tr class="<?php echo $wednesdayClass; ?>">
                 <td class="day-header">Mercredi</td>
                 <td class="content-cell">
                     <div class="editable" 
@@ -1279,7 +1339,7 @@ function do_cado_courses_files(){
             </tr>
             
             <!-- Jeudi -->
-            <tr>
+            <tr class="<?php echo $thursdayClass; ?>">
                 <td class="day-header">Jeudi</td>
                 <td class="content-cell">
                     <div class="editable" 
@@ -1302,7 +1362,7 @@ function do_cado_courses_files(){
             </tr>
             
             <!-- Vendredi -->
-            <tr>
+            <tr class="<?php echo $fridayClass; ?>">
                 <td class="day-header">Vendredi</td>
                 <td class="content-cell">
                     <div class="editable" 
