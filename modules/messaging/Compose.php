@@ -88,7 +88,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         // Query to get the original message date
         $mail_id = $_REQUEST['mail_id']; // Make sure this is passed in the URL
         $date_query = DBGet(DBQuery('SELECT mail_datetime as formatted_date , mail_Subject FROM msg_inbox WHERE mail_id=' . $mail_id . ''));
-         print_r($date_query);
+        // print_r($date_query);
         $mail_subject = $date_query[1]['MAIL_SUBJECT'];
         $message_date = convertUTCtoEST($date_query[1]['FORMATTED_DATE']) ;
         $content = '<br><br><br><hr></hr>';
