@@ -918,6 +918,7 @@ function CadoHTMLcommunication($title,$courses,$results,$grade_id,$student_id){
 
 function CadoHTMLHeader($student_id, $grade_id,$last_mp) {
 
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
     $columns=array();
     $data=array();
     $SCHOOL_RET=DBGet(DBQuery('SELECT * from schools where ID = \''. UserSchool() . '\''));
@@ -993,6 +994,10 @@ function CadoHTMLHeader($student_id, $grade_id,$last_mp) {
     $data['COMMUNICATION_QUARTER']=$QUART_RET[1]['TITLE'];
     $data['COMMUNICATION_STAR_DATE']=$QUART_RET[1]['START_DATE'];
     $data['COMMUNICATION_END_DATE']=$QUART_RET[1]['END_DATE'];
+    if($markingPeriod[1]['SORT_ORDER'] == 255){
+        CadoHTMLHeaderSecondaire(_reportcard_cat1,$column,$data);
+        return;
+    }
     if(strpos($grade_id,'Secondaire'))
         CadoHTMLHeaderSecondaire(_reportcard_cat1,$column,$data);
     else 
