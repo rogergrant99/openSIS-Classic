@@ -1089,7 +1089,12 @@ function do_cado_courses_files(){
             margin: 0.2em 0;
         }
 
-
+        /* Highlight styling */
+        .editable mark,
+        .editable .highlight {
+            background-color: #ffff00;
+            padding: 0 2px;
+        }
         .minus-sign {
             background: #d3192bff;
             color: white;
@@ -1236,6 +1241,7 @@ function do_cado_courses_files(){
                     <button class="format-btn" id="italicBtn" onclick="formatText(\'italic\')">I</button>
                     <button class="format-btn" id="boldBtn" onclick="formatText(\'bold\')">B</button>
                     <button class="format-btn" id="underlineBtn" onclick="formatText(\'underline\')">U</button>
+                    <button class="format-btn" id="highlightBtn" onclick="toggleHighlight()" title="Surligner">🖍</button>
                     <button class="format-btn list-btn" id="ulBtn" onclick="insertList(\'ul\')">• Liste</button>
                     <button class="format-btn list-btn" id="olBtn" onclick="insertList(\'ol\')">1. Liste</button>
                 ';
@@ -1393,6 +1399,7 @@ function do_cado_courses_files(){
         const boldBtn = document.getElementById('boldBtn');
         const italicBtn = document.getElementById('italicBtn');
         const underlineBtn = document.getElementById('underlineBtn');
+        const highlightBtn = document.getElementById('highlightBtn');
         const ulBtn = document.getElementById('ulBtn');
         const olBtn = document.getElementById('olBtn');
 
@@ -1447,23 +1454,21 @@ function do_cado_courses_files(){
         }        
         function showFormattingToolbar() {
             if (!isEditingCell) return;
-            // console.log('show');
             boldBtn.style.display = 'block';  
             italicBtn.style.display = 'block';  
             underlineBtn.style.display = 'block';  
+            highlightBtn.style.display = 'block';  
             ulBtn.style.display = 'block';  
             olBtn.style.display = 'block';  
-            
-            // formattingToolbar.classList.add('active');
             updateToolbarButtons();
         }
 
         function hideFormattingToolbar() {
             if (isEditingCell) return;
-            // console.log('hide');
             boldBtn.style.display = 'none';  
             italicBtn.style.display = 'none';  
             underlineBtn.style.display = 'none';  
+            highlightBtn.style.display = 'none';  
             ulBtn.style.display = 'none';  
             olBtn.style.display = 'none';  
         }
@@ -1489,7 +1494,7 @@ function do_cado_courses_files(){
             
             setTimeout(() => {
                 try {
-                    let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
+                    let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
                     
                     try {
                         isBold = document.queryCommandState('bold');
@@ -1497,6 +1502,10 @@ function do_cado_courses_files(){
                         isUnderline = document.queryCommandState('underline');
                         isUL = document.queryCommandState('insertUnorderedList');
                         isOL = document.queryCommandState('insertOrderedList');
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            isHighlight = isTextHighlighted(selection.getRangeAt(0));
+                        }
                     } catch (e) {
                         const result = getFormattingFromDOM();
                         isBold = result.isBold;
@@ -1510,6 +1519,7 @@ function do_cado_courses_files(){
                     if (boldBtn) boldBtn.classList.toggle('active', isBold);
                     if (italicBtn) italicBtn.classList.toggle('active', isItalic);
                     if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
+                    if (highlightBtn) highlightBtn.classList.toggle('active', isHighlight);
                     if (ulBtn) ulBtn.classList.toggle('active', isUL);
                     if (olBtn) olBtn.classList.toggle('active', isOL);
                     
@@ -1535,10 +1545,10 @@ function do_cado_courses_files(){
             }
             
             if (!element) {
-                return { isBold: false, isItalic: false, isUnderline: false, isUL: false, isOL: false };
+                return { isBold: false, isItalic: false, isUnderline: false, isHighlight: false, isUL: false, isOL: false };
             }
             
-            let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
+            let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
             let current = element;
             
             while (current && current !== currentEditableElement && current !== document.body) {
@@ -1661,6 +1671,92 @@ function do_cado_courses_files(){
             }
             document.body.appendChild(form);
             form.submit();
+        }
+        function toggleHighlight() {
+            if (currentEditableElement && isEditingCell) {
+                currentEditableElement.focus();
+                
+                const selection = window.getSelection();
+                if (!selection.rangeCount) return;
+                
+                const range = selection.getRangeAt(0);
+                
+                // Check if selection is already highlighted
+                const isHighlighted = isTextHighlighted(range);
+                
+                if (isHighlighted) {
+                    // Remove highlight
+                    removeHighlight(range);
+                } else {
+                    // Add highlight
+                    document.execCommand('hiliteColor', false, '#ffff00');
+                }
+                
+                scheduleAutoSave(currentEditableElement);
+                setTimeout(() => updateToolbarButtons(), 10);
+                setTimeout(() => updateToolbarButtons(), 50);
+                setTimeout(() => updateToolbarButtons(), 100);
+            }
+        }
+
+        function isTextHighlighted(range) {
+            let container = range.commonAncestorContainer;
+            if (container.nodeType === Node.TEXT_NODE) {
+                container = container.parentElement;
+            }
+            
+            let current = container;
+            while (current && current !== currentEditableElement) {
+                const bgColor = window.getComputedStyle(current).backgroundColor;
+                const tagName = current.tagName ? current.tagName.toUpperCase() : '';
+                
+                if (tagName === 'MARK' || 
+                    bgColor === 'rgb(255, 255, 0)' || 
+                    bgColor === 'yellow' ||
+                    current.classList.contains('highlight')) {
+                    return true;
+                }
+                current = current.parentElement;
+            }
+            return false;
+        }
+
+        function removeHighlight(range) {
+            const selectedContent = range.extractContents();
+            const span = document.createElement('span');
+            span.appendChild(selectedContent);
+            
+            // Remove background color from all child elements
+            const highlightedElements = span.querySelectorAll('[style*="background"]');
+            highlightedElements.forEach(el => {
+                el.style.backgroundColor = '';
+                if (!el.getAttribute('style')) {
+                    const parent = el.parentNode;
+                    while (el.firstChild) {
+                        parent.insertBefore(el.firstChild, el);
+                    }
+                    parent.removeChild(el);
+                }
+            });
+            
+            // Remove mark tags
+            const markElements = span.querySelectorAll('mark');
+            markElements.forEach(mark => {
+                const parent = mark.parentNode;
+                while (mark.firstChild) {
+                    parent.insertBefore(mark.firstChild, mark);
+                }
+                parent.removeChild(mark);
+            });
+            
+            range.insertNode(span);
+            
+            // Unwrap the span
+            const parent = span.parentNode;
+            while (span.firstChild) {
+                parent.insertBefore(span.firstChild, span);
+            }
+            parent.removeChild(span);
         }
         if(document.readyState === 'complete') {
             post('Modules.php?modname=scheduling/Planification.php','auto_save');
