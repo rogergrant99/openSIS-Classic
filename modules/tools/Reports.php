@@ -44,7 +44,7 @@ if (!$_REQUEST['modfunc']) {
      }
      if(count($courses)){
         if ((!isset($conv_st_date) || !isset($conv_end_date))) {
-            echo '<center><font color="red"><b><h5>Les compétences ont déja été attribués</h5></b></font></center>';
+            echo '<center><font color="red"><b><h5>Les compétences ont déjà été attribuées</h5></b></font></center>';
         }
     }
      else{
