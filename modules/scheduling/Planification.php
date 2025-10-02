@@ -1263,7 +1263,7 @@ function do_cado_courses_files(){
                     <button class="format-btn" id="underlineBtn" onclick="formatText(\'underline\')">U</button>
                     <button class="format-btn" id="highlightBtn" onclick="toggleHighlight()" title="Surligner">🖍</button>
                     <select class="format-btn" id="fontSizeBtn" onchange="changeFontSize(this.value)" title="Taille de police">
-                        <option value="">Taille</option>
+                    <option value="">Taille</option>
                         <option value="1">Très petit</option>
                         <option value="2">Petit</option>
                         <option value="3">Normal</option>
@@ -1519,52 +1519,51 @@ function do_cado_courses_files(){
                 setTimeout(() => updateToolbarButtons(), 100);
             }
         }
-        function updateToolbarButtons() {
-            if (!currentEditableElement || !isEditingCell) return;
+function updateToolbarButtons() {
+    if (!currentEditableElement || !isEditingCell) return;
+    
+    setTimeout(() => {
+        try {
+            let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
             
-            // Get buttons by ID
-            
-            setTimeout(() => {
-                try {
-                    let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
-                    
-                    try {
-                        isBold = document.queryCommandState('bold');
-                        isItalic = document.queryCommandState('italic');
-                        isUnderline = document.queryCommandState('underline');
-                        isUL = document.queryCommandState('insertUnorderedList');
-                        isOL = document.queryCommandState('insertOrderedList');
-                        const selection = window.getSelection();
-                        if (selection.rangeCount > 0) {
-                            isHighlight = isTextHighlighted(selection.getRangeAt(0));
-                        }
-                    } catch (e) {
-                        const result = getFormattingFromDOM();
-                        isBold = result.isBold;
-                        isItalic = result.isItalic;
-                        isUnderline = result.isUnderline;
-                        isUL = result.isUL;
-                        isOL = result.isOL;
-                    }
-                    
-                    // Update button states
-                    if (boldBtn) boldBtn.classList.toggle('active', isBold);
-                    if (italicBtn) italicBtn.classList.toggle('active', isItalic);
-                    if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
-                    if (highlightBtn) highlightBtn.classList.toggle('active', isHighlight);
-                    if (ulBtn) ulBtn.classList.toggle('active', isUL);
-                    if (olBtn) olBtn.classList.toggle('active', isOL);
-                    // Update font size dropdown
-                    if (fontSizeBtn && selection.rangeCount > 0) {
-                        const currentSize = getCurrentFontSize();
-                        fontSizeBtn.value = currentSize || '';
-                    }
-                    
-                } catch (error) {
-                    console.log('Error updating toolbar buttons:', error);
+            try {
+                isBold = document.queryCommandState('bold');
+                isItalic = document.queryCommandState('italic');
+                isUnderline = document.queryCommandState('underline');
+                isUL = document.queryCommandState('insertUnorderedList');
+                isOL = document.queryCommandState('insertOrderedList');
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    isHighlight = isTextHighlighted(selection.getRangeAt(0));
                 }
-            }, 10);
+            } catch (e) {
+                const result = getFormattingFromDOM();
+                isBold = result.isBold;
+                isItalic = result.isItalic;
+                isUnderline = result.isUnderline;
+                isUL = result.isUL;
+                isOL = result.isOL;
+            }
+            
+            // Update button states
+            if (boldBtn) boldBtn.classList.toggle('active', isBold);
+            if (italicBtn) italicBtn.classList.toggle('active', isItalic);
+            if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
+            if (highlightBtn) highlightBtn.classList.toggle('active', isHighlight);
+            if (ulBtn) ulBtn.classList.toggle('active', isUL);
+            if (olBtn) olBtn.classList.toggle('active', isOL);
+            
+            // Update font size dropdown
+            if (fontSizeBtn) {
+                const currentSize = getCurrentFontSize();
+                fontSizeBtn.value = currentSize || '';
+            }
+            
+        } catch (error) {
+            console.log('Error updating toolbar buttons:', error);
         }
+    }, 10);
+}
 
         function getFormattingFromDOM() {
             const selection = window.getSelection();
