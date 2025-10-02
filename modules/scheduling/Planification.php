@@ -161,7 +161,8 @@ if ($_POST && isset($_POST['auto_save'])) {
     $week = $_POST['week'];
     $field = $_POST['field'];
     $content = $_POST['content']; 
-    $content = strip_tags($content, '<b><strong><i><em><u><br><p><ul><ol><li><span><div>');    
+    $allowed_tags = '<b><strong><i><em><u><br><p><ul><ol><li><span><div><font><mark>';
+    $content = strip_tags($content, $allowed_tags);   
     $_SESSION['schedule_data'][$week][$field] = $content;
     if( $week  === 'week1' && $field){
         $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d',$week1_sec) . '\'   and course_id=\'' . $temp_course_id . '\'  and is_primary=\'' . $primaire . '\''));
@@ -1016,6 +1017,25 @@ function do_cado_courses_files(){
         color: white;
         border-color: #0056b3;
     }
+        .format-btn select,
+        #fontSizeBtn {
+            min-width: 80px;
+            padding: 4px 6px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .format-btn select option {
+            padding: 2px;
+        }
+
+        /* Support for different font sizes */
+        .editable font[size="1"] { font-size: 10px; }
+        .editable font[size="2"] { font-size: 13px; }
+        .editable font[size="3"] { font-size: 16px; }
+        .editable font[size="4"] { font-size: 18px; }
+        .editable font[size="5"] { font-size: 24px; }
+        .editable font[size="6"] { font-size: 32px; }
     .formatting-toolbar {
         gap: 4px;
         /* border: 1px solid #dee2e6; */
@@ -1242,6 +1262,15 @@ function do_cado_courses_files(){
                     <button class="format-btn" id="boldBtn" onclick="formatText(\'bold\')">B</button>
                     <button class="format-btn" id="underlineBtn" onclick="formatText(\'underline\')">U</button>
                     <button class="format-btn" id="highlightBtn" onclick="toggleHighlight()" title="Surligner">🖍</button>
+                    <select class="format-btn" id="fontSizeBtn" onchange="changeFontSize(this.value)" title="Taille de police">
+                        <option value="">Taille</option>
+                        <option value="1">Très petit</option>
+                        <option value="2">Petit</option>
+                        <option value="3">Normal</option>
+                        <option value="4">Grand</option>
+                        <option value="5">Très grand</option>
+                        <option value="6">Énorme</option>
+                    </select>
                     <button class="format-btn list-btn" id="ulBtn" onclick="insertList(\'ul\')">• Liste</button>
                     <button class="format-btn list-btn" id="olBtn" onclick="insertList(\'ol\')">1. Liste</button>
                 ';
@@ -1400,6 +1429,7 @@ function do_cado_courses_files(){
         const italicBtn = document.getElementById('italicBtn');
         const underlineBtn = document.getElementById('underlineBtn');
         const highlightBtn = document.getElementById('highlightBtn');
+        const fontSizeBtn = document.getElementById('fontSizeBtn');
         const ulBtn = document.getElementById('ulBtn');
         const olBtn = document.getElementById('olBtn');
 
@@ -1458,6 +1488,7 @@ function do_cado_courses_files(){
             italicBtn.style.display = 'block';  
             underlineBtn.style.display = 'block';  
             highlightBtn.style.display = 'block';  
+            fontSizeBtn.style.display = 'block';
             ulBtn.style.display = 'block';  
             olBtn.style.display = 'block';  
             updateToolbarButtons();
@@ -1469,6 +1500,7 @@ function do_cado_courses_files(){
             italicBtn.style.display = 'none';  
             underlineBtn.style.display = 'none';  
             highlightBtn.style.display = 'none';  
+            fontSizeBtn.style.display = 'none';
             ulBtn.style.display = 'none';  
             olBtn.style.display = 'none';  
         }
@@ -1522,6 +1554,11 @@ function do_cado_courses_files(){
                     if (highlightBtn) highlightBtn.classList.toggle('active', isHighlight);
                     if (ulBtn) ulBtn.classList.toggle('active', isUL);
                     if (olBtn) olBtn.classList.toggle('active', isOL);
+                    // Update font size dropdown
+                    if (fontSizeBtn && selection.rangeCount > 0) {
+                        const currentSize = getCurrentFontSize();
+                        fontSizeBtn.value = currentSize || '';
+                    }
                     
                 } catch (error) {
                     console.log('Error updating toolbar buttons:', error);
@@ -1679,16 +1716,30 @@ function do_cado_courses_files(){
                 const selection = window.getSelection();
                 if (!selection.rangeCount) return;
                 
+                // If no text is selected but cursor is in highlighted text, select the highlighted portion
+                if (selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    const highlightedElement = findHighlightedParent(range.startContainer);
+                    
+                    if (highlightedElement) {
+                        // Select the entire highlighted element
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(highlightedElement);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    } else {
+                        updateToolbarButtons();
+                        return;
+                    }
+                }
+                
                 const range = selection.getRangeAt(0);
                 
                 // Check if selection is already highlighted
-                const isHighlighted = isTextHighlighted(range);
-                
-                if (isHighlighted) {
-                    // Remove highlight
-                    removeHighlight(range);
+                if (isTextHighlighted(range)) {
+                    document.execCommand('hiliteColor', false, 'transparent');
+                    cleanupHighlight(range);
                 } else {
-                    // Add highlight
                     document.execCommand('hiliteColor', false, '#ffff00');
                 }
                 
@@ -1699,6 +1750,26 @@ function do_cado_courses_files(){
             }
         }
 
+        function findHighlightedParent(node) {
+            let current = node;
+            if (current.nodeType === Node.TEXT_NODE) {
+                current = current.parentElement;
+            }
+            
+            while (current && current !== currentEditableElement) {
+                const bgColor = window.getComputedStyle(current).backgroundColor;
+                const tagName = current.tagName ? current.tagName.toUpperCase() : '';
+                
+                if (tagName === 'MARK' || 
+                    bgColor === 'rgb(255, 255, 0)' || 
+                    bgColor === 'yellow' ||
+                    current.classList.contains('highlight')) {
+                    return current;
+                }
+                current = current.parentElement;
+            }
+            return null;
+        }
         function isTextHighlighted(range) {
             let container = range.commonAncestorContainer;
             if (container.nodeType === Node.TEXT_NODE) {
@@ -1758,6 +1829,65 @@ function do_cado_courses_files(){
             }
             parent.removeChild(span);
         }
+        function changeFontSize(size) {
+            document.execCommand('fontSize', false, size);
+            if (!size || !currentEditableElement || !isEditingCell) {
+                if (fontSizeBtn) fontSizeBtn.value = '';
+                return;
+            }
+            
+            currentEditableElement.focus();
+            
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) {
+                if (fontSizeBtn) fontSizeBtn.value = '';
+                return;
+            }
+            
+            // Use the fontSize command with size value
+            document.execCommand('fontSize', false, size);
+            
+            // Reset the dropdown
+            if (fontSizeBtn) fontSizeBtn.value = '';
+            
+            // scheduleAutoSave(currentEditableElement);
+            setTimeout(() => updateToolbarButtons(), 10);
+        }
+        function getCurrentFontSize() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return null;
+            
+            let element = selection.getRangeAt(0).commonAncestorContainer;
+            if (element.nodeType === Node.TEXT_NODE) {
+                element = element.parentElement;
+            }
+            
+            // Check for font tag with size attribute
+            let current = element;
+            while (current && current !== currentEditableElement) {
+                if (current.tagName === 'FONT' && current.hasAttribute('size')) {
+                    return current.getAttribute('size');
+                }
+                
+                // Also check for inline font-size style
+                const fontSize = window.getComputedStyle(current).fontSize;
+                if (fontSize) {
+                    const pxSize = parseInt(fontSize);
+                    // Map pixel sizes to font size numbers (approximate)
+                    if (pxSize <= 10) return '1';
+                    if (pxSize <= 13) return '2';
+                    if (pxSize <= 16) return '3';
+                    if (pxSize <= 18) return '4';
+                    if (pxSize <= 24) return '5';
+                    if (pxSize > 24) return '6';
+                }
+                
+                current = current.parentElement;
+            }
+            
+            return null;
+        }
+
         if(document.readyState === 'complete') {
             post('Modules.php?modname=scheduling/Planification.php','auto_save');
         }
@@ -1783,6 +1913,7 @@ function do_cado_courses_files(){
                         document.activeElement !== currentEditableElement) {
                         return;
                     }
+                    setTimeout(() => updateToolbarButtons(), 10);
                     
                     // Handle Ctrl/Cmd + formatting shortcuts
                     if (e.ctrlKey || e.metaKey) {
@@ -1790,12 +1921,15 @@ function do_cado_courses_files(){
                         switch(e.key.toLowerCase()) {
                             case 'b':
                                 command = 'bold';
+                                updateToolbarButtons();
                                 break;
                             case 'i':
                                 command = 'italic';
+                                updateToolbarButtons();
                                 break;
                             case 'u':
                                 command = 'underline';
+                                updateToolbarButtons();
                                 break;
                         }
                         
