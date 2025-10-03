@@ -405,8 +405,15 @@ function check_all_planif() {
         return;
     }
     
-    // Build display data
-    $displayData = buildTeacherPlanningDisplay($teachers, $courses);
+    // Separate primary/preschool courses from regular courses
+    $separatedCourses = separatePrimaryAndRegularCourses($courses);
+    
+    // Build display data with separated columns
+    $displayData = buildTeacherPlanningDisplayWithPrimaryColumn(
+        $teachers, 
+        $separatedCourses['regular'], 
+        $separatedCourses['primary']
+    );
     
     // Output the results
     $options = ['search' => false];
@@ -420,6 +427,159 @@ function check_all_planif() {
     
     echo '</div>';
 }
+/**
+ * Separate courses into primary/preschool and regular courses
+ * @param array $courses List of all courses
+ * @return array Array with 'primary' and 'regular' keys
+ */
+function separatePrimaryAndRegularCourses($courses) {
+    $primary = [];
+    $regular = [];
+    $primaryGroups = [];
+    
+    foreach ($courses as $course) {
+        $shortName = $course['SHORT_NAME'];
+        $groupKey = determineGroupKey($shortName);
+        
+        if ($groupKey === 'regular') {
+            // Regular course
+            $regular[] = $course;
+        } else {
+            // Primary/Preschool course - group them
+            if (!isset($primaryGroups[$groupKey])) {
+                $groupedCourse = $course;
+                $groupedCourse['SHORT_NAME'] = getGroupDisplayName($groupKey);
+                $groupedCourse['IS_GROUPED'] = true;
+                $groupedCourse['GROUP_KEY'] = $groupKey;
+                $groupedCourse['ORIGINAL_COURSES'] = [$course];
+                $primaryGroups[$groupKey] = $groupedCourse;
+            } else {
+                $primaryGroups[$groupKey]['ORIGINAL_COURSES'][] = $course;
+            }
+        }
+    }
+    
+    // Sort primary groups (PRE, then Prim 1-6)
+    uksort($primaryGroups, function($a, $b) {
+        if ($a === 'pre') return -1;
+        if ($b === 'pre') return 1;
+        return strcmp($a, $b);
+    });
+    
+    return [
+        'primary' => array_values($primaryGroups),
+        'regular' => $regular
+    ];
+}function buildTeacherPlanningDisplayWithPrimaryColumn($teachers, $regularCourses, $primaryCourses) {
+    $staffDisplay = [];
+    $courseDisplay = [];
+    
+    $columnIndex = 0;
+    
+    // First column: Primary/Preschool
+    if (!empty($primaryCourses)) {
+        $columnIndex++;
+        $staffDisplay[$columnIndex] = formatTeacherHeader('Primaire/Préscolaire');
+        
+        $courseIndex = 0;
+        foreach ($primaryCourses as $course) {
+            $courseIndex++;
+            $courseDisplay[$courseIndex][$columnIndex] = formatCourseDisplay($course);
+        }
+    }
+    
+    // Remaining columns: Individual teachers with their regular courses
+    foreach ($teachers as $teacher) {
+        $teacherCourses = getTeacherCourses($teacher, $regularCourses);
+        
+        if (!empty($teacherCourses)) {
+            $columnIndex++;
+            $staffDisplay[$columnIndex] = formatTeacherHeader($teacher['FULL_NAME']);
+            
+            $courseIndex = 0;
+            foreach ($teacherCourses as $course) {
+                $courseIndex++;
+                $courseDisplay[$courseIndex][$columnIndex] = formatCourseDisplay($course);
+            }
+        }
+    }
+    
+    return [
+        'teachers' => $staffDisplay,
+        'courses' => $courseDisplay
+    ];
+}
+
+
+function groupCoursesByType($courses) {
+    $grouped = [];
+    $processedGroups = [];
+    
+    foreach ($courses as $course) {
+        $shortName = $course['SHORT_NAME'];
+        $groupKey = determineGroupKey($shortName);
+        
+        if ($groupKey === 'regular') {
+            // Regular course - add as is
+            $grouped[] = $course;
+        } else {
+            // Group course (PRE or Prim X)
+            if (!isset($processedGroups[$groupKey])) {
+                // First course in this group - create a representative entry
+                $groupedCourse = $course;
+                $groupedCourse['SHORT_NAME'] = getGroupDisplayName($groupKey);
+                $groupedCourse['IS_GROUPED'] = true;
+                $groupedCourse['GROUP_KEY'] = $groupKey;
+                $groupedCourse['ORIGINAL_COURSES'] = [$course];
+                
+                $processedGroups[$groupKey] = count($grouped);
+                $grouped[] = $groupedCourse;
+            } else {
+                // Add to existing group
+                $index = $processedGroups[$groupKey];
+                $grouped[$index]['ORIGINAL_COURSES'][] = $course;
+            }
+        }
+    }
+    
+    return $grouped;
+}
+function determineGroupKey($shortName) {
+    $upperName = strtoupper($shortName);
+    
+    // Check for PRE courses
+    if (strpos($upperName, 'PRE') === 0) {
+        return 'pre';
+    }
+    
+    // Check for Prim courses
+    if (preg_match('/PRIM\s*(\d)/', $upperName, $matches)) {
+        $level = $matches[1];
+        if ($level >= 1 && $level <= 6) {
+            return 'prim' . $level;
+        }
+    }
+    
+    return 'regular';
+}
+
+/**
+ * Get display name for a course group
+ * @param string $groupKey Group key
+ * @return string Display name
+ */
+function getGroupDisplayName($groupKey) {
+    if ($groupKey === 'pre') {
+        return 'Préscolaire (PRE)';
+    }
+    
+    if (preg_match('/prim(\d)/', $groupKey, $matches)) {
+        return 'Primaire ' . $matches[1];
+    }
+    
+    return $groupKey;
+}
+
 
 /**
  * Get all active teachers from the database
@@ -475,9 +635,11 @@ function getCoursesForCurrentPeriod() {
             cp.COURSE_PERIOD_ID,
             cp.SHORT_NAME,
             cp.COURSE_ID,
-            cp.COURSE_WEIGHT as WEIGHT 
+            cp.COURSE_WEIGHT as WEIGHT,
+            cd.GRADE_LEVEL
         FROM staff s
         JOIN course_periods cp ON cp.TEACHER_ID = s.STAFF_ID
+        JOIN course_details cd ON cd.COURSE_ID = cp.COURSE_ID AND cd.SYEAR = cp.SYEAR
         JOIN school_periods sp ON 1=1
         WHERE cp.GRADE_SCALE_ID IS NOT NULL 
             AND cp.MARKING_PERIOD_ID IN (" . GetAllMP($mp_type, $cur_mp) . ")
@@ -490,7 +652,7 @@ function getCoursesForCurrentPeriod() {
     if (!empty($_REQUEST['period'])) {
         $query .= " AND cp.COURSE_PERIOD_ID = '" . $_REQUEST['period'] . "'";
     } else {
-        $query .= " ORDER BY LOWER(cp.SHORT_NAME)";
+        $query .= " ORDER BY cd.GRADE_LEVEL, LOWER(cp.SHORT_NAME)";
     }
     
     return DBGet(DBQuery($query));
@@ -500,6 +662,13 @@ function getCoursesForCurrentPeriod() {
  * Build the display data structure for teachers and their courses
  * @param array $teachers List of teachers
  * @param array $courses List of courses
+ * @return array Display data with teachers and courses
+ */
+/**
+ * Build the display data structure for teachers and their courses
+ * Modified to handle grouped courses
+ * @param array $teachers List of teachers
+ * @param array $courses List of courses (may include grouped courses)
  * @return array Display data with teachers and courses
  */
 function buildTeacherPlanningDisplay($teachers, $courses) {
@@ -577,12 +746,6 @@ function formatCourseDisplay($course) {
     
     $html = '<script>
     function handleCourseClick(courseId, coursePeriodId, teacherId, weekDate) {
-        console.log(\'Course clicked:\', {
-            courseId: courseId,
-            coursePeriodId: coursePeriodId,
-            teacherId: teacherId,
-            weekDate: weekDate
-        });
         window.open(\'ForExport.php?modname=scheduling/Planification.php&modfunc=print&marking_period_id=\' + courseId + \'&week_range=\' + weekDate + \'&print_admin=true&_openSIS_PDF=true&report=true\', \'_blank\');
     }</script><div class="course-item text-center">';
     
@@ -596,9 +759,39 @@ function formatCourseDisplay($course) {
     // Get current week and next week timestamps
     $timeData = getCurrentAndNextWeekTimestamps();
     
-    // Check planning status for both weeks
-    $currentWeekMissing = check_planif($course['COURSE_ID'], $timeData['current_week']);
-    $nextWeekMissing = check_planif($course['COURSE_ID'], $timeData['next_week']);
+    // For grouped courses, check all courses in the group
+    if (!empty($course['IS_GROUPED'])) {
+        $currentWeekMissing = true;
+        $nextWeekMissing = true;
+        
+        // Check if ANY course in the group has planning
+        foreach ($course['ORIGINAL_COURSES'] as $originalCourse) {
+            if (!check_planif($originalCourse['COURSE_ID'], $timeData['current_week'])) {
+                $currentWeekMissing = false;
+                break;
+            }
+        }
+        
+        foreach ($course['ORIGINAL_COURSES'] as $originalCourse) {
+            if (!check_planif($originalCourse['COURSE_ID'], $timeData['next_week'])) {
+                $nextWeekMissing = false;
+                break;
+            }
+        }
+        
+        // Use the first course's ID for the link
+        $displayCourseId = $course['ORIGINAL_COURSES'][0]['COURSE_ID'];
+        $displayCoursePeriodId = $course['ORIGINAL_COURSES'][0]['COURSE_PERIOD_ID'];
+        $displayStaffId = $course['ORIGINAL_COURSES'][0]['STAFF_ID'];
+    } else {
+        // Regular course - check normally
+        $currentWeekMissing = check_planif($course['COURSE_ID'], $timeData['current_week']);
+        $nextWeekMissing = check_planif($course['COURSE_ID'], $timeData['next_week']);
+        
+        $displayCourseId = $course['COURSE_ID'];
+        $displayCoursePeriodId = $course['COURSE_PERIOD_ID'];
+        $displayStaffId = $course['STAFF_ID'];
+    }
     
     // Format dates for display and use
     $currentWeekDate = date('Y-m-d', $timeData['current_week']);
@@ -609,9 +802,9 @@ function formatCourseDisplay($course) {
     // Display current week status with clickable date
     $html .= '<br>' . getPlanningStatusIcon($currentWeekMissing);
     $html .= '<a href="javascript:void(0);" onclick="handleCourseClick('
-        . intval($course['COURSE_ID']) . ', '
-        . intval($course['COURSE_PERIOD_ID']) . ', '
-        . intval($course['STAFF_ID']) . ', '
+        . intval($displayCourseId) . ', '
+        . intval($displayCoursePeriodId) . ', '
+        . intval($displayStaffId) . ', '
         . '\'' . $currentWeekDate . '\'' . ')" '
         . 'style="text-decoration: underline; color: #007bff; cursor: pointer;">'
         . htmlspecialchars($currentWeekDisplay, ENT_QUOTES, 'UTF-8')
@@ -620,9 +813,9 @@ function formatCourseDisplay($course) {
     // Display next week status with clickable date
     $html .= '<br>' . getPlanningStatusIcon($nextWeekMissing);
     $html .= '<a href="javascript:void(0);" onclick="handleCourseClick('
-        . intval($course['COURSE_ID']) . ', '
-        . intval($course['COURSE_PERIOD_ID']) . ', '
-        . intval($course['STAFF_ID']) . ', '
+        . intval($displayCourseId) . ', '
+        . intval($displayCoursePeriodId) . ', '
+        . intval($displayStaffId) . ', '
         . '\'' . $nextWeekDate . '\'' . ')" '
         . 'style="text-decoration: underline; color: #007bff; cursor: pointer;">'
         . htmlspecialchars($nextWeekDisplay, ENT_QUOTES, 'UTF-8')
@@ -637,10 +830,9 @@ function formatCourseDisplay($course) {
  * @return array Timestamps for current and next week
  */
 function getCurrentAndNextWeekTimestamps() {
-    $oneDay = 24 * 60 * 60; // seconds in a day
-    $oneWeek = 7 * $oneDay; // seconds in a week
+    $oneDay = 24 * 60 * 60;
+    $oneWeek = 7 * $oneDay;
     
-    // Get current week's Monday
     $currentWeekStart = strtotime(date('Y-m-d'));
     while (date('N', $currentWeekStart) != 1) {
         $currentWeekStart -= $oneDay;
@@ -651,6 +843,7 @@ function getCurrentAndNextWeekTimestamps() {
         'next_week' => $currentWeekStart + $oneWeek
     ];
 }
+
 
 /**
  * Get the appropriate icon for planning status
