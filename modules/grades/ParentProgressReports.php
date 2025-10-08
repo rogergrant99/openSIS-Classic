@@ -26,7 +26,7 @@
 #
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
-include '_makeLetterGrade.fnc.php';
+include '_makeLetterGrade.fnc.php'; 
 $_REQUEST['assigned_date'] = 'N';
 $_REQUEST['due_date'] = 'Y';
 if ($_REQUEST['modfunc'] == 'save') {
@@ -328,16 +328,22 @@ function _makeExtra($value, $column) {
 
     if ($column == 'POINTS') {
         if ($THIS_RET['TOTAL_POINTS'] != '0')
-            if ($value != '-1') {
-                if (($THIS_RET['DUE'] || $value != '') && $value != '') {
-                    $student_points[$THIS_RET['ASSIGNMENT_TYPE_ID']] += $value;
-                    $total_points[$THIS_RET['ASSIGNMENT_TYPE_ID']] += $THIS_RET['TOTAL_POINTS'];
-                    $percent_weights[$THIS_RET['ASSIGNMENT_TYPE_ID']] = $THIS_RET['FINAL_GRADE_PERCENT'];
-                }
-                //return '<TABLE border=0 cellspacing=0 cellpadding=0 class=LO_field><TR><TD><font size=-1>' . (rtrim(rtrim($value, '0'), '.') + 0) . '</font></TD><TD><font size=-1>&nbsp;/&nbsp;</font></TD><TD><font size=-1>' . $THIS_RET['TOTAL_POINTS'] . '</font></TD></TR></TABLE>';
-                $outputval = rtrim(rtrim($value,'0'),'.');
-                return '<TABLE border=0 cellspacing=0 cellpadding=0 class=LO_field><TR><TD><font size=-1>' . ($outputval == '' ? 0 : $outputval) . '</font></TD><TD><font size=-1>&nbsp;/&nbsp;</font></TD><TD><font size=-1>' . $THIS_RET['TOTAL_POINTS'] . '</font></TD></TR></TABLE>';
-            } else
+        if ($value != '-1') {
+            if (($THIS_RET['DUE'] || $value != '') && $value != '') {
+                $student_points[$THIS_RET['ASSIGNMENT_TYPE_ID']] += $value;
+                $total_points[$THIS_RET['ASSIGNMENT_TYPE_ID']] += $THIS_RET['TOTAL_POINTS'];
+                $percent_weights[$THIS_RET['ASSIGNMENT_TYPE_ID']] = $THIS_RET['FINAL_GRADE_PERCENT'];
+            }
+            
+            $outputval = rtrim(rtrim($value, '0'), '.');
+            
+            // Return "Non coté" if points are empty
+            if ($outputval == '') {
+                return '<TABLE border=0 cellspacing=0 cellpadding=0 class=LO_field><TR><TD><font size=-1>Non coté</font></TD></TR></TABLE>';
+            }
+            
+            return '<TABLE border=0 cellspacing=0 cellpadding=0 class=LO_field><TR><TD><font size=-1>' . $outputval . '</font></TD><TD><font size=-1>&nbsp;/&nbsp;</font></TD><TD><font size=-1>' . $THIS_RET['TOTAL_POINTS'] . '</font></TD></TR></TABLE>';
+        } else
                 return '<TABLE border=0 cellspacing=0 cellpadding=0 class=LO_field><TR><TD><font size=-1>Excluded</font></TD><TD></TD><TD></TD></TR></TABLE>';
         else {
             $student_points[$THIS_RET['ASSIGNMENT_TYPE_ID']] += $value;
