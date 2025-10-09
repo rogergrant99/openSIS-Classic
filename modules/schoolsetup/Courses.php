@@ -1072,9 +1072,9 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                             }
 
                             if (str_replace("\'", "''", $value) == '') {
-                                //                                    if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK' || $column == 'SECONDARY_TEACHER_ID') && !gradeAssociation($id)) {
+                                //                                    if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING' || $column == 'SECONDARY_TEACHER_ID') && !gradeAssociation($id)) {
 
-                                if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID') && !gradeAssociation($id)) {
+                                if (($table_name == 'course_periods' || $table_name == 'course_period_var') && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID') && !gradeAssociation($id)) {
                                     $sql .= $column . " = NULL,";
                                     $go = true;
                                 }
@@ -1083,7 +1083,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                                     $sql1 .= $column . " = NULL,";
                                     $go = true;
                                 }
-                                if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID'  || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
+                                if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID'  || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING')) {
                                     $flag_err = 'Y';
                                 }
                                 if ($column == 'DOES_ATTENDANCE' && !(scheduleAssociation($id))) {
@@ -1146,15 +1146,15 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                                         $go = true;
                                     }
                                 } else {
-                                    //                                        if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TEACHER_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
-                                    if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'TEACHER_ID'  || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
+                                    //                                        if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TEACHER_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING')) {
+                                    if (!gradeAssociation($id) && ($column == 'COURSE_WEIGHT' || $column == 'GRADE_SCALE_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'TEACHER_ID'  || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING')) {
                                         $sql .= $column . "='" . str_replace("'", "''", $value) . "',";
                                         if ($table_name == 'course_periods')
                                             $sql1 .= $column . "='" . str_replace("'", "''", $value) . "',";
                                         $go = true;
                                     } else {
-                                        //                                            if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
-                                        if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' ||  $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_CLASS_RANK')) {
+                                        //                                            if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' || $column == 'CREDITS' || $column == 'DOES_BREAKOFF' || $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING')) {
+                                        if (gradeAssociation($id) && ($column == 'TEACHER_ID' || $column == 'SECONDARY_TEACHER_ID' || $column == 'TERTIARY_TEACHER_ID' || $column == 'GRADE_SCALE_ID' ||  $column == 'DOES_HONOR_ROLL' || $column == 'HALF_DAY' || $column == 'DOES_NO_PLANNING')) {
                                             $flag_err = 'Y';
                                         }
                                         if (scheduleAssociation($id) && ($column == 'ROOM_ID' || $column == 'DAYS' || $column == 'PERIOD_ID' || $column == 'MARKING_PERIOD_ID')) {
@@ -1226,8 +1226,8 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                         $f = 0;
                         if ($seat_num_check[1]['FILLED_SEATS'] > 0) {
                             $cp_gdr_teach_id = DBGet(DBQuery('SELECT * FROM course_periods cp, course_period_var cpv WHERE cp.course_period_id=' . $id . ' AND cp.course_period_id=cpv.course_period_id'));
-                            //                                 if ((isset($columns['DOES_BREAKOFF']) && ($columns['DOES_BREAKOFF'] != $cp_gdr_teach_id[1]['DOES_BREAKOFF'])) || (isset($columns['DOES_HONOR_ROLL']) && ($columns['DOES_HONOR_ROLL'] != $cp_gdr_teach_id[1]['DOES_HONOR_ROLL'])) || (isset($columns['HALF_DAY']) && ($columns['HALF_DAY'] != $cp_gdr_teach_id[1]['HALF_DAY'])) || (isset($columns['DOES_CLASS_RANK']) && ($columns['DOES_CLASS_RANK'] != $cp_gdr_teach_id[1]['HALF_DAY'])) && $not_pass_update == false) {
-                            if ((isset($columns['BEGIN_DATE']) && ($columns['BEGIN_DATE'] != $cp_gdr_teach_id[1]['BEGIN_DATE'])) || (isset($columns['DOES_HONOR_ROLL']) && ($columns['DOES_HONOR_ROLL'] != $cp_gdr_teach_id[1]['DOES_HONOR_ROLL'])) || (isset($columns['HALF_DAY']) && ($columns['HALF_DAY'] != $cp_gdr_teach_id[1]['HALF_DAY'])) || (isset($columns['DOES_CLASS_RANK']) && ($columns['DOES_CLASS_RANK'] != $cp_gdr_teach_id[1]['HALF_DAY'])) && $not_pass_update == false) {
+                            //                                 if ((isset($columns['DOES_BREAKOFF']) && ($columns['DOES_BREAKOFF'] != $cp_gdr_teach_id[1]['DOES_BREAKOFF'])) || (isset($columns['DOES_HONOR_ROLL']) && ($columns['DOES_HONOR_ROLL'] != $cp_gdr_teach_id[1]['DOES_HONOR_ROLL'])) || (isset($columns['HALF_DAY']) && ($columns['HALF_DAY'] != $cp_gdr_teach_id[1]['HALF_DAY'])) || (isset($columns['DOES_NO_PLANNING']) && ($columns['DOES_NO_PLANNING'] != $cp_gdr_teach_id[1]['HALF_DAY'])) && $not_pass_update == false) {
+                            if ((isset($columns['BEGIN_DATE']) && ($columns['BEGIN_DATE'] != $cp_gdr_teach_id[1]['BEGIN_DATE'])) || (isset($columns['DOES_HONOR_ROLL']) && ($columns['DOES_HONOR_ROLL'] != $cp_gdr_teach_id[1]['DOES_HONOR_ROLL'])) || (isset($columns['HALF_DAY']) && ($columns['HALF_DAY'] != $cp_gdr_teach_id[1]['HALF_DAY'])) || (isset($columns['DOES_NO_PLANNING']) && ($columns['DOES_NO_PLANNING'] != $cp_gdr_teach_id[1]['HALF_DAY'])) && $not_pass_update == false) {
                                 $f = 1;
                             }
                             if ($f == 1) {
@@ -1269,7 +1269,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                     if ($flag_err == 'Y') {
                         $cp_gdr_teach_id = DBGet(DBQuery('SELECT * FROM course_periods WHERE course_period_id=' . $id));
 
-                        if ((isset($columns['DOES_BREAKOFF']) && ($columns['DOES_BREAKOFF'] != $cp_gdr_teach_id[1]['DOES_BREAKOFF'])) || (isset($columns['DOES_HONOR_ROLL']) && ($columns['DOES_HONOR_ROLL'] != $cp_gdr_teach_id[1]['DOES_HONOR_ROLL'])) || (isset($columns['HALF_DAY']) && ($columns['HALF_DAY'] != $cp_gdr_teach_id[1]['HALF_DAY'])) || (isset($columns['DOES_CLASS_RANK']) && ($columns['DOES_CLASS_RANK'] != $cp_gdr_teach_id[1]['HALF_DAY'])) && $not_pass_update == false) {
+                        if ((isset($columns['DOES_BREAKOFF']) && ($columns['DOES_BREAKOFF'] != $cp_gdr_teach_id[1]['DOES_BREAKOFF'])) || (isset($columns['DOES_HONOR_ROLL']) && ($columns['DOES_HONOR_ROLL'] != $cp_gdr_teach_id[1]['DOES_HONOR_ROLL'])) || (isset($columns['HALF_DAY']) && ($columns['HALF_DAY'] != $cp_gdr_teach_id[1]['HALF_DAY'])) || (isset($columns['DOES_NO_PLANNING']) && ($columns['DOES_NO_PLANNING'] != $cp_gdr_teach_id[1]['HALF_DAY'])) && $not_pass_update == false) {
                             if ($msgFlag == '') {
                                 $assoc_err = "<font color=red><b> " . _cannotModifyThisCoursePeriodAsItHasAssociation . "  </b></font>";
                                 $msgFlag = 1;
@@ -1936,7 +1936,7 @@ if (!$_REQUEST['modfunc'] && !$_REQUEST['course_modfunc'] && !$_REQUEST['action'
             $sql = "SELECT PARENT_ID,TITLE,SHORT_NAME,
                                 MP,MARKING_PERIOD_ID,TEACHER_ID,SECONDARY_TEACHER_ID,TERTIARY_TEACHER_ID,CALENDAR_ID,IF(MARKING_PERIOD_ID IS NULL,BEGIN_DATE,NULL) AS BEGIN_DATE,IF(MARKING_PERIOD_ID IS NULL,END_DATE,NULL) AS END_DATE,
                                 TOTAL_SEATS,(TOTAL_SEATS - FILLED_SEATS) AS AVAILABLE_SEATS,
-                                GRADE_SCALE_ID,DOES_HONOR_ROLL,DOES_CLASS_RANK,
+                                GRADE_SCALE_ID,DOES_HONOR_ROLL,DOES_NO_PLANNING,
                                 GENDER_RESTRICTION,HOUSE_RESTRICTION,CREDITS,
                                 HALF_DAY,DOES_BREAKOFF,COURSE_WEIGHT,DAYS,PERIOD_ID,ROOM_ID,DOES_ATTENDANCE,SCHEDULE_TYPE
                         FROM course_periods cp LEFT JOIN course_period_var cpv ON (cp.course_period_id=cpv.course_period_id)
@@ -2125,18 +2125,17 @@ if (!$_REQUEST['modfunc'] && !$_REQUEST['course_modfunc'] && !$_REQUEST['action'
         //        echo $RET['DOES_BREAKOFF'];
         $header .= CheckboxInputSwitch($RET['DOES_BREAKOFF'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][DOES_BREAKOFF]', '' . _allowTeacherGradescale . '', $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . 'id="course_breakoff_id" ' . ($RET['GRADE_SCALE_ID'] == '' ? 'disabled="disabled"' : ''), ' switch-success');
         $header .= CheckboxInputSwitch($RET['COURSE_WEIGHT'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][COURSE_WEIGHT]', '' . _courseIsWeighted . '', $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . 'id="course_weight_id" ' . ($RET['GRADE_SCALE_ID'] == '' ? 'disabled="disabled"' : ''), ' switch-success');
-        $header .= CheckboxInputSwitch($RET['DOES_HONOR_ROLL'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][DOES_HONOR_ROLL]', _affectsHonorRoll, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div, ' switch-success');
+        // $header .= CheckboxInputSwitch($RET['DOES_HONOR_ROLL'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][DOES_HONOR_ROLL]', _affectsHonorRoll, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div, ' switch-success');
 
         if ($_REQUEST['course_period_id'] != 'new') {
             $get_does_att = DBGet(DBQuery('SELECT count(*) as RET_EX FROM course_period_var WHERE COURSE_PERIOD_ID=' . $_REQUEST['course_period_id'] . ' AND DOES_ATTENDANCE=\'Y\' '));
-            if ($get_does_att[1]['RET_EX'] == 0)
-                $header .= CheckboxInputSwitch($RET['HALF_DAY'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][HALF_DAY]', _halfDay, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . ' disabled id="half_day"', ' switch-success');
-            else
-                $header .= CheckboxInputSwitch($RET['HALF_DAY'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][HALF_DAY]', _halfDay, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . ' id="half_day"', ' switch-success');
+            // if ($get_does_att[1]['RET_EX'] == 0)
+            //     $header .= CheckboxInputSwitch($RET['HALF_DAY'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][HALF_DAY]', _halfDay, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . ' disabled id="half_day"', ' switch-success');
+            // else
+            //     $header .= CheckboxInputSwitch($RET['HALF_DAY'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][HALF_DAY]', _halfDay, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . ' id="half_day"', ' switch-success');
         } else
             $header .= CheckboxInputSwitch($RET['HALF_DAY'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][HALF_DAY]', _halfDay, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div . ' disabled id="half_day"', ' switch-success');
-
-        $header .= CheckboxInputSwitch($RET['DOES_CLASS_RANK'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][DOES_CLASS_RANK]', _affectsClassRank, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div, ' switch-success');
+        $header .= CheckboxInputSwitch($RET['DOES_NO_PLANNING'], 'tables[course_periods][' . $_REQUEST['course_period_id'] . '][DOES_NO_PLANNING]', _doesNoPlanning, $checked, $new, '<i class="icon-checkbox-checked"></i>', '<i class="icon-checkbox-unchecked"></i>', $div, ' switch-success');
 
         $header .= '</div></div>'; //.col-sm-12.col-lg-12
         $header .= '</div>'; //.row

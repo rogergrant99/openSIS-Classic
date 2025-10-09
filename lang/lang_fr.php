@@ -2055,4 +2055,5 @@ define("_select_student","Choisir l'étudiant");
 define("_noSubject", "Aucun sujet");
 define("_reponse", "Réponse à : ");
 define("_planification", "Planification de cours");
+define("_doesNoPlanning", "Ne fait pas de planification");
 ?>
