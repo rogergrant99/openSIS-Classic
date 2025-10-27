@@ -528,6 +528,16 @@ function style(){
             background: white;
         }
 
+        .editor-content a {
+            color: #007bff;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .editor-content a:hover {
+            color: #0056b3;
+        }
+
         .editor-footer {
             padding: 15px 20px;
             background: #f8f9fa;
@@ -1095,82 +1105,135 @@ function scripts(){
             updateToolbarState();
         }
 
-        // // Focus editor on page load
-        // document.addEventListener("DOMContentLoaded", function() {
-        //     const editor = document.getElementById("editor");
-        //     if (editor) {
-        //         // Small delay to ensure everything is rendered
-        //         setTimeout(function() {
-        //             editor.focus();
-                    
-        //             // Place cursor appropriately
-        //             const range = document.createRange();
-        //             const selection = window.getSelection();
-                    
-        //             if (editor.innerHTML === "" || editor.innerHTML === "<br>") {
-        //                 editor.innerHTML = "<br>";
-        //                 range.setStart(editor.firstChild, 0);
-        //             } else {
-        //                 // Place at end of existing content
-        //                 range.selectNodeContents(editor);
-        //                 range.collapse(false);
-        //             }
-                    
-        //             selection.removeAllRanges();
-        //             selection.addRange(range);
-        //             saveCursorPosition();
-        //         }, 200);
-        //     }
-        // });
-
-        // // Also focus when window finishes loading
-        // window.addEventListener("load", function() {
-        //     setTimeout(function() {
-        //         const editor = document.getElementById("editor");
-        //         if (editor && !document.activeElement.closest("#editor")) {
-        //             editor.focus();
-        //         }
-        //     }, 300);
-        // });
-
-
-        // Auto-save functions
-        // function updateAutoSaveStatus(status, message) {
-        //     autoSaveStatus.className = `auto-save-status ${status}`;
-        //     autoSaveText.textContent = message;
-        // }
-
-        // function triggerAutoSave() {
-        //     hasUnsavedChanges = true;
+// URL Auto-linking functionality with proper cursor preservation
+        function autoLinkUrls() {
+            const editor = document.getElementById("editor");
+            const selection = window.getSelection();
             
-        //     // Clear existing timeout
-        //     if (autoSaveTimeout) {
-        //         clearTimeout(autoSaveTimeout);
-        //     }
+            // Save cursor position relative to editor content
+            let cursorOffset = 0;
+            let cursorNode = null;
             
-        //     // Set new timeout
-        //     autoSaveTimeout = setTimeout(() => {
-        //         if (hasUnsavedChanges) {
-        //             saveContent();
-        //         }
-        //     }, AUTO_SAVE_DELAY);
-        // }
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                cursorNode = range.startContainer;
+                cursorOffset = range.startOffset;
+                
+                // Calculate absolute offset from start of editor
+                const preCaretRange = range.cloneRange();
+                preCaretRange.selectNodeContents(editor);
+                preCaretRange.setEnd(range.startContainer, range.startOffset);
+                cursorOffset = preCaretRange.toString().length;
+            }
+            
+            const urlPattern = /(https?:\/\/[^\s<]+[^<.,:;"\')\]\s])/g;
+            
+            const walker = document.createTreeWalker(
+                editor,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (!node.parentElement.closest("a")) {
+                    textNodes.push(node);
+                }
+            }
+            
+            let modified = false;
+            textNodes.forEach(textNode => {
+                const text = textNode.textContent;
+                if (urlPattern.test(text)) {
+                    const fragment = document.createDocumentFragment();
+                    let lastIndex = 0;
+                    let match;
+                    
+                    urlPattern.lastIndex = 0;
+                    
+                    while ((match = urlPattern.exec(text)) !== null) {
+                        if (match.index > lastIndex) {
+                            fragment.appendChild(
+                                document.createTextNode(text.substring(lastIndex, match.index))
+                            );
+                        }
+                        
+                        const link = document.createElement("a");
+                        link.href = match[0];
+                        link.target = "_blank";
+                        link.rel = "noopener noreferrer";
+                        link.textContent = match[0];
+                        link.style.color = "#007bff";
+                        link.style.textDecoration = "underline";
+                        fragment.appendChild(link);
+                        
+                        lastIndex = match.index + match[0].length;
+                    }
+                    
+                    if (lastIndex < text.length) {
+                        fragment.appendChild(
+                            document.createTextNode(text.substring(lastIndex))
+                        );
+                    }
+                    
+                    textNode.parentNode.replaceChild(fragment, textNode);
+                    modified = true;
+                }
+            });
+            
+            // Restore cursor position if content was modified
+            if (modified && cursorOffset >= 0) {
+                try {
+                    let currentOffset = 0;
+                    const newWalker = document.createTreeWalker(
+                        editor,
+                        NodeFilter.SHOW_TEXT,
+                        null,
+                        false
+                    );
+                    
+                    let targetNode = null;
+                    let targetOffset = 0;
+                    
+                    while (node = newWalker.nextNode()) {
+                        const nodeLength = node.textContent.length;
+                        if (currentOffset + nodeLength >= cursorOffset) {
+                            targetNode = node;
+                            targetOffset = cursorOffset - currentOffset;
+                            break;
+                        }
+                        currentOffset += nodeLength;
+                    }
+                    
+                    if (targetNode) {
+                        const range = document.createRange();
+                        range.setStart(targetNode, Math.min(targetOffset, targetNode.textContent.length));
+                        range.collapse(true);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                } catch (e) {
+                    console.error("Error restoring cursor:", e);
+                    // Fallback: place cursor at end
+                    const range = document.createRange();
+                    range.selectNodeContents(editor);
+                    range.collapse(false);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+        }
 
-        // function startPeriodicAutoSave() {
-        //     autoSaveInterval = setInterval(() => {
-        //         if (hasUnsavedChanges) {
-        //             saveContent();
-        //         }
-        //     }, AUTO_SAVE_INTERVAL);
-        // }
-
-        // function stopPeriodicAutoSave() {
-        //     if (autoSaveInterval) {
-        //         clearInterval(autoSaveInterval);
-        //     }
-        // }
-        
-        // Compter les mots
+        let autoLinkTimeout;
+        function debouncedAutoLink() {
+            clearTimeout(autoLinkTimeout);
+            autoLinkTimeout = setTimeout(() => {
+                autoLinkUrls();
+            }, 1000);
+        }
+            
         function updateWordCount() {
             const text = editor.innerText || editor.textContent || "";
             const words = text.trim().split(/\s+/).filter(word => word.length > 0);
@@ -1187,6 +1250,9 @@ function scripts(){
         
         // Insérer un lien
         function insertLink() {
+            const selection = window.getSelection();
+            const selectedText = selection.toString();
+            document.getElementById("linkText").value = selectedText;
             document.getElementById("linkModal").style.display = "block";
         }
         
@@ -1195,8 +1261,15 @@ function scripts(){
             const url = document.getElementById("linkUrl").value;
             
             if (url) {
-                const linkHtml = text ? `<a href="${url}" target="_blank">${text}</a>` : `<a href="${url}" target="_blank">${url}</a>`;
-                execCmd("insertHTML", linkHtml);
+                const link = document.createElement("a");
+                link.href = url;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.textContent = text || url;
+                link.style.color = "#007bff";
+                link.style.textDecoration = "underline";
+                
+                document.execCommand("insertHTML", false, link.outerHTML);
             }
             
             closeModal("linkModal");
@@ -1445,14 +1518,18 @@ function scripts(){
         // Event listeners for auto-save
         editor.addEventListener("input", function() {
             updateWordCount();
-            // triggerAutoSave();
+            if (e.inputType === "insertText" && (e.data === " " || e.data === "\\n")) {
+                autoLinkUrls();
+            } else {
+                debouncedAutoLink();
+            }
         });
         
-        // editor.addEventListener("paste", function() {
-        //     setTimeout(() => {
-        //         triggerAutoSave();
-        //     }, 100);
-        // });
+        editor.addEventListener("paste", function() {
+            setTimeout(() => {
+                autoLinkUrls();
+            }, 100);
+        });
 
         function updateToolbarState() {
             // Get all formatting buttons

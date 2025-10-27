@@ -1641,7 +1641,149 @@ function do_cado_courses_files(){
         
         const AUTO_SAVE_DELAY = 3000; // 3 seconds after user stops typing
         const AUTO_SAVE_INTERVAL = 30000; // 30 seconds periodic save
+    // Add this function to detect and convert URLs to clickable links
+    function autoLinkURLs(element) {
+        // URL detection regex pattern
+        const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+        
+        // Get all text nodes in the element
+        const walker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+        
+        const textNodes = [];
+        let node;
+        
+        while (node = walker.nextNode()) {
+            // Skip if parent is already a link
+            if (node.parentElement.tagName !== 'A') {
+                textNodes.push(node);
+            }
+        }
+        
+        // Process each text node
+        textNodes.forEach(textNode => {
+            const text = textNode.textContent;
+            const matches = text.match(urlPattern);
+            
+            if (matches) {
+                const fragment = document.createDocumentFragment();
+                let lastIndex = 0;
+                
+                matches.forEach(url => {
+                    const index = text.indexOf(url, lastIndex);
+                    
+                    // Add text before URL
+                    if (index > lastIndex) {
+                        fragment.appendChild(
+                            document.createTextNode(text.substring(lastIndex, index))
+                        );
+                    }
+                    
+                    // Create clickable link
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.textContent = url;
+                    link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
+                    link.style.color = '#007bff';
+                    link.style.textDecoration = 'underline';
+                    
+                    // Prevent link from being editable
+                    link.contentEditable = 'false';
+                    
+                    fragment.appendChild(link);
+                    lastIndex = index + url.length;
+                });
+                
+                // Add remaining text
+                if (lastIndex < text.length) {
+                    fragment.appendChild(
+                        document.createTextNode(text.substring(lastIndex))
+                    );
+                }
+                
+                // Replace the text node with the fragment
+                textNode.parentNode.replaceChild(fragment, textNode);
+            }
+        });
+    }
 
+    // Add paste event listener to detect URLs when pasting
+    editableCells.forEach(cell => {
+        // Handle paste events
+        cell.addEventListener('paste', function(e) {
+            // Let the paste happen first
+            setTimeout(() => {
+                autoLinkURLs(this);
+                scheduleAutoSave(this);
+            }, 10);
+        });
+        
+        // Also handle manual typing (with debounce)
+        let typingTimer;
+        cell.addEventListener('input', function(e) {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                autoLinkURLs(this);
+            }, 500); // Wait 500ms after user stops typing
+        });
+        
+        // Handle blur to ensure links are created
+        const originalBlur = cell.onblur;
+        cell.addEventListener('blur', function(e) {
+            autoLinkURLs(this);
+            if (originalBlur) originalBlur.call(this, e);
+        });
+    });
+
+    // Prevent link editing - handle clicks on links
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A' && e.target.closest('.editable')) {
+            // If Ctrl/Cmd is pressed, open the link
+            if (e.ctrlKey || e.metaKey) {
+                return; // Allow default link behavior
+            }
+            // Otherwise, prevent navigation and allow editing around it
+            else   
+                window.open(e.target.href, '_blank', 'noopener,noreferrer');
+            e.preventDefault();
+        }
+    });
+
+    // Add CSS for better link styling
+    const linkStyles = document.createElement('style');
+    linkStyles.textContent = `
+        .editable a {
+            color: #007bff;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 0 2px;
+            border-radius: 2px;
+            transition: background-color 0.2s;
+        }
+        
+        .editable a:hover {
+            background-color: #e7f3ff;
+        }
+        
+        .editable a::before {
+            content: '🔗 ';
+            font-size: 0.8em;
+            opacity: 0.6;
+        }
+    `;
+    document.head.appendChild(linkStyles);
+
+    // Initialize auto-linking for existing content on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        editableCells.forEach(cell => {
+            autoLinkURLs(cell);
+        });
+    });
         
         editableCells.forEach(cell => {
             cell.addEventListener('blur', function() {
