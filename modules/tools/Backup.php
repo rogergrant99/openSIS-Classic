@@ -66,7 +66,7 @@ if (('Backup' == $_REQUEST['action']) || ($_REQUEST['action'] == _backup)) {
             exec("$mysql_dir\\mysqldump -n -c --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $Export_FileName");
     }
     else {
-        exec("mysqldump -n -c --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $Export_FileName");
+        exec("mysqldump -n -c --skip-ssl --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $Export_FileName");
     }
     // $content = file_get_contents($Export_FileName);
 
