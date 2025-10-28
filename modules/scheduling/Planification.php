@@ -6,6 +6,8 @@ DrawBC("" . _scheduling . " > " . ProgramTitle());
 
 global $course_period_id,$course_id;
 
+if(UserSyear() != date('Y'))
+    return;
 $user_course = UserCourse();
 if( $_REQUEST['print_admin']){
     $user_course = $_REQUEST['marking_period_id'];
