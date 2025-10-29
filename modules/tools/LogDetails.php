@@ -68,13 +68,22 @@ if (!$_REQUEST['modfunc']) {
     echo '</div>'; //.row
 }
 
-// Traitement des dates sélectionnées
+// Traitement des dates sélectionnées - Conversion EST vers UTC pour la requête
 if ($_REQUEST['day_start'] && $_REQUEST['month_start'] && $_REQUEST['year_start']) {
-    $conv_st_date = $_REQUEST['year_start'].'-'.$_REQUEST['month_start'].'-'.$_REQUEST['day_start'].' '.'00:00:00';
+    $est_start_date = $_REQUEST['year_start'].'-'.$_REQUEST['month_start'].'-'.$_REQUEST['day_start'].' '.'00:00:00';
+    $conv_st_date = convertESTtoUTC($est_start_date);
 }
 
 if ($_REQUEST['day_end'] && $_REQUEST['month_end'] && $_REQUEST['year_end']) {
-    $conv_end_date = $_REQUEST['year_end'].'-'.$_REQUEST['month_end'].'-'.$_REQUEST['day_end'].' '.'23:59:59';
+    $est_end_date = $_REQUEST['year_end'].'-'.$_REQUEST['month_end'].'-'.$_REQUEST['day_end'].' '.'23:59:59';
+    $conv_end_date = convertESTtoUTC($est_end_date);
+}
+
+
+function convertESTtoUTC($est_datetime) {
+    $date = new DateTime($est_datetime, new DateTimeZone('America/New_York'));
+    $date->setTimezone(new DateTimeZone('UTC'));
+    return $date->format('Y-m-d H:i:s');
 }
 
 if($_REQUEST['modfunc']=='del')
@@ -441,15 +450,15 @@ if (!empty($chart_dates) && !empty($chart_counts)) {
         echo '<div role="tabpanel" class="tab-pane active" id="chart-tab">';
         echo '<div style="padding: 20px;">';
         echo '<div class="alert alert-info">';
-        echo '<strong>Résumé du tableau de connexion:</strong> ';
-        if ($stats_RET && !empty($chart_counts)) {
-            $total_logins = array_sum($chart_counts);
-            $avg_logins = round($total_logins / count($chart_counts), 2);
-            $max_logins = max($chart_counts);
-            echo "Nombre total de connexions: $total_logins | Moyenne par jour: $avg_logins | Pointe: $max_logins connexions";
-        } else {
-            echo "Aucune donnée de connexion disponible pour la période sélectionnée avec les filtres appliqués.";
-        }
+        // echo '<strong>Résumé du tableau de connexion:</strong> ';
+        // if ($stats_RET && !empty($chart_counts)) {
+        //     $total_logins = array_sum($chart_counts);
+        //     $avg_logins = round($total_logins / count($chart_counts), 2);
+        //     $max_logins = max($chart_counts);
+        //     echo "Nombre total de connexions: $total_logins | Moyenne par jour: $avg_logins | Pointe: $max_logins connexions";
+        // } else {
+        //     echo "Aucune donnée de connexion disponible pour la période sélectionnée avec les filtres appliqués.";
+        // }
 if ($stats_RET && !empty($chart_counts)) {
     $total_logins = array_sum($chart_counts);
     $total_failures = array_sum($chart_failures);
