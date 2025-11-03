@@ -1525,7 +1525,7 @@ define("_selectedUser", "Utilisateur sélectionné");
 define("_choosePeriod", "Choisissez la période");
 define("_gradeReportingIsOpenForThisMarkingPeriodYouCanEditTheseGrades", "l'entrée de notes est ouverte pour cette période scolaire. Vous pouvez modifier ces notes.");
 define("_assignPercents", "POURCENTS");
-define("_getGradebookGrades", "Obtenir les notes du carnet de notes");
+define("_getGradebookGrades", "Assigner note final a partir du carnet de notes");
 define("_get", "Avoir");
 define("_clearAll", "TOUT EFFACER");
 define("_percent", "Pourcent");
@@ -1839,7 +1839,7 @@ define("_gradeReportingIsNotOpenForThisMarkingPeriod", "L'entrée de notes n'est
 define("_youCanEditTheseGrades", "Vous pouvez modifier ces notes");
 define("_theseGradesAreComplete", "Ces notes sont complètes");
 define("_assignLetters", "Note");
-define("_assignPercent", "Assigner pourcentage");
+define("_assignPercent", "Note final");
 define("_daysOfWeek", "Jours de la semaine");
 define("_endDateDropDate", "Date de fin");
 define("_selectAnyOne", "Sélectionnez une");

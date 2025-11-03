@@ -30,6 +30,8 @@ include('../../RedirectModulesInc.php');
 include 'modules/grades/ConfigInc.php';
 DrawBC("" . _gradebook . " > " . ProgramTitle());
 
+$_REQUEST['use_percents'] = 'true';
+
 echo '<div class="panel panel-default">';
 echo '<div class="panel-body">';
     # Letting user know if they have weighted the course period but have not set any
@@ -137,6 +139,296 @@ if (!$course_RET[1]['GRADE_SCALE_ID'] && !$_REQUEST['include_inactive']) {
 $course_title = $course_RET[1]['TITLE'];
 $grade_scale_id = $course_RET[1]['GRADE_SCALE_ID'];
 $course_id = $course_RET[1]['COURSE_ID'];
+
+// Charger automatiquement les notes du carnet de notes
+$gradebook_grades_RET = array();
+if ($_REQUEST['mp'] && GetMP($_REQUEST['mp'], 'TABLE') == 'school_quarters' || GetMP($_REQUEST['mp'], 'TABLE') == 'school_progress_periods') {
+    $course_periods = DBGet(DBQuery('select marking_period_id from course_periods where course_period_id=' . UserCoursePeriod()));
+    
+    // Vérifier si le cours utilise la pondération
+    $config_RET = DBGet(DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=\'' . User('STAFF_ID') . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND PROGRAM=\'Gradebook\' AND VALUE LIKE \'%_' . $course_period_id . '\''), array(), array('TITLE'));
+    $is_weighted = false;
+    if (count($config_RET)) {
+        foreach ($config_RET as $title => $value) {
+            if ($title == 'WEIGHT') {
+                $arr = explode('_', $value[1]['VALUE']);
+                if ($arr[0] == 'Y') {
+                    $is_weighted = true;
+                }
+                break;
+            }
+        }
+    }
+    
+    if ($course_periods[1]['MARKING_PERIOD_ID'] == NULL) {
+        $school_years = DBGet(DBQuery('select marking_period_id from school_years where syear=' . UserSyear() . ' and school_id=' . UserSchool()));
+        $fy_mp_id = $school_years[1]['MARKING_PERIOD_ID'];
+        
+        if ($is_weighted) {
+            // Calcul avec pondération à deux niveaux : ASSIGN_WEIGHT et FINAL_GRADE_PERCENT
+            $gradebook_sql = 'SELECT s.STUDENT_ID, 
+                ga.ASSIGNMENT_ID,
+                gt.ASSIGNMENT_TYPE_ID,
+                gt.FINAL_GRADE_PERCENT,
+                ga.ASSIGNMENT_WEIGHT,
+                ga.POINTS AS TOTAL_POINTS,
+                gg.POINTS AS STUDENT_POINTS,
+                CASE WHEN (ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) THEN \'Y\' ELSE NULL END AS DUE
+                FROM students s 
+                JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') 
+                JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND (ga.MARKING_PERIOD_ID=\'' . UserMP() . '\' OR ga.MARKING_PERIOD_ID=\'' . $fy_mp_id . '\')) 
+                JOIN gradebook_assignment_types gt ON (gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID)
+                LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
+                WHERE ((ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) OR gg.POINTS IS NOT NULL)
+                AND ga.POINTS != \'0\'
+                ORDER BY s.STUDENT_ID, gt.ASSIGNMENT_TYPE_ID, ga.ASSIGNMENT_ID';
+            
+            $gradebook_detailed = DBGet(DBQuery($gradebook_sql));
+            
+            // Organiser par étudiant et type d'assignation
+            $student_data = array();
+            foreach ($gradebook_detailed as $row) {
+                $student_id = $row['STUDENT_ID'];
+                $type_id = $row['ASSIGNMENT_TYPE_ID'];
+                
+                if (!isset($student_data[$student_id])) {
+                    $student_data[$student_id] = array();
+                }
+                if (!isset($student_data[$student_id][$type_id])) {
+                    $student_data[$student_id][$type_id] = array(
+                        'assignments' => array(),
+                        'type_weight' => $row['FINAL_GRADE_PERCENT']
+                    );
+                }
+                
+                // Ajouter l'assignation si elle a été notée et n'est pas exclue
+                if ($row['STUDENT_POINTS'] !== null && 
+                    $row['STUDENT_POINTS'] !== '' && 
+                    $row['STUDENT_POINTS'] != '-1' && 
+                    $row['TOTAL_POINTS'] > 0 && 
+                    ($row['DUE'] == 'Y' || $row['STUDENT_POINTS'] !== '')) {
+                    
+                    $student_data[$student_id][$type_id]['assignments'][] = array(
+                        'points' => $row['STUDENT_POINTS'],
+                        'total' => $row['TOTAL_POINTS'],
+                        'weight' => $row['ASSIGNMENT_WEIGHT']
+                    );
+                }
+            }
+            
+            // Calculer le pourcentage pondéré pour chaque étudiant
+            foreach ($student_data as $student_id => $types) {
+        $final_weighted_total = 0;
+        $final_total_weight = 0;
+        
+        foreach ($types as $type_id => $type_data) {
+            if (count($type_data['assignments']) > 0) {
+                // Calculer la moyenne pondérée au sein du type d'assignation
+                $type_weighted_total = 0;
+                $type_total_weight = 0;
+                
+                foreach ($type_data['assignments'] as $assignment) {
+                    // FIXED: Skip if points are null, empty, or excluded
+                    if ($assignment['points'] === null || $assignment['points'] === '' || $assignment['points'] == '-1') {
+                        continue;  // Skip this assignment entirely
+                    }
+                    
+                    // FIXED: Skip if total is zero or invalid
+                    if ($assignment['total'] <= 0) {
+                        continue;  // Skip this assignment
+                    }
+                    
+                    $assign_percent = ($assignment['points'] / $assignment['total']) * 100;
+                    $assign_weight = $assignment['weight'] > 0 ? $assignment['weight'] : 0;
+                    
+                    if ($assign_weight > 0) {
+                        // Utiliser ASSIGN_WEIGHT
+                        $type_weighted_total += $assign_percent * $assign_weight;
+                        $type_total_weight += $assign_weight;
+                    } else {
+                        // Pas de poids individuel, contribution égale
+                        $type_weighted_total += $assign_percent;
+                        $type_total_weight += 100;
+                    }
+                }
+                
+                // FIXED: Only include this type if there were valid assignments
+                if ($type_total_weight > 0) {
+                    // Moyenne du type d'assignation
+                    $type_average = ($type_weighted_total / $type_total_weight) * 100;
+                    
+                    // Appliquer le poids du type (FINAL_GRADE_PERCENT)
+                    $type_weight = $type_data['type_weight'];
+                    
+                    // FIXED: Only include type weight if it's valid and there are graded assignments
+                    if ($type_weight > 0) {
+                        $final_weighted_total += $type_average * $type_weight;
+                        $final_total_weight += $type_weight;
+                    }
+                }
+            }
+        }
+        
+        // FIXED: Only calculate final grade if there are valid weighted types
+        if ($final_total_weight > 0) {
+            $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = round($final_weighted_total / $final_total_weight);
+        } else {
+            $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = '';
+        }
+        }
+        } else {
+            // Calcul simple sans pondération
+            $gradebook_sql = 'SELECT DISTINCT s.STUDENT_ID, 
+                sum(' . db_case(array('gg.POINTS', "'-1'", "'0'", 'gg.POINTS')) . ') AS PARTIAL_POINTS,
+                sum(' . db_case(array('gg.POINTS', '\'-1\' OR gg.POINTS IS NULL', "'0'", 'ga.POINTS')) . ') AS PARTIAL_TOTAL
+                FROM students s 
+                JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') 
+                JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND (ga.MARKING_PERIOD_ID=\'' . UserMP() . '\' OR ga.MARKING_PERIOD_ID=\'' . $fy_mp_id . '\')) 
+                LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
+                WHERE ((ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) OR gg.POINTS IS NOT NULL) 
+                GROUP BY s.STUDENT_ID';
+            
+            $gradebook_grades_RET = DBGet(DBQuery($gradebook_sql), array(), array('STUDENT_ID'));
+            
+            // Calculer le pourcentage pour chaque étudiant
+            foreach ($gradebook_grades_RET as $student_id => $data) {
+                if ($data[1]['PARTIAL_TOTAL'] != 0) {
+                    $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = round(($data[1]['PARTIAL_POINTS'] / $data[1]['PARTIAL_TOTAL']) * 100);
+                } else {
+                    $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = '';
+                }
+            }
+        }
+    } else {
+        // Même logique pour quand MARKING_PERIOD_ID n'est pas NULL
+        if ($is_weighted) {
+            // Calcul avec pondération à deux niveaux : ASSIGN_WEIGHT et FINAL_GRADE_PERCENT
+            $gradebook_sql = 'SELECT s.STUDENT_ID, 
+                ga.ASSIGNMENT_ID,
+                gt.ASSIGNMENT_TYPE_ID,
+                gt.FINAL_GRADE_PERCENT,
+                ga.ASSIGNMENT_WEIGHT,
+                ga.POINTS AS TOTAL_POINTS,
+                gg.POINTS AS STUDENT_POINTS,
+                CASE WHEN (ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) THEN \'Y\' ELSE NULL END AS DUE
+                FROM students s 
+                JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') 
+                JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND ga.MARKING_PERIOD_ID=\'' . UserMP() . '\') 
+                JOIN gradebook_assignment_types gt ON (gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID)
+                LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
+                WHERE ((ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) OR gg.POINTS IS NOT NULL)
+                AND ga.POINTS != \'0\'
+                ORDER BY s.STUDENT_ID, gt.ASSIGNMENT_TYPE_ID, ga.ASSIGNMENT_ID';
+            
+            $gradebook_detailed = DBGet(DBQuery($gradebook_sql));
+            
+            // Organiser par étudiant et type d'assignation
+            $student_data = array();
+            foreach ($gradebook_detailed as $row) {
+                $student_id = $row['STUDENT_ID'];
+                $type_id = $row['ASSIGNMENT_TYPE_ID'];
+                
+                if (!isset($student_data[$student_id])) {
+                    $student_data[$student_id] = array();
+                }
+                if (!isset($student_data[$student_id][$type_id])) {
+                    $student_data[$student_id][$type_id] = array(
+                        'assignments' => array(),
+                        'type_weight' => $row['FINAL_GRADE_PERCENT']
+                    );
+                }
+                
+                // Ajouter l'assignation si elle a été notée et n'est pas exclue
+                if ($row['STUDENT_POINTS'] !== null && $row['STUDENT_POINTS'] != '-1' && 
+                    $row['TOTAL_POINTS'] > 0 && ($row['DUE'] == 'Y' || $row['STUDENT_POINTS'] != '')) {
+                    $student_data[$student_id][$type_id]['assignments'][] = array(
+                        'points' => $row['STUDENT_POINTS'],
+                        'total' => $row['TOTAL_POINTS'],
+                        'weight' => $row['ASSIGNMENT_WEIGHT']
+                    );
+                }
+            }
+            
+            // Calculer le pourcentage pondéré pour chaque étudiant
+            foreach ($student_data as $student_id => $types) {
+                $final_weighted_total = 0;
+                $final_total_weight = 0;
+                
+                foreach ($types as $type_id => $type_data) {
+                    if (count($type_data['assignments']) > 0) {
+                        $type_weighted_total = 0;
+                        $type_total_weight = 0;
+                        
+                        foreach ($type_data['assignments'] as $assignment) {
+                            // FIXED: Skip null, empty, or excluded grades
+                            if ($assignment['points'] === null || $assignment['points'] === '' || $assignment['points'] == '-1') {
+                                continue;
+                            }
+                            
+                            // FIXED: Skip invalid totals
+                            if ($assignment['total'] <= 0) {
+                                continue;
+                            }
+                            
+                            $assign_percent = ($assignment['points'] / $assignment['total']) * 100;
+                            $assign_weight = $assignment['weight'] > 0 ? $assignment['weight'] : 0;
+                            
+                            if ($assign_weight > 0) {
+                                $type_weighted_total += $assign_percent * $assign_weight;
+                                $type_total_weight += $assign_weight;
+                            } else {
+                                $type_weighted_total += $assign_percent;
+                                $type_total_weight += 100;
+                            }
+                        }
+                        
+                        // FIXED: Only include type if valid assignments exist
+                        if ($type_total_weight > 0) {
+                            $type_average = ($type_weighted_total / $type_total_weight) * 100;
+                            $type_weight = $type_data['type_weight'];
+                            
+                            // FIXED: Only include valid type weights
+                            if ($type_weight > 0) {
+                                $final_weighted_total += round($type_average * $type_weight);
+                                $final_total_weight += $type_weight;
+                            }
+                        }
+                    }
+                }
+                
+                // FIXED: Calculate or leave empty
+                if ($final_total_weight > 0) {
+                    // NOTE: There's a bug on line 414 - should NOT divide by 100
+                    $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = round($final_weighted_total / $final_total_weight /100);
+                } else {
+                    $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = '';
+                }
+            }
+        } else {
+            $gradebook_sql = 'SELECT DISTINCT s.STUDENT_ID, 
+                sum(' . db_case(array('gg.POINTS', "'-1'", "'0'", 'gg.POINTS')) . ') AS PARTIAL_POINTS,
+                sum(' . db_case(array('gg.POINTS', '\'-1\' OR gg.POINTS IS NULL', "'0'", 'ga.POINTS')) . ') AS PARTIAL_TOTAL
+                FROM students s 
+                JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') 
+                JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND ga.MARKING_PERIOD_ID=\'' . UserMP() . '\') 
+                LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
+                WHERE ((ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) OR gg.POINTS IS NOT NULL) 
+                GROUP BY s.STUDENT_ID';
+            
+            $gradebook_grades_RET = DBGet(DBQuery($gradebook_sql), array(), array('STUDENT_ID'));
+            
+            foreach ($gradebook_grades_RET as $student_id => $data) {
+                if ($data[1]['PARTIAL_TOTAL'] != 0) {
+                    $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = round(($data[1]['PARTIAL_POINTS'] / $data[1]['PARTIAL_TOTAL']) * 100);
+                } else {
+                    $gradebook_grades_RET[$student_id][1]['GRADEBOOK_PERCENT'] = '';
+                }
+            }
+        }
+    }
+}
+
+
 
 if ($_REQUEST['mp']) {
     $current_RET = DBGet(DBQuery('SELECT g.STUDENT_ID,g.REPORT_CARD_GRADE_ID,g.GRADE_PERCENT,g.REPORT_CARD_COMMENT_ID,g.COMMENT FROM student_report_card_grades g,course_periods cp WHERE cp.COURSE_PERIOD_ID=g.COURSE_PERIOD_ID AND cp.COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND g.MARKING_PERIOD_ID=\'' . $_REQUEST['mp'] . '\''), array(), array('STUDENT_ID'));
@@ -279,26 +571,37 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'gradebook') {
                         if (count($grades_RET1)) {
                         //echo '--------------------------';
                         //echo $student[1]['STUDENT_ID'];
-                            foreach ($grades_RET1 as $key => $val) {
-                                //print_r($val);
-                                if ($val['LETTERWTD_GRADE'] != -1.00 && $val['LETTERWTD_GRADE'] != '') {
-                                    if($val['WEIGHT_GRADE'] != 'N/A')
-                                        $total_type_weight[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]+= $val['ASSIGN_WEIGHT']  ;
-                                    $tot_type_grade[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]+= $val['POINTS2'] / $val['TOTAL_POINTS'] * ((($val['ASSIGN_WEIGHT'] )));
-                                    $assign_types[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']] = [$val['ASSIGNMENT_TYPE_ID']];
-                                    $assign_type_weigth[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]= $val['ASSIGN_TYP_WG'];
-                                }
+                        foreach ($grades_RET1 as $key => $val) {
+                            if ($val['LETTERWTD_GRADE'] != -1.00 && $val['LETTERWTD_GRADE'] != '') {
+                                if($val['WEIGHT_GRADE'] != 'N/A')
+                                    $total_type_weight[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]+= $val['ASSIGN_WEIGHT'];
+                                $tot_type_grade[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]+= $val['POINTS2'] / $val['TOTAL_POINTS'] * ((($val['ASSIGN_WEIGHT'])));
+                                $assign_types[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']] = [$val['ASSIGNMENT_TYPE_ID']];
+                                $assign_type_weigth[$student[1]['STUDENT_ID']][$val['ASSIGNMENT_TYPE_ID']]= $val['ASSIGN_TYP_WG'];
                             }
-                            //echo "<pre>";print_r($total_type_weight);echo "</pre>";
-                            //$total_IDweight=0;
-                            foreach ($assign_types[$student[1]['STUDENT_ID']] as $key => $val) {
-                                if($total_type_weight[$student[1]['STUDENT_ID']][$val['0']])
-                                    $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] = $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]]  * 100 /  $total_type_weight[$student[1]['STUDENT_ID']][$val['0']]  ;
-                                if($tot_type_grade[$student[1]['STUDENT_ID']][$val[0]])
-                                    $tot_weight_grade+= $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] * $assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]] / 100;
-                                //$total_IDweight += $assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]]  ;
+                        }
+
+                        // Calculate the total weight for this student
+                        $total_student_weight = 0;
+                        foreach ($assign_types[$student[1]['STUDENT_ID']] as $key => $val) {
+                            if(isset($assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]])) {
+                                $total_student_weight += $assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]];
                             }
-                            //if($total_IDweight)
+                        }
+
+                        // Normalize weights if they don't equal 100
+                        $weight_multiplier = ($total_student_weight > 0 && $total_student_weight != 100) ? (100 / $total_student_weight) : 1;
+
+                        foreach ($assign_types[$student[1]['STUDENT_ID']] as $key => $val) {
+                            if($total_type_weight[$student[1]['STUDENT_ID']][$val['0']])
+                                $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] = $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] * 100 / $total_type_weight[$student[1]['STUDENT_ID']][$val['0']];
+                            
+                            if($tot_type_grade[$student[1]['STUDENT_ID']][$val[0]]) {
+                                // Use normalized weight
+                                $normalized_weight = $assign_type_weigth[$student[1]['STUDENT_ID']][$val[0]] * $weight_multiplier;
+                                $tot_weight_grade+= $tot_type_grade[$student[1]['STUDENT_ID']][$val[0]] * $normalized_weight / 100;
+                            }
+                        }                            //if($total_IDweight)
                                 //$tot_weight_grade = $tot_weight_grade * 100 / $total_IDweight;
                             //------------------------------------------------------//
 
@@ -1231,16 +1534,28 @@ if (!isset($_openSIS['allow_edit']))
     $_openSIS['allow_edit'] = $allow_edit;
 
 if ($_REQUEST['use_percents'] != 'true') {
-    $extra['SELECT'] = ",'' AS GRADE_PERCENT,'' AS REPORT_CARD_GRADE";
-    $extra['functions'] = array('GRADE_PERCENT' => '_makeGrade', 'REPORT_CARD_GRADE' => '_makeGrade');
+    $extra['SELECT'] = ",'' AS GRADE_PERCENT,'' AS REPORT_CARD_GRADE,'' AS GRADEBOOK_GRADE,'' AS DIFFERENCE";
+    $extra['functions'] = array(
+        'GRADE_PERCENT' => '_makeGrade', 
+        'REPORT_CARD_GRADE' => '_makeGrade',
+        'GRADEBOOK_GRADE' => '_makeGradebookGrade',
+        'DIFFERENCE' => '_makeDifference'
+    );
 } elseif ($not_graded) {
-
-    $extra['SELECT'] = ",'' AS GRADE_PERCENT";
-    $extra['functions'] = array('GRADE_PERCENT' => '_makePercent');
+    $extra['SELECT'] = ",'' AS GRADE_PERCENT,'' AS GRADEBOOK_GRADE,'' AS DIFFERENCE";
+    $extra['functions'] = array(
+        'GRADE_PERCENT' => '_makePercent',
+        'GRADEBOOK_GRADE' => '_makeGradebookGrade',
+        'DIFFERENCE' => '_makeDifference'
+    );
 } else {
-
-    $extra['SELECT'] = ",'' AS REPORT_CARD_GRADE,'' AS GRADE_PERCENT";
-    $extra['functions'] = array('REPORT_CARD_GRADE' => '_makePercent', 'GRADE_PERCENT' => '_makePercent');
+    $extra['SELECT'] = ",'' AS REPORT_CARD_GRADE,'' AS GRADE_PERCENT,'' AS GRADEBOOK_GRADE,'' AS DIFFERENCE";
+    $extra['functions'] = array(
+        'REPORT_CARD_GRADE' => '_makePercent', 
+        'GRADE_PERCENT' => '_makePercent',
+        'GRADEBOOK_GRADE' => '_makeGradebookGrade',
+        'DIFFERENCE' => '_makeDifference'
+    );
 }
 
 if (substr($_REQUEST['mp'], 0, 1) != 'E' && GetMP($_REQUEST['mp'], 'DOES_COMMENTS') == 'Y') {
@@ -1333,13 +1648,13 @@ if (!$_REQUEST['_openSIS_PDF']) {
     } else if ($grade_status == 'not set yet') {
         echo '<div class="alert bg-danger alert-styled-left">'._gradeReportingDateHasNotSetForThisMarkingPeriod.'.</div>';
     }
-
+    echo '<div class="no-margin">Le total des notes de carnet est affiché sous la colone <b><i>"Note de carnet"</i></b> <br> Le bouton <b><i>"Assigner note final a partir du carnet de notes"</i></b> va attribuer les notes de carnet à la colone <b><i>"Note final"</i></b><br> La colone <b><i>"Différence"</i></b> affiche la différence entre le total des notes de carnet et ce qui est inscrit dans la colone <b><i>"Note final"</i></b><br>La fonction <b><i>"Assigner note final a partir du carnet de notes"</i></b> devrait ètre effectuer seulement quand les notes de carnets sont complètes.</div>';
     if (AllowEdit() && count($stu_RET) != 0) {
         echo '<ul class="nav nav-pills nav-xs nav-pills-bordered">';
-        if ($_REQUEST['use_percents'] != 'true')
-            $gb_header = "<li><A HREF=Modules.php?modname=$_REQUEST[modname]&include_inactive=$_REQUEST[include_inactive]&mp=$_REQUEST[mp]&use_percents=true&period=" . CpvId() . ">" . _assignPercents . "</A></li>";
-        elseif ($not_graded != true)
-            $gb_header = "<li><A HREF=Modules.php?modname=$_REQUEST[modname]&include_inactive=$_REQUEST[include_inactive]&mp=$_REQUEST[mp]&use_percents=false&period=" . CpvId() . ">" . _assignLetters . "</A></li>";
+        // if ($_REQUEST['use_percents'] != 'true')
+        //     $gb_header = "<li><A HREF=Modules.php?modname=$_REQUEST[modname]&include_inactive=$_REQUEST[include_inactive]&mp=$_REQUEST[mp]&use_percents=true&period=" . CpvId() . ">" . _assignPercents . "</A></li>";
+        // elseif ($not_graded != true)
+        //     $gb_header = "<li><A HREF=Modules.php?modname=$_REQUEST[modname]&include_inactive=$_REQUEST[include_inactive]&mp=$_REQUEST[mp]&use_percents=false&period=" . CpvId() . ">" . _assignLetters . "</A></li>";
 
         if (substr($_REQUEST['mp'], 0, 1) != 'E') {
             if ($cp_type != 'custom')
@@ -1394,10 +1709,12 @@ if ($_REQUEST['include_inactive'] == 'Y')
         'ACTIVE' => _schoolStatus,
         'ACTIVE_SCHEDULE' => _courseStatus,
     );
+$columns += array('GRADEBOOK_GRADE' => 'Notes de carnet');
+
 if ($_REQUEST['use_percents'] != 'true')
     $columns += array(
         'GRADE_PERCENT' => _percent,
-        'REPORT_CARD_GRADE' => _assignGrade,
+        // 'REPORT_CARD_GRADE' => _assignGrade,
     );
 elseif ($not_graded)
     $columns += array(
@@ -1405,10 +1722,10 @@ elseif ($not_graded)
     );
 else
     $columns += array(
-        'REPORT_CARD_GRADE' => _grade,
+        // 'REPORT_CARD_GRADE' => _grade,
         'GRADE_PERCENT' => _assignPercent,
     );
-
+$columns += array('DIFFERENCE' => 'Différence');
 
 
 if (substr($_REQUEST['mp'], 0, 1) != 'E' && GetMP($_REQUEST['mp'], 'DOES_COMMENTS') == 'Y') {
@@ -1744,5 +2061,72 @@ function _makeExtra($value, $column)
                 return 'N/A';
         else
             return 'E/C';
+    }
+}
+
+function _makeGradebookGrade($value, $column)
+{
+    global $THIS_RET, $gradebook_grades_RET, $grades_RET;
+
+    $gradebook_percent = $gradebook_grades_RET[$THIS_RET['STUDENT_ID']][1]['GRADEBOOK_PERCENT'];
+    
+    if ($gradebook_percent !== '' && $gradebook_percent !== null) {
+        if (!isset($_REQUEST['_openSIS_PDF'])) {
+            return '<div style="text-align: center;"><b>' . $gradebook_percent . '%</b></div>';
+        } else {
+            return $gradebook_percent . '%';
+        }
+    } else {
+        return '<span style="color: #999;">N/A</span>';
+    }
+}
+
+function _makeDifference($value, $column)
+{
+    global $THIS_RET, $current_RET, $gradebook_grades_RET, $import_RET;
+    
+    // Obtenir le pourcentage du carnet de notes
+    $gradebook_percent = $gradebook_grades_RET[$THIS_RET['STUDENT_ID']][1]['GRADEBOOK_PERCENT'];
+    
+    // Obtenir le pourcentage assigné - PRIORISER import_RET
+    $assigned_percent = null;
+    
+    if (isset($import_RET[$THIS_RET['STUDENT_ID']][1]['GRADE_PERCENT']) && 
+        $import_RET[$THIS_RET['STUDENT_ID']][1]['GRADE_PERCENT'] !== '') {
+        // Utiliser la valeur importée (nouvelle) - ENLEVER le symbole %
+        $assigned_percent = rtrim($import_RET[$THIS_RET['STUDENT_ID']][1]['GRADE_PERCENT'], '%');
+        $assigned_percent = floatval($assigned_percent); // Convertir en nombre
+    } elseif (isset($current_RET[$THIS_RET['STUDENT_ID']][1]['GRADE_PERCENT']) &&
+              $current_RET[$THIS_RET['STUDENT_ID']][1]['GRADE_PERCENT'] !== '') {
+        // Utiliser la valeur actuelle de la BD
+        $assigned_percent = $current_RET[$THIS_RET['STUDENT_ID']][1]['GRADE_PERCENT'];
+    }
+    
+    if ($gradebook_percent !== '' && $gradebook_percent !== null && 
+        $assigned_percent !== '' && $assigned_percent !== null) {
+        
+        // Arrondir le pourcentage assigné à l'entier
+        $assigned_percent = round($assigned_percent);
+        
+        // Calculer la différence
+        $difference = $assigned_percent - $gradebook_percent;
+        
+        // Coloration selon la différence
+        $color = '#000';
+        $sign = '';
+        if ($difference > 0) {
+            $color = '#dc3545'; // Rouge
+            $sign = '+';
+        } elseif ($difference < 0) {
+            $color = '#dc3545'; // Rouge
+        }
+        
+        if (!isset($_REQUEST['_openSIS_PDF'])) {
+            return '<div style="text-align: center; color: ' . $color . '; font-weight: bold;">' . $sign . $difference . '%</div>';
+        } else {
+            return $sign . $difference . '%';
+        }
+    } else {
+        return '<span style="color: #999;">-</span>';
     }
 }

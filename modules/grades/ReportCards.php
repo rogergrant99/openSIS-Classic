@@ -32,6 +32,7 @@ include '_makeLetterGrade.fnc.php';
 ini_set('max_execution_time', 5000);
 ini_set('memory_limit', '12000M');
 
+$todays_syear = date("Y");
 if (isset($_SESSION['student_id']) && $_SESSION['student_id'] != '') {
     $_REQUEST['search_modfunc'] = 'list';
 }
@@ -86,7 +87,7 @@ if ($_REQUEST['modfunc'] == 'save') {
         if (count($RET)) {
             //start of report card print
             $QUART_RET=DBGet(DBQuery('SELECT * from school_quarters WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' AND MARKING_PERIOD_ID=\'' . UserMP() . '\''));  
-                //echo '<pre>'; print_r($RET); echo '</pre>'; 
+                // echo '<pre>'; print_r($RET); echo '</pre>'; 
                 foreach ($RET as $student_id => $course_periods) {
                     $individual=array();
                     if($publish_parents) $publish_parents=$student_id;
@@ -94,7 +95,7 @@ if ($_REQUEST['modfunc'] == 'save') {
                     foreach ($RET[$student_id] as $course_id => $courses) {
                         foreach ($courses as $marking_period_id => $temp) {
                             $SCHED_RET=DBGet(DBQuery('SELECT * from schedule WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND student_id=\'' . $student_id . '\'  AND SYEAR=\'' . UserSyear(). '\' AND COURSE_PERIOD_ID=\'' . $temp[1]['COURSE_PERIOD_ID'] . '\'')); 
-                            if(count($SCHED_RET) && $SCHED_RET[1]['DROPPED'] == 'Y')
+                            if(count($SCHED_RET) && $SCHED_RET[1]['DROPPED'] == 'Y' && ($todays_syear == UserSyear()) )
                                 continue;
                             $grade_id=$temp[1]['GRADE_ID'];
                             $individual[$i++]=$temp[1];
@@ -292,7 +293,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                     // echo '<pre>'; print_r($ATT_RET); echo '</pre>';
                     foreach ($ATT_RET as $abs) $count+=1 - $abs['STATE_VALUE'];
                     if($count)
-                        $data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['ABSCENCES']=($count !=0 ? $count . '' : '0');
+                        $data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['ABSCENCES']=($count !==null ? $count . '' : '0');
                     else
                         $data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['ABSCENCES']=0;
                 }else{
@@ -303,7 +304,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                     // echo '<pre>'; print_r($ATT_RET); echo '</pre>';
                     foreach ($ATT_RET as $abs) $count+=1 - $abs['STATE_VALUE'];
                     if($count)
-                        $data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['ABSCENCES']=($count !=0 ? $count . '' : '0');
+                        $data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['ABSCENCES']=($count !==null ? $count . '' : '0');
                     else
                         $data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['ABSCENCES']=0;
     
@@ -443,7 +444,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                 $grades_RET=array();
                 $last_id=0;
                 $SCHED_RET=DBGet(DBQuery('SELECT * from schedule WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND student_id=\'' . $student_id . '\'  AND SYEAR=\'' . UserSyear(). '\' AND COURSE_PERIOD_ID=\'' . $course_period_id . '\'')); 
-                if(count($SCHED_RET) && $SCHED_RET[1]['DROPPED'] == 'Y')
+                if(count($SCHED_RET) && $SCHED_RET[1]['DROPPED'] == 'Y' && ($todays_syear == UserSyear()))
                     $data['COURSES'][$course_count]['DROPPED']=true;
                 $GRADE_LEVEL_RET=DBGet(DBQuery('SELECT title from school_gradelevels WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND id=\'' . $course['GRADE_LEVEL'] . '\'')); 
                 if(count($GRADE_LEVEL_RET))
@@ -487,6 +488,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
 function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$student_id,$mp){
     global $publish_parents;
     global $one_page_pdf;
+    // echo '<pre>'; print_r($data); echo'</pre>';    
     
     $one_page_pdf=false;
     if(strpos($grade_id,"Primaire")){
@@ -560,8 +562,8 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
         $has_final[$YY1]=false;
         $has_final[$YY2]=false;
         for($comploop=1; $comploop <= $numcompetences ; $comploop++){
-            $comp_total=0;
-            $weight_total=0;
+            $comp_total=null;
+            $weight_total=null;
             if($numcompetences>1){
                 if($toggle)
                     echo '<tr> <td class="class-results--align-right">' . $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['COMPETENCE']  .'</td>';
@@ -569,147 +571,183 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                     echo '<tr> <td class="class-results--align-right">' . $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['COMPETENCE']  .'</td>';
             }else
                 echo '<td class="class-results--align-right">' . _studentAverage .'</td>';
+
+// Competences Year 1
             if($colspan==4){
+                // Competences first of two years displayed
                 for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
-                    // Year 1 , all competences and quarts
-                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])   .'</td>';
-                    if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])){
+                // Year 1 , all competences for all quarts
+                    if($YY2 && $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])
+                        echo'<td class="class-results--align-center">' . (_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])  !==null ? _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])  . '' : 'TI')   .'</td>';
+                    else
+                        echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE']) . '</td>';
+                    if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE'])>=0){
                         $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['GRADE']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                         $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     }
                 } 
-                // Year 1 , competences totals
                 if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH']){
                     $has_final[$YY2]=true;
                     $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
                     $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
+                // Year 1 competences final exam
                     if(! $publish_parents)
-                        echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
+                        echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
                     else
-                        echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>'; 
+                        echo'<td class="class-results--align-center">' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>'; 
                 }
                 else
-                    echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+                // Year 1 Resultats final des competences
+                    echo'<td class="class-results--align-center">' . ($comp_total !== null && $comp_total !== '' && $weight_total != 0 ? _myround($comp_total * 100 / $weight_total) : ($comp_total === 0 ? '0' : '')) .'</td>';
                 if($weight_total)
                     $resultat_final[$YY2]+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['WEIGTH'];
-            }   
-            $comp_total=0;
-            $weight_total=0;
+            } 
+
+// Competences Year 2  
+            $comp_total=null;
+            $weight_total=null;
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
-                // Year 2 , all competences and quarts
-                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  .'</td>';
-                if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])){
+            // Year 2 , all competences for all quarts
+                if($YY1 && $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])
+                    echo'<td class="class-results--align-center">' . (_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  !==null ? _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  . '' : 'TI')   .'</td>';
+                else
+                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])  .'</td>';
+                if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE'])>=0){
                     $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['GRADE']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
-            // Year 2 , competences totals 
             if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH']){
                 $has_final[$YY1]=true;
                 $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
                 $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
+            // Year 2 competences final exam
                 if(! $publish_parents)
-                    echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td></tr>';
+                    echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td></tr>';
                 else
-                    echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td></tr>';
+                    echo'<td class="class-results--align-center">' . ($comp_total !== null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td></tr>';
             }
             else
-                echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ') .'</td></tr>';
+            // Year 2 Resultats final des competences
+                    echo'<td class="class-results--align-center">' . ($comp_total !== null ? _myround($comp_total * 100 / $weight_total) . '' : '') .'</td></tr>';
             if($weight_total)
                 $resultat_final[$YY1]+= _myround($comp_total * 100 / $weight_total) * $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop-1]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['WEIGTH'];
         }
-        if($numcompetences>1){
+            if($numcompetences>1){
             echo '<td class="class-results--align-right">' . _studentAverage .'</td>';
-            $comp_total=0;
-            $weight_total=0;
+            $comp_total=null;
+            $weight_total=null;
+
+// Resultats disciplinaire Year 1
             if($colspan==4){
+            // reslutats disciplinaire for two years displayed
                 for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
-                    // Year 1 quarts totals
-                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])   .'</td>';
+                // Year 1 quarts resultats disciplinaire
+                        echo'<td class="class-results--align-center">' . (_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])  !=0 ? _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])  . '' : '')   .'</td>';
                     if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL'])){
                         $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['FINAL']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                         $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     }
                 }
-                // Year 1 , all quarts total
                 if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH']){
                     $has_final[$YY2]=true;
                     $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
                     $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAMWEIGTH'];
+                // Year 1 resutlat final with final exam
                     if(! $publish_parents)
-                        echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
+                        echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY2]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
                     else
-                        echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+                        echo'<td class="class-results--align-center">' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
                 }
+                // Year 1 resultat disciplinaire avec final exam
                 if($has_final[$YY2]){
                     if(! $publish_parents)
-                        echo'<td class="class-results--align-center"> <span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final[$YY2]) . '' : '')   .'</td>';
+                        echo'<td class="class-results--align-center"> <span style="color:red;">' . ($comp_total !==null ? _myround($resultat_final[$YY2]) . '' : '')   .'</td>';
                     else
-                        echo'<td class="class-results--align-center"> <span>' . ($comp_total !=0 ? _myround($resultat_final[$YY2]) . '' : '')   .'</td>';
+                        echo'<td class="class-results--align-center"> <span>' . ($comp_total !==null ? _myround($resultat_final[$YY2]) . '' : '')   .'</td>';
                 }
                 else
-                    echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')   .'</td>';
+                // Year 1 Total disciplinaire
+                    echo'<td class="class-results--align-center">' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : '')   .'</td>';
             }
-        $comp_total=0;
-        $weight_total=0;
+
+
+// Resultats disciplinaire Year 2
+        $comp_total=null;
+        $weight_total=null;
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
-                // Year 2 quarts totals
-                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])  .'</td>';
+            // Year 2 quarts resultats disciplinaire
+                echo'<td class="class-results--align-center">' . (_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])  !=0 ? _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])  . '' : '')   .'</td>';
                 if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL'])){
                     $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['FINAL']) / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
-            // Year 2 , all quarts total
             if($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM'] && $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH']){
                 $has_final[$YY1]=true;
                 $comp_total += _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) / 100 * $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
                 $weight_total += $data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAMWEIGTH'];
+            // Year 2 final exam
                 if(! $publish_parents)
-                    echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
+                    echo'<td class="class-results--align-center "><span style="color:red;"><i>(' . _myround($data['RESULTS']['COURSE'][$courseloop]['ASSIGNMENT'][$comploop]['YEAR'][$YY1]['FINALEXAM']) .  ')</i></span><spanstyle="color:black;">  ' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</span></td>';
                 else
-                    echo'<td class="class-results--align-center ">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
+                    echo'<td class="class-results--align-center ">' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : 'TI')  .'</td>';
             }
+            // Year 2 resultat disciplinaire avec final exam
             if($has_final[$YY1]){
                     if(! $publish_parents)
-                        echo'<td class="class-results--align-center"><span style="color:red;">' . ($comp_total !=0 ? _myround($resultat_final[$YY1]) . '' : '')   .'</td></tr>';
+                        echo'<td class="class-results--align-center"><span style="color:red;">' . ($comp_total !==null ? _myround($resultat_final[$YY1]) . '' : '')   .'</td></tr>';
                     else
-                        echo'<td class="class-results--align-center"><span>' . ($comp_total !=0 ? _myround($resultat_final[$YY1]) . '' : '')   .'</td></tr>';
+                        echo'<td class="class-results--align-center"><span>' . ($comp_total !==null ? _myround($resultat_final[$YY1]) . '' : '')   .'</td></tr>';
             }
             else
-                echo'<td class="class-results--align-center ">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
+            // Year 2 Total disciplinaire
+                echo'<td class="class-results--align-center ">' .($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : '').'</td></tr>';
         }
+
         echo '<td class="class-results--align-right">' . _groupAverage .'</td>';
-        $comp_total=0;
-        $weight_total=0;
+        $comp_total=null;
+        $weight_total=null;
+
+// Group Year 1 
         if($colspan==4){
+            // Group for two years displayed
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 // Year 1 group average
-                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])   .'</td>';
+                if($YY2 && $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])
+                    echo'<td class="class-results--align-center">' . (_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])  !==null ? _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])  . '' : 'TI')   .'</td>';
+                else
+                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])   .'</td>';
                 if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'])){
                     $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY2]['GROUP_AVG'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY2]['FINAL_WEIGHT'];
                 }
             }
-            //echo  $comp_total * 100 / $weight_total;
             // Year 1 , all quarts group average total
-            echo'<td class="class-results--align-center">' . ($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ')   .'</td>';
+            echo'<td class="class-results--align-center">' . ($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : '')   .'</td>';
         }
-        $comp_total=0;
-        $weight_total=0;
+        $comp_total=null;
+        $weight_total=null;
+
+// Group Year 2 
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 // Year 2 group average
-                echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])  .'</td>';
+                if($YY1 && $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])
+                    echo'<td class="class-results--align-center">' . (_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])  !==null ? _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])  . '' : 'TI')   .'</td>';
+                else
+                    echo'<td class="class-results--align-center">' . _myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])  .'</td>';
                 if(_myround($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'])){
                     $comp_total += $data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['GROUP_AVG'] / 100 * $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                     $weight_total += $data['RESULTS']['QUART'][$quartloop]['YEAR'][$YY1]['FINAL_WEIGHT'];
                 }
             }
-        // Year 2 , all quarts group average total
-        echo'<td class="class-results--align-center">' .($comp_total !=0 ? _myround($comp_total * 100 / $weight_total) . '' : '  ').'</td></tr>';
+            // Year 2 , all quarts group average total
+            echo'<td class="class-results--align-center">' .($comp_total !==null ? _myround($comp_total * 100 / $weight_total) . '' : '').'</td></tr>';
 
+// Admin markup Year 1
         if(! $publish_parents){
             if($colspan==4){
+            // Admin for two years displayed
                 if($data['RESULTS']['COURSE'][$courseloop]['QUART'][1]['YEAR'][$YY2]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][2]['YEAR'][$YY2]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][3]['YEAR'][$YY2]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][1]['YEAR'][$YY1]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][2]['YEAR'][$YY1]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][3]['YEAR'][$YY1]['DIFF'])
                 {
                     echo '<td></td>';
@@ -721,6 +759,8 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                         }else echo '<td></td>';
                     }
                     echo '<td></td>';
+
+// Admin markup Year 2
                     for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                         if($data['RESULTS']['COURSE'][$courseloop]['QUART'][1]['YEAR'][$YY1]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][2]['YEAR'][$YY1]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][3]['YEAR'][$YY1]['DIFF']){
                             if($data['RESULTS']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['DIFF'])
@@ -731,6 +771,7 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                     echo '<td></td>';
                 }
             }else
+// Admin markup Year 1 if not two years displayed
             for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
                 if($data['RESULTS']['COURSE'][$courseloop]['QUART'][1]['YEAR'][$YY1]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][2]['YEAR'][$YY1]['DIFF'] || $data['RESULTS']['COURSE'][$courseloop]['QUART'][3]['YEAR'][$YY1]['DIFF'] )
                 {
@@ -740,6 +781,8 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 }
             }
         }
+
+// Abscences
         if($abscences){
             if($colspan==4){
                 echo '<tr><tr></tr>';
@@ -761,11 +804,17 @@ function CadoHTMLresultatsCycles($title,$quarts,$courses,$data,$grade_id,$studen
                 $total_absc=0;
                 $total_quart_abs=0;
                 for($quartloop=1; $quartloop <= $numquart ; $quartloop++){
-                    echo '<td colspan=1 class="center">' .$data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['ABSCENCES'] .' / ' . $data['ABSCENCES_QUARTER']['QUART'][$quartloop]['YEAR'][$YY1]['MAXDAYS_QUARTER'] .'</td>';
+                    if($YY1)
+                        echo '<td colspan=1 class="center">' .$data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['ABSCENCES'] .' / ' . $data['ABSCENCES_QUARTER']['QUART'][$quartloop]['YEAR'][$YY1]['MAXDAYS_QUARTER'] .'</td>';
+                    else
+                        echo '<td colspan=1 class="center"></td>';
                     $total_absc+=$data['STUDENT_ABSCENCES_QUARTER']['COURSE'][$courseloop]['QUART'][$quartloop]['YEAR'][$YY1]['ABSCENCES'];
                     $total_quart_abs+=$data['ABSCENCES_QUARTER']['QUART'][$quartloop]['YEAR'][$YY1]['MAXDAYS_QUARTER'];
                 }
-                echo '<td colspan=1 class="class-results--align-center">' . $total_absc .' / ' . $total_quart_abs .'</td>';
+                if($YY1)
+                    echo '<td colspan=1 class="class-results--align-center">' . $total_absc .' / ' . $total_quart_abs .'</td>';
+                else 
+                    echo '<td colspan=1 class="class-results--align-center"></td>';
             }else{
                 echo '<tr><tr></tr>';
                 echo '</tr><td class="class-results--align-right"">Unités</td>
@@ -917,8 +966,7 @@ function CadoHTMLcommunication($title,$courses,$results,$grade_id,$student_id){
 }
 
 function CadoHTMLHeader($student_id, $grade_id,$last_mp) {
-
-    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));
+    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND marking_period_id= \'' . UserMP() . '\' '));
     $columns=array();
     $data=array();
     $SCHOOL_RET=DBGet(DBQuery('SELECT * from schools where ID = \''. UserSchool() . '\''));
@@ -2151,8 +2199,9 @@ function _makeTeacherID($teacher, $column){
 
 function _myround($value){
     if($value== 'N/A') return ''; 
-//    return round(round($value,2),0);
-    return($value !=0 ? round(round($value,2),0) . '' : '');
+    if($value== '0') return '0';
+    // return round(round($value,2),0);
+    return($value !==null ? round(round($value,2),0) . '' : '');
 }
 
 function CadoTeacherComlpetion($teacher_id,$course_id,$course_period_id,$short_name){
