@@ -1648,7 +1648,7 @@ if (!$_REQUEST['_openSIS_PDF']) {
     } else if ($grade_status == 'not set yet') {
         echo '<div class="alert bg-danger alert-styled-left">'._gradeReportingDateHasNotSetForThisMarkingPeriod.'.</div>';
     }
-    echo '<div class="no-margin">Le total des notes de carnet est affiché sous la colone <b><i>"Note de carnet"</i></b> <br> Le bouton <b><i>"Assigner note final a partir du carnet de notes"</i></b> va attribuer les notes de carnet à la colone <b><i>"Note final"</i></b><br> La colone <b><i>"Différence"</i></b> affiche la différence entre le total des notes de carnet et ce qui est inscrit dans la colone <b><i>"Note final"</i></b><br>La fonction <b><i>"Assigner note final a partir du carnet de notes"</i></b> devrait ètre effectuer seulement quand les notes de carnets sont complètes.</div>';
+    echo '<div class="no-margin">Le total des notes de carnet est affiché sous la colone <b><i>"Note de carnet"</i></b> <br> Le bouton <b><i>"Assigner note final a partir du carnet de notes"</i></b> va attribuer les notes de carnet à la colone <b><i>"Note final"</i></b><br> La colone <b><i>"Différence"</i></b> affiche la différence entre le total des notes de carnet et ce qui est inscrit dans la colone <b><i>"Note final"</i></b><br>La fonction <b><i>"Assigner note final a partir du carnet de notes"</i></b> devrait ètre effectuer seulement quand les notes de carnets sont complètes.<br>Il faut cliquer sur <b><i>"Enregistrer"</b></i> pour appliquer les notes final (et les commentaires).</div>';
     if (AllowEdit() && count($stu_RET) != 0) {
         echo '<ul class="nav nav-pills nav-xs nav-pills-bordered">';
         // if ($_REQUEST['use_percents'] != 'true')
