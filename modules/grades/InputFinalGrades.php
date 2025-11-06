@@ -59,6 +59,8 @@ echo '<div class="panel-body">';
             foreach ($assignment_weight as $key => $weight) 
             {
                 $total+=$weight['ASSIGNMENT_WEIGHT'];
+                if($weight['ASSIGNMENT_WEIGHT']=='' || $weight['ASSIGNMENT_WEIGHT']== '0')
+                    $total=0;
             }
             if ($total != 100)
                 echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
