@@ -1829,7 +1829,7 @@ define("_cannotAddActivityWithSameTitle", "Impossible d'ajouter l'activité avec
 define("_startDateOrEndDateCannotBeBlank", "Date de début ou de fin ne peut pas être vide");
 define("_scoreBreakoffPointsSetupIsIncompletePleaseSetScoreBreakoffPointsFromConfiguration", "La configuration du points d'arrêt est incomplète, régler le points d'arrêt sous Notes->Installer->Configuration");
 define("_gradeReportingDateHasNotSetForThisMarkingPeriod", "date de clôture de prise de notes n'a pas été entré pour cette période de prise de notes");
-define("_coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes", "La période de cours est configurée comme pondérée, mais la pondération des compétences ou des devoirs ne totalise pas 100%.");
+define("_coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes", "La période de cours est configurée comme pondérée, mais la pondération des compétences ou des devoirs ne totalise pas 100% ou un devoir a une pondération inexistante ou a zéro.");
 define("_messageBodyCannotBeEmpty", "Le corps du message ne peut pas être vide");
 define("_messageNotSentAsNoUsersWereFound", "Message non envoyé comme aucun utilisateur n'a été trouvé");
 define("_unableToDeleteGoalPleaseDeleteProgressesFirst", "Impossible de supprimer le but. S'il vous plaît supprimer le progrès en premier.");
