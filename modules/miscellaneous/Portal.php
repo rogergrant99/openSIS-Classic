@@ -557,6 +557,8 @@ function check_weight($course_period_id,$staff_id,$mp,$course_id)
             $assignment_weight=DBGet(DBQuery('SELECT    ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.  $mp . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
             foreach ($assignment_weight as $key => $weight) 
             {
+                if($weight['ASSIGNMENT_WEIGHT']=='' || $weight['ASSIGNMENT_WEIGHT'] == '0')
+                    return 1;
                 $total+=$weight['ASSIGNMENT_WEIGHT'];
             }
             if ($total != 100)
