@@ -3600,15 +3600,13 @@ function formcheck_failure_count(this_DET) {
 //-------------------------------------------------assignments Title Validation Starts---------------------------------------------
 function formcheck_assignments(this_DET) {
   var this_button_id = this_DET.id;
-
   var frmvalidator = new Validator("F3", this_button_id);
-
   var type_id = document.getElementById("type_id").value;
   var assignment_type_id = document.getElementById("assignment_type_id").value;
-
   var data = document.getElementsByName(
     "tables[" + assignment_type_id + "][FINAL_GRADE_PERCENT]"
   );
+  
   if(data.length > 0 ){
     data = data[0];
     if (data.value == "") {
@@ -3629,60 +3627,97 @@ function formcheck_assignments(this_DET) {
   else {
     data = data;
   }
-
+  
   if (type_id.trim() == "") {
     frmvalidator.addValidation(
       "tables[new][TITLE]",
       "req",
-      "Title cannot be blank"
+      "Le titre ne peut pas être vide"
     );
     frmvalidator.addValidation(
       "tables[new][TITLE]",
       "maxlen=50",
-      "Max length for title is 50"
+      "La longueur maximale du titre est de 50 caractères."
     );
     frmvalidator.addValidation(
       "tables[new][POINTS]",
       "req",
-      "Total points cannot be blank"
+      "Le total des points ne peut pas être vide."
+    );
+    frmvalidator.addValidation(
+      "tables[new][POINTS]",
+      "num",
+      "Le total des points doit être un nombre."
+    );
+    frmvalidator.addValidation(
+      "tables[new][POINTS]",
+      "gt=0",
+      "Le total des points doit être supérieur à zéro."
     );
     frmvalidator.addValidation(
       "month_tables[new][ASSIGNED_DATE]",
       "req",
-      "Assigned date cannot be blank"
+      "La date d'attribution ne peut pas être vide."
     );
     frmvalidator.addValidation(
       "month_tables[new][DUE_DATE]",
       "req",
-      "Due date cannot be blank"
+      "La date d'échéance ne peut pas être vide."
     );
+    
   } else {
     frmvalidator.addValidation(
       "tables[" + type_id + "][TITLE]",
       "req",
-      "Title cannot be blank"
+      "Le titre ne peut pas être vide"
     );
     frmvalidator.addValidation(
       "tables[" + type_id + "][TITLE]",
       "maxlen=50",
-      "Max length for title is 50"
+      "La longueur maximale du titre est de 50 caractères."
     );
     frmvalidator.addValidation(
       "tables[" + type_id + "][POINTS]",
       "req",
-      "Total points cannot be blank"
+      "Le total des points ne peut pas être vide."
+    );
+    frmvalidator.addValidation(
+      "tables[" + type_id + "][POINTS]",
+      "num",
+      "Le total des points doit être un nombre."
+    );
+    frmvalidator.addValidation(
+      "tables[" + type_id + "][POINTS]",
+      "gt=0",
+      "Le total des points doit être supérieur à zéro."
+    );
+    frmvalidator.addValidation(
+      "tables[" + type_id + "][ASSIGNMENT_WEIGHT]",
+      "req",
+      "La pondération ne peut pas être vide"
+    );
+    frmvalidator.addValidation(
+      "tables[" + type_id + "][ASSIGNMENT_WEIGHT]",
+      "num",
+      "La pondération doit être un nombre"
+    );
+    frmvalidator.addValidation(
+      "tables[" + type_id + "][ASSIGNMENT_WEIGHT]",
+      "gt=0",
+      "La pondération doit être supérieur à zéro."
     );
     frmvalidator.addValidation(
       "month_tables[" + type_id + "][ASSIGNED_DATE]",
       "req",
-      "Assigned date cannot be blank"
+      "La date d'attribution ne peut pas être vide."
     );
     frmvalidator.addValidation(
       "month_tables[" + type_id + "][DUE_DATE]",
       "req",
-      "Due date cannot be blank"
+      "La date d'échéance ne peut pas être vide."
     );
   }
+  
   return true;
 }
 //-------------------------------------------------assignments Title Validation Ends---------------------------------------------
