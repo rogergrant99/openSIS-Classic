@@ -410,7 +410,7 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'delete') {
             $table = _assignmentType;
 
             //   $data=DBGet(DBQuery('select id from student_report_card_grades where course_period_id=(select course_period_id from  gradebook_assignment_types where assignment_type_id='.$_REQUEST['assignment_type_id'].')'));
-            $course_period_ids=DBGet(DBQuery('SELECT * FROM gradebook_assignments WHERE assignment_type_id=' . $_REQUEST['assignment_type_id']));
+            $course_period_ids=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types WHERE assignment_type_id=' . $_REQUEST['assignment_type_id']));
             $data = DBGet(DBQuery('select id from student_report_card_grades where course_period_id=' . $course_period_ids[1]['COURSE_PERIOD_ID'] . ''));
 
             if (count($data) > 0)
