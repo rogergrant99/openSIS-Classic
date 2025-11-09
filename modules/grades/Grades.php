@@ -111,7 +111,7 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
     $LO_columns = array(
         'TYPE_TITLE' => _category,
         'TITLE' => _assignment,
-        //'POINTS' => _points,
+        'POINTS' => _points,
         //'LETTER_GRADE' => _grade,
         'COMMENT' => _comment,
     );
