@@ -68,7 +68,7 @@ if (UserStudentID() && !$_REQUEST['modfunc']) {
                 'GRADE' => _letter,
                 'UNGRADED' => _ungraded,
             ) + ($do_stats ? array(
-                'BAR1' =>  '' . _gradeRange . '(%)',
+                // 'BAR1' =>  '' . _gradeRange . '(%)',
                 'BAR2' => _classRank,
             ) : array());
         else
@@ -76,10 +76,10 @@ if (UserStudentID() && !$_REQUEST['modfunc']) {
                 'TITLE' => _courseTitle,
                 'TEACHER' => _teacher,
                 'PERCENT' => _percent,
-                'GRADE' => _letter,
-                'UNGRADED' => _ungraded,
+                // 'GRADE' => _letter,
+                // 'UNGRADED' => _ungraded,
             ) + ($do_stats ? array(
-                'BAR1' =>  '' . _gradeRange . '(%)',
+                // 'BAR1' =>  '' . _gradeRange . '(%)',
             ) : array());
 
         if (count($courses_RET)) {
@@ -402,12 +402,12 @@ if (UserStudentID() && !$_REQUEST['modfunc']) {
                         'CATEGORY' => _category,
                         'POINTS' => _pointsPossible,
                         'PERCENT' => _percent,
-                        'LETTER' => _letter,
+                        // 'LETTER' => _letter,
                         'ASSIGNED_DATE' => _assignedDate,
                         'DUE_DATE' => _dueDate,
                     ) + ($do_stats ? array(
-                        'BAR1' => _gradeRange,
-                        'BAR2' => _classRank,
+                        // 'BAR1' => _gradeRange,
+                        // 'BAR2' => _classRank,
                     ) : array());
                 else
                     $LO_columns = array(
@@ -415,11 +415,11 @@ if (UserStudentID() && !$_REQUEST['modfunc']) {
                         'CATEGORY' => _category,
                         'POINTS' => _pointsPossible,
                         'PERCENT' => _percent,
-                        'LETTER' => _letter,
+                        // 'LETTER' => _letter,
                         'ASSIGNED_DATE' => _assignedDate,
                         'DUE_DATE' => _dueDate,
                     ) + ($do_stats ? array(
-                        'BAR1' => _gradeRange,
+                        // 'BAR1' => _gradeRange,
                     ) : array());
 
                 $LO_ret = array(0 => array());
