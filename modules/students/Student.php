@@ -1813,6 +1813,2411 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
                     echo '<div class="panel panel-default">';
                     echo PopTable('header', $tabs, '');
 
+// START ID 13 Note évolutive
+if ($_REQUEST['category_id'] == 13) {
+    // Handle delete action
+    if (isset($_GET['delete_note']) && $_GET['delete_note'] != '') {
+        $note_id = intval($_GET['delete_note']);
+        DBQuery("DELETE FROM note_evolutive WHERE ID = " . $note_id . " AND STUDENT_ID = '" . UserStudentID() . "'");
+        echo '<div class="alert alert-success">Note supprimée avec succès!</div>';
+    }
+    
+    // Handle form submission
+    if (isset($_POST['save_note_evolutive'])) {
+        $student_id = UserStudentID();
+        $syear = UserSyear();
+        $school_id = UserSchool();
+        $note_date = $_POST['note_date'];
+        $note_text = str_replace("'", "''", $_POST['note_text']);
+        
+        if (isset($_POST['note_id']) && $_POST['note_id'] != '') {
+            // Update existing note
+            $note_id = intval($_POST['note_id']);
+            $sql = "UPDATE note_evolutive SET 
+                    NOTE_DATE = '" . $note_date . "',
+                    NOTE_TEXT = '" . $note_text . "'
+                    WHERE ID = " . $note_id . " 
+                    AND STUDENT_ID = '" . $student_id . "'";
+            
+            DBQuery($sql);
+            echo '<div class="alert alert-success">Note mise à jour avec succès!</div>';
+        } else {
+            // Insert new note
+            $sql = "INSERT INTO note_evolutive (
+                    STUDENT_ID, SYEAR, SCHOOL_ID, NOTE_DATE, NOTE_TEXT, CREATED_BY
+                ) VALUES (
+                    '" . $student_id . "',
+                    '" . $syear . "',
+                    '" . $school_id . "',
+                    '" . $note_date . "',
+                    '" . $note_text . "',
+                    '" . User('STAFF_ID') . "'
+                )";
+            
+            DBQuery($sql);
+            echo '<div class="alert alert-success">Note créée avec succès!</div>';
+        }
+    }
+    
+    // Fetch all notes for this student
+    $notes_data = DBGet(DBQuery("SELECT ne.*, CONCAT(s.FIRST_NAME, ' ', s.LAST_NAME) as CREATED_BY_NAME 
+                                FROM note_evolutive ne
+                                LEFT JOIN staff s ON ne.CREATED_BY = s.STAFF_ID
+                                WHERE ne.STUDENT_ID = '" . UserStudentID() . "' 
+                                AND ne.SYEAR = '" . UserSyear() . "' 
+                                AND ne.SCHOOL_ID = '" . UserSchool() . "'
+                                ORDER BY ne.NOTE_DATE DESC, ne.CREATED_AT DESC"));
+    
+    // Fetch student's information for display
+    $student_info = DBGet(DBQuery("SELECT s.FIRST_NAME, s.LAST_NAME, s.BIRTHDATE, sg.TITLE as GRADE_LEVEL 
+                                   FROM students s
+                                   JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID
+                                   JOIN school_gradelevels sg ON se.GRADE_ID = sg.ID 
+                                   WHERE s.STUDENT_ID = '" . UserStudentID() . "' 
+                                   AND se.SYEAR = '" . UserSyear() . "' 
+                                   AND se.SCHOOL_ID = '" . UserSchool() . "' 
+                                   ORDER BY se.START_DATE DESC 
+                                   LIMIT 1"));
+    
+    $student_name = isset($student_info[1]) ? $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'] : '';
+    
+    // Check if we're editing an existing note
+    $editing_note = null;
+    if (isset($_GET['edit_note']) && $_GET['edit_note'] != '') {
+        $note_id = intval($_GET['edit_note']);
+        $editing_note_data = DBGet(DBQuery("SELECT * FROM note_evolutive 
+                                           WHERE ID = " . $note_id . " 
+                                           AND STUDENT_ID = '" . UserStudentID() . "'"));
+        if (count($editing_note_data) > 0) {
+            $editing_note = $editing_note_data[1];
+        }
+    }
+    
+    echo '
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Notes évolutives</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            .container {
+                max-width: 1000px;
+                margin: 0 auto;
+                background-color: white;
+                padding: 30px;
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 3px solid #333;
+                padding-bottom: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+                color: #333;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+            
+            .student-info {
+                background-color: #f5f5f5;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 30px;
+            }
+            
+            .section {
+                margin-bottom: 30px;
+            }
+            
+            .section-title {
+                background-color: #e8e8e8;
+                padding: 10px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                border-left: 4px solid #4a90e2;
+                font-size: 16px;
+            }
+            
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: 600;
+                color: #555;
+                font-size: 14px;
+            }
+            
+            input[type="date"] {
+                width: 250px;
+                padding: 10px 12px;
+                border: 1px solid #605d5dff;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            
+            textarea {
+                width: 100%;
+                min-height: 200px;
+                padding: 12px;
+                border: 1px solid #605d5dff;
+                border-radius: 4px;
+                font-size: 14px;
+                resize: vertical;
+                font-family: Arial, sans-serif;
+                line-height: 1.5;
+            }
+            
+            .btn-save {
+                background-color: #4a90e2;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+            
+            .btn-save:hover {
+                background-color: #357abd;
+            }
+            
+            .btn-print {
+                background-color: #28a745;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+            
+            .btn-print:hover {
+                background-color: #218838;
+            }
+            
+            .btn-cancel {
+                background-color: #6c757d;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+            }
+            
+            .btn-cancel:hover {
+                background-color: #5a6268;
+            }
+            
+            .button-container {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            
+            .notes-list {
+                margin-top: 40px;
+            }
+            
+            .note-item {
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 20px;
+                position: relative;
+            }
+            
+            .note-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            
+            .note-date {
+                font-weight: bold;
+                color: #333;
+                font-size: 16px;
+            }
+            
+            .note-meta {
+                font-size: 12px;
+                color: #666;
+                font-style: italic;
+            }
+            
+            .note-content {
+                color: #444;
+                line-height: 1.6;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            
+            .note-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 15px;
+                padding-top: 15px;
+                border-top: 1px solid #e0e0e0;
+            }
+            
+            .btn-edit {
+                background-color: #ffc107;
+                color: #000;
+                padding: 8px 20px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+            }
+            
+            .btn-edit:hover {
+                background-color: #e0a800;
+            }
+            
+            .btn-delete {
+                background-color: #dc3545;
+                color: white;
+                padding: 8px 20px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-block;
+            }
+            
+            .btn-delete:hover {
+                background-color: #c82333;
+            }
+            
+            .btn-print-note {
+                background-color: #17a2b8;
+                color: white;
+                padding: 8px 20px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: pointer;
+            }
+            
+            .btn-print-note:hover {
+                background-color: #138496;
+            }
+            
+            .empty-state {
+                text-align: center;
+                padding: 40px;
+                color: #666;
+                font-style: italic;
+            }
+            
+            .alert {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 4px;
+            }
+            
+            .alert-success {
+                background-color: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+            }
+            
+            @media print {
+                .btn-save,
+                .btn-print,
+                .btn-cancel,
+                .btn-edit,
+                .btn-delete,
+                .btn-print-note,
+                .button-container,
+                .note-actions,
+                .navbar,
+                .sidebar,
+                .panel-heading,
+                nav,
+                .nav-tabs,
+                ul[role="tablist"] {
+                    display: none !important;
+                }
+                
+                body {
+                    background: white !important;
+                }
+                
+                .container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 20px !important;
+                    box-shadow: none !important;
+                }
+                
+                input[type="date"],
+                textarea {
+                    border: none;
+                    border-bottom: 1px solid #000;
+                    background: transparent;
+                }
+                
+                @page {
+                    margin: 1cm;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>NOTES ÉVOLUTIVES</h1>
+            </div>
+            
+            <div class="student-info">
+                <strong>Élève:</strong> ' . htmlspecialchars($student_name) . '
+            </div>
+            
+            <div class="section">
+                <div class="section-title">' . ($editing_note ? 'MODIFIER LA NOTE' : 'AJOUTER UNE NOUVELLE NOTE') . '</div>
+                <form method="POST" action="">
+                    ' . ($editing_note ? '<input type="hidden" name="note_id" value="' . $editing_note['ID'] . '">' : '') . '
+                    
+                    <div class="form-group">
+                        <label>Date de la note: <span style="color: red;">*</span></label>
+                        <input type="date" name="note_date" value="' . ($editing_note ? $editing_note['NOTE_DATE'] : date('Y-m-d')) . '" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Contenu de la note: <span style="color: red;">*</span></label>
+                        <textarea name="note_text" required placeholder="Entrez votre note ici...">' . ($editing_note ? htmlspecialchars($editing_note['NOTE_TEXT']) : '') . '</textarea>
+                    </div>
+                    
+                    <div class="button-container">
+                        ' . ($editing_note ? '<a href="Modules.php?modname=' . $_REQUEST['modname'] . '&include=' . $_REQUEST['include'] . '&category_id=13" class="btn-cancel">Annuler</a>' : '') . '
+                        <button type="button" onclick="printForm()" class="btn-print">Imprimer la note</button>
+                        <button type="submit" name="save_note_evolutive" class="btn-save">' . ($editing_note ? 'Mettre à jour' : 'Enregistrer') . '</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="notes-list">
+                <div class="section-title">HISTORIQUE DES NOTES</div>';
+    
+    if (count($notes_data) > 0) {
+        foreach ($notes_data as $note) {
+            $note_date_formatted = date('d/m/Y', strtotime($note['NOTE_DATE']));
+            $created_at_formatted = date('d/m/Y à H:i', strtotime($note['CREATED_AT']));
+            
+            echo '
+                <div class="note-item" id="note-' . $note['ID'] . '">
+                    <div class="note-header">
+                        <div>
+                            <div class="note-date">Date: ' . $note_date_formatted . '</div>
+                            <div class="note-meta">Créée le ' . $created_at_formatted . ($note['CREATED_BY_NAME'] ? ' par ' . htmlspecialchars($note['CREATED_BY_NAME']) : '') . '</div>
+                        </div>
+                    </div>
+                    <div class="note-content">' . nl2br(htmlspecialchars($note['NOTE_TEXT'])) . '</div>
+                    <div class="note-actions">
+                        <a href="Modules.php?modname=' . $_REQUEST['modname'] . '&include=' . $_REQUEST['include'] . '&category_id=13&edit_note=' . $note['ID'] . '" class="btn-edit">Modifier</a>
+                        <button onclick="printNote(' . $note['ID'] . ')" class="btn-print-note">Imprimer</button>
+                        <a href="Modules.php?modname=' . $_REQUEST['modname'] . '&include=' . $_REQUEST['include'] . '&category_id=13&delete_note=' . $note['ID'] . '" class="btn-delete" onclick="return confirm(\'Êtes-vous sûr de vouloir supprimer cette note?\')">Supprimer</a>
+                    </div>
+                </div>';
+        }
+    } else {
+        echo '<div class="empty-state">Aucune note enregistrée pour cet élève.</div>';
+    }
+    
+    echo '
+            </div>
+        </div>
+        
+        <script>
+        function printForm() {
+            var printWindow = window.open(\'\', \'_blank\');
+            var studentInfo = "' . addslashes($student_name) . '";
+            var noteDate = document.querySelector(\'input[name="note_date"]\').value;
+            var noteText = document.querySelector(\'textarea[name="note_text"]\').value;
+            
+            var formattedDate = new Date(noteDate).toLocaleDateString(\'fr-FR\');
+            
+            var printHTML = `
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Note évolutive</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            padding: 20px;
+                            background: white;
+                        }
+                        
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        
+                        h1 {
+                            font-size: 28px;
+                            margin-bottom: 10px;
+                        }
+                        
+                        .student-info {
+                            background-color: #f5f5f5;
+                            padding: 15px;
+                            margin-bottom: 30px;
+                        }
+                        
+                        .note-date {
+                            font-weight: bold;
+                            margin-bottom: 15px;
+                            font-size: 16px;
+                        }
+                        
+                        .note-content {
+                            line-height: 1.6;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                            padding: 20px;
+                            border: 1px solid #ddd;
+                        }
+                        
+                        @page {
+                            margin: 1cm;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>NOTE ÉVOLUTIVE</h1>
+                    </div>
+                    <div class="student-info">
+                        <strong>Élève:</strong> ${studentInfo}
+                    </div>
+                    <div class="note-date">
+                        Date: ${formattedDate}
+                    </div>
+                    <div class="note-content">
+                        ${noteText.replace(/\n/g, \'<br>\')}
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            printWindow.onload = function() {
+                printWindow.focus();
+                printWindow.print();
+                setTimeout(function() {
+                    printWindow.close();
+                }, 100);
+            };
+        }
+        
+        function printNote(noteId) {
+            var noteElement = document.getElementById(\'note-\' + noteId);
+            var studentInfo = "' . addslashes($student_name) . '";
+            var noteDateElement = noteElement.querySelector(\'.note-date\');
+            var noteContentElement = noteElement.querySelector(\'.note-content\');
+            var noteMetaElement = noteElement.querySelector(\'.note-meta\');
+            
+            var printWindow = window.open(\'\', \'_blank\');
+            
+            var printHTML = `
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Note évolutive</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            padding: 20px;
+                            background: white;
+                        }
+                        
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        
+                        h1 {
+                            font-size: 28px;
+                            margin-bottom: 10px;
+                        }
+                        
+                        .student-info {
+                            background-color: #f5f5f5;
+                            padding: 15px;
+                            margin-bottom: 30px;
+                        }
+                        
+                        .note-date {
+                            font-weight: bold;
+                            margin-bottom: 10px;
+                            font-size: 16px;
+                        }
+                        
+                        .note-meta {
+                            font-size: 12px;
+                            color: #666;
+                            font-style: italic;
+                            margin-bottom: 15px;
+                        }
+                        
+                        .note-content {
+                            line-height: 1.6;
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                            padding: 20px;
+                            border: 1px solid #ddd;
+                        }
+                        
+                        @page {
+                            margin: 1cm;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>NOTE ÉVOLUTIVE</h1>
+                    </div>
+                    <div class="student-info">
+                        <strong>Élève:</strong> ${studentInfo}
+                    </div>
+                    <div class="note-date">
+                        ${noteDateElement.textContent}
+                    </div>
+                    <div class="note-meta">
+                        ${noteMetaElement.textContent}
+                    </div>
+                    <div class="note-content">
+                        ${noteContentElement.innerHTML}
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            printWindow.onload = function() {
+                printWindow.focus();
+                printWindow.print();
+                setTimeout(function() {
+                    printWindow.close();
+                }, 100);
+            };
+        }
+        </script>
+    </body>
+    </html>
+    ';
+}
+// END ID 13 Note évolutive
+
+// START ID 14 Plan d'intervention
+if ($_REQUEST['category_id'] == 14) {
+    // Handle form submission
+    if (isset($_POST['save_plan_intervention'])) {
+        $student_id = UserStudentID();
+        $syear = UserSyear();
+        $school_id = UserSchool();
+        
+        // Check if a plan already exists for this student
+        $existing_plan = DBGet(DBQuery("SELECT ID FROM plan_intervention 
+                                        WHERE STUDENT_ID = '" . $student_id . "' 
+                                        AND SYEAR = '" . $syear . "' 
+                                        AND SCHOOL_ID = '" . $school_id . "'"));
+        
+        // Process checkbox values
+        $diagnostics = array();
+        if (isset($_POST['diag_dysphasie'])) $diagnostics[] = 'Dysphasie';
+        if (isset($_POST['diag_dyspraxie'])) $diagnostics[] = 'Dyspraxie';
+        if (isset($_POST['diag_dyslexie'])) $diagnostics[] = 'Dyslexie';
+        if (isset($_POST['diag_dysorthographie'])) $diagnostics[] = 'Dysorthographie';
+        if (isset($_POST['diag_dyscalculie'])) $diagnostics[] = 'Dyscalculie';
+        if (isset($_POST['diag_tda'])) $diagnostics[] = 'TDA';
+        if (isset($_POST['diag_tdah'])) $diagnostics[] = 'TDAH';
+        if (isset($_POST['diag_ted'])) $diagnostics[] = 'TED';
+        if (isset($_POST['diag_anxiete'])) $diagnostics[] = 'Anxiété';
+        if (isset($_POST['diag_gilles'])) $diagnostics[] = 'Gilles de la Tourette';
+        $diagnostics_str = implode(',', $diagnostics);
+        
+        $spheres = array();
+        if (isset($_POST['sphere_comportementale'])) $spheres[] = 'Comportementale';
+        if (isset($_POST['sphere_apprentissage'])) $spheres[] = 'Apprentissage';
+        $spheres_str = implode(',', $spheres);
+        
+        $mesures = array();
+        if (isset($_POST['mes_temps_supp'])) $mesures[] = 'Temps supplémentaire';
+        if (isset($_POST['mes_calculatrice'])) $mesures[] = 'Calculatrice';
+        if (isset($_POST['mes_reponses_orales'])) $mesures[] = 'Réponses orales';
+        if (isset($_POST['mes_ordinateur'])) $mesures[] = 'Ordinateur';
+        if (isset($_POST['mes_logiciel_correction'])) $mesures[] = 'Logiciel correction';
+        if (isset($_POST['mes_word'])) $mesures[] = 'Word';
+        if (isset($_POST['mes_synthetiseur'])) $mesures[] = 'Synthétiseur vocal';
+        if (isset($_POST['mes_dictionnaire'])) $mesures[] = 'Dictionnaire électronique';
+        if (isset($_POST['mes_place_pref'])) $mesures[] = 'Place préférentielle';
+        if (isset($_POST['mes_verifier_comp'])) $mesures[] = 'Vérifier compréhension';
+        if (isset($_POST['mes_materiel_manip'])) $mesures[] = 'Matériel manipulation';
+        if (isset($_POST['mes_coquilles'])) $mesures[] = 'Coquilles insonorisantes';
+        if (isset($_POST['mes_fragmenter'])) $mesures[] = 'Fragmenter tâche';
+        if (isset($_POST['mes_diminuer'])) $mesures[] = 'Diminuer exigences';
+        $mesures_str = implode(',', $mesures);
+        
+        if (count($existing_plan) > 0) {
+            // Update existing plan
+            $sql = "UPDATE plan_intervention SET 
+                    ANNEE_SCOLAIRE = '" . str_replace("'", "''", $_POST['annee_scolaire']) . "',
+                    CODE_PERMANENT = '" . str_replace("'", "''", $_POST['code_permanent']) . "',
+                    DATE_NAISSANCE = " . ($_POST['date_naissance'] ? "'" . $_POST['date_naissance'] . "'" : "NULL") . ",
+                    NIVEAU_SCOLAIRE = '" . str_replace("'", "''", $_POST['niveau_scolaire']) . "',
+                    REPRISE = '" . str_replace("'", "''", $_POST['reprise']) . "',
+                    DIAGNOSTIC = '" . str_replace("'", "''", $diagnostics_str) . "',
+                    AUTRES_DIAGNOSTIC = '" . str_replace("'", "''", $_POST['autres_diagnostic']) . "',
+                    DATE_EVALUATION = '" . str_replace("'", "''", $_POST['date_evaluation']) . "',
+                    PRECISIONS = '" . str_replace("'", "''", $_POST['precisions']) . "',
+                    HYPOTHESE = '" . str_replace("'", "''", $_POST['hypothese']) . "',
+                    MEDICATION = '" . str_replace("'", "''", $_POST['medication']) . "',
+                    SPHERES_PROBLEMATIQUES = '" . str_replace("'", "''", $spheres_str) . "',
+                    MANIFESTATIONS_COMPORTEMENTALE = '" . str_replace("'", "''", $_POST['manifestations_comportementale']) . "',
+                    MANIFESTATIONS_APPRENTISSAGE = '" . str_replace("'", "''", $_POST['manifestations_apprentissage']) . "',
+                    BESOINS_OBJECTIFS = '" . str_replace("'", "''", $_POST['besoins_objectifs']) . "',
+                    MESURES_APPUI = '" . str_replace("'", "''", $mesures_str) . "',
+                    AUTRES_MESURES = '" . str_replace("'", "''", $_POST['autres_mesures']) . "',
+                    RECOMMANDATIONS = '" . str_replace("'", "''", $_POST['recommandations']) . "',
+                    AUTORITE_PARENTALE_1 = '" . str_replace("'", "''", $_POST['autorite_parentale_1']) . "',
+                    DATE_SIGNATURE_PARENT_1 = " . ($_POST['date_signature_parent_1'] ? "'" . $_POST['date_signature_parent_1'] . "'" : "NULL") . ",
+                    AUTORITE_PARENTALE_2 = '" . str_replace("'", "''", $_POST['autorite_parentale_2']) . "',
+                    DATE_SIGNATURE_PARENT_2 = " . ($_POST['date_signature_parent_2'] ? "'" . $_POST['date_signature_parent_2'] . "'" : "NULL") . ",
+                    ELEVE_SIGNATURE = '" . str_replace("'", "''", $_POST['eleve_signature']) . "',
+                    DATE_SIGNATURE_ELEVE = " . ($_POST['date_signature_eleve'] ? "'" . $_POST['date_signature_eleve'] . "'" : "NULL") . ",
+                    DIRECTION_SIGNATURE = '" . str_replace("'", "''", $_POST['direction_signature']) . "',
+                    DATE_SIGNATURE_DIRECTION = " . ($_POST['date_signature_direction'] ? "'" . $_POST['date_signature_direction'] . "'" : "NULL") . "
+                    WHERE STUDENT_ID = '" . $student_id . "' 
+                    AND SYEAR = '" . $syear . "' 
+                    AND SCHOOL_ID = '" . $school_id . "'";
+            
+            DBQuery($sql);
+            echo '<div class="alert alert-success">Plan d\'intervention mis à jour avec succès!</div>';
+        } else {
+            // Insert new plan
+            $sql = "INSERT INTO plan_intervention (
+                    STUDENT_ID, SYEAR, SCHOOL_ID, NOM_ELEVE, ANNEE_SCOLAIRE, CODE_PERMANENT,
+                    DATE_NAISSANCE, NIVEAU_SCOLAIRE, REPRISE, DIAGNOSTIC, AUTRES_DIAGNOSTIC,
+                    DATE_EVALUATION, PRECISIONS, HYPOTHESE, MEDICATION, SPHERES_PROBLEMATIQUES,
+                    MANIFESTATIONS_COMPORTEMENTALE, MANIFESTATIONS_APPRENTISSAGE, BESOINS_OBJECTIFS,
+                    MESURES_APPUI, AUTRES_MESURES, RECOMMANDATIONS,
+                    AUTORITE_PARENTALE_1, DATE_SIGNATURE_PARENT_1,
+                    AUTORITE_PARENTALE_2, DATE_SIGNATURE_PARENT_2,
+                    ELEVE_SIGNATURE, DATE_SIGNATURE_ELEVE,
+                    DIRECTION_SIGNATURE, DATE_SIGNATURE_DIRECTION
+                ) VALUES (
+                    '" . $student_id . "',
+                    '" . $syear . "',
+                    '" . $school_id . "',
+                    '" . str_replace("'", "''", $_POST['nom_eleve']) . "',
+                    '" . str_replace("'", "''", $_POST['annee_scolaire']) . "',
+                    '" . str_replace("'", "''", $_POST['code_permanent']) . "',
+                    " . ($_POST['date_naissance'] ? "'" . $_POST['date_naissance'] . "'" : "NULL") . ",
+                    '" . str_replace("'", "''", $_POST['niveau_scolaire']) . "',
+                    '" . str_replace("'", "''", $_POST['reprise']) . "',
+                    '" . str_replace("'", "''", $diagnostics_str) . "',
+                    '" . str_replace("'", "''", $_POST['autres_diagnostic']) . "',
+                    '" . str_replace("'", "''", $_POST['date_evaluation']) . "',
+                    '" . str_replace("'", "''", $_POST['precisions']) . "',
+                    '" . str_replace("'", "''", $_POST['hypothese']) . "',
+                    '" . str_replace("'", "''", $_POST['medication']) . "',
+                    '" . str_replace("'", "''", $spheres_str) . "',
+                    '" . str_replace("'", "''", $_POST['manifestations_comportementale']) . "',
+                    '" . str_replace("'", "''", $_POST['manifestations_apprentissage']) . "',
+                    '" . str_replace("'", "''", $_POST['besoins_objectifs']) . "',
+                    '" . str_replace("'", "''", $mesures_str) . "',
+                    '" . str_replace("'", "''", $_POST['autres_mesures']) . "',
+                    '" . str_replace("'", "''", $_POST['recommandations']) . "',
+                    '" . str_replace("'", "''", $_POST['autorite_parentale_1']) . "',
+                    " . ($_POST['date_signature_parent_1'] ? "'" . $_POST['date_signature_parent_1'] . "'" : "NULL") . ",
+                    '" . str_replace("'", "''", $_POST['autorite_parentale_2']) . "',
+                    " . ($_POST['date_signature_parent_2'] ? "'" . $_POST['date_signature_parent_2'] . "'" : "NULL") . ",
+                    '" . str_replace("'", "''", $_POST['eleve_signature']) . "',
+                    " . ($_POST['date_signature_eleve'] ? "'" . $_POST['date_signature_eleve'] . "'" : "NULL") . ",
+                    '" . str_replace("'", "''", $_POST['direction_signature']) . "',
+                    " . ($_POST['date_signature_direction'] ? "'" . $_POST['date_signature_direction'] . "'" : "NULL") . "
+                )";
+            
+            DBQuery($sql);
+            echo '<div class="alert alert-success">Plan d\'intervention créé avec succès!</div>';
+        }
+    }
+    
+    // Fetch existing plan data
+    $plan_data = DBGet(DBQuery("SELECT * FROM plan_intervention 
+                                WHERE STUDENT_ID = '" . UserStudentID() . "' 
+                                AND SYEAR = '" . UserSyear() . "' 
+                                AND SCHOOL_ID = '" . UserSchool() . "'"));
+    
+    if (count($plan_data) > 0) {
+        $plan = $plan_data[1];
+        // Parse comma-separated values
+        $diagnostics_array = explode(',', $plan['DIAGNOSTIC']);
+        $spheres_array = explode(',', $plan['SPHERES_PROBLEMATIQUES']);
+        $mesures_array = explode(',', $plan['MESURES_APPUI']);
+    } else {
+        $plan = array();
+        $diagnostics_array = array();
+        $spheres_array = array();
+        $mesures_array = array();
+    }
+    
+    // Fetch student's information
+    $student_info = DBGet(DBQuery("SELECT s.FIRST_NAME, s.LAST_NAME, s.BIRTHDATE, s.ALT_ID, sg.TITLE as GRADE_LEVEL 
+                                   FROM students s
+                                   JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID
+                                   JOIN school_gradelevels sg ON se.GRADE_ID = sg.ID 
+                                   WHERE s.STUDENT_ID = '" . UserStudentID() . "' 
+                                   AND se.SYEAR = '" . UserSyear() . "' 
+                                   AND se.SCHOOL_ID = '" . UserSchool() . "' 
+                                   ORDER BY se.START_DATE DESC 
+                                   LIMIT 1"));
+    
+    // Set default values
+    if (!isset($plan['NOM_ELEVE']) && isset($student_info[1])) {
+        $plan['NOM_ELEVE'] = $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'];
+    }
+    if (!isset($plan['DATE_NAISSANCE']) && isset($student_info[1]['BIRTHDATE'])) {
+        $plan['DATE_NAISSANCE'] = $student_info[1]['BIRTHDATE'];
+    }
+    if (!isset($plan['NIVEAU_SCOLAIRE']) && isset($student_info[1]['GRADE_LEVEL'])) {
+        $plan['NIVEAU_SCOLAIRE'] = $student_info[1]['GRADE_LEVEL'];
+    }
+    if (!isset($plan['CODE_PERMANENT']) && isset($student_info[1]['ALT_ID'])) {
+        $plan['CODE_PERMANENT'] = $student_info[1]['ALT_ID'];
+    }
+    
+    echo '
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Plan d\'intervention</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                background-color: white;
+                padding: 40px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 3px solid #333;
+                padding-bottom: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+                color: #333;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+            
+            .section {
+                margin-bottom: 25px;
+            }
+            
+            .section-title {
+                background-color: #e8e8e8;
+                padding: 10px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                border-left: 4px solid #4a90e2;
+            }
+            
+            .form-row {
+                display: flex;
+                gap: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .form-group {
+                flex: 1;
+                margin-bottom: 15px;
+            }
+            
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 600;
+                color: #555;
+            }
+            
+            input[type="text"],
+            input[type="date"],
+            textarea {
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #605d5dff;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            
+            textarea {
+                min-height: 80px;
+                resize: vertical;
+            }
+            
+            .checkbox-group {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-top: 10px;
+            }
+            
+            .checkbox-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .checkbox-item input[type="checkbox"] {
+                width: auto;
+                margin: 0;
+            }
+            
+            .checkbox-item label {
+                margin: 0;
+                font-weight: normal;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+            
+            th, td {
+                border: 1px solid #ddd;
+                padding: 10px;
+                text-align: left;
+            }
+            
+            th {
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }
+            
+            .signature-section {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+                margin-top: 30px;
+            }
+            
+            .signature-box {
+                border: 1px solid #ddd;
+                padding: 15px;
+                min-height: 100px;
+            }
+            
+            .btn-save {
+                background-color: #4a90e2;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 20px;
+            }
+            
+            .btn-save:hover {
+                background-color: #357abd;
+            }
+            
+            .btn-print {
+                background-color: #28a745;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 20px;
+                margin-right: 10px;
+            }
+            
+            .btn-print:hover {
+                background-color: #218838;
+            }
+            
+            .button-container {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .signature-ts{
+                text-align: left;
+                font-family: "Lucida Handwriting Std",  sans-serif;
+                font-size:12px; 
+                padding 10px;
+                border: none;
+                alignv: bottom;
+                padding-top:20px;
+                width: 50%;
+            }            
+            @media print {
+                .btn-save,
+                .btn-print,
+                .button-container {
+                    display: none !important;
+                }
+                
+                .navbar,
+                .sidebar,
+                .panel-heading,
+                nav,
+                .nav-tabs,
+                ul[role="tablist"] {
+                    display: none !important;
+                }
+                
+                .container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 20px !important;
+                    box-shadow: none !important;
+                }
+                
+                body {
+                    background: white !important;
+                }
+                
+                input[type="text"],
+                input[type="date"],
+                textarea {
+                    border: none;
+                    border-bottom: 1px solid #000;
+                    background: transparent;
+                }
+                
+                @page {
+                    margin: 1cm;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>PLAN D\'INTERVENTION</h1>
+            </div>
+            
+            <form method="POST" action="">
+                <div class="section">
+                    <div class="section-title">INFORMATIONS DE L\'ÉLÈVE</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom de l\'élève:</label>
+                            <input type="text" name="nom_eleve" value="' . htmlspecialchars($plan['NOM_ELEVE']) . '" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Année scolaire:</label>
+                            <input type="text" name="annee_scolaire" value="' . (isset($plan['ANNEE_SCOLAIRE']) ? htmlspecialchars($plan['ANNEE_SCOLAIRE']) : UserSyear() . '-' . (UserSyear() + 1)) . '"readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Code permanent:</label>
+                            <input type="text" name="code_permanent" value="' . (isset($plan['CODE_PERMANENT']) ? htmlspecialchars($plan['CODE_PERMANENT']) : '') . '"readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Date de naissance:</label>
+                            <input type="date" name="date_naissance" value="' . (isset($plan['DATE_NAISSANCE']) ? $plan['DATE_NAISSANCE'] : '') . '"readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Niveau scolaire:</label>
+                            <input type="text" name="niveau_scolaire" value="' . (isset($plan['NIVEAU_SCOLAIRE']) ? htmlspecialchars($plan['NIVEAU_SCOLAIRE']) : '') . '"readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Reprise:</label>
+                            <input type="text" name="reprise" value="' . (isset($plan['REPRISE']) ? htmlspecialchars($plan['REPRISE']) : '') . '">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">DIAGNOSTIC</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_dysphasie" name="diag_dysphasie" ' . (in_array('Dysphasie', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_dysphasie">Dysphasie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_tda" name="diag_tda" ' . (in_array('TDA', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_tda">TDA</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_dyspraxie" name="diag_dyspraxie" ' . (in_array('Dyspraxie', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_dyspraxie">Dyspraxie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_tdah" name="diag_tdah" ' . (in_array('TDAH', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_tdah">TDAH</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_dyslexie" name="diag_dyslexie" ' . (in_array('Dyslexie', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_dyslexie">Dyslexie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_ted" name="diag_ted" ' . (in_array('TED', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_ted">TED</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_dysorthographie" name="diag_dysorthographie" ' . (in_array('Dysorthographie', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_dysorthographie">Dysorthographie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_anxiete" name="diag_anxiete" ' . (in_array('Anxiété', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_anxiete">Anxiété</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_dyscalculie" name="diag_dyscalculie" ' . (in_array('Dyscalculie', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_dyscalculie">Dyscalculie</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="diag_gilles" name="diag_gilles" ' . (in_array('Gilles de la Tourette', $diagnostics_array) ? 'checked' : '') . '>
+                            <label for="diag_gilles">Gilles de la Tourette</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Autres:</label>
+                        <input type="text" name="autres_diagnostic" value="' . (isset($plan['AUTRES_DIAGNOSTIC']) ? htmlspecialchars($plan['AUTRES_DIAGNOSTIC']) : '') . '">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Date(s) de l\'évaluation(s):</label>
+                        <input type="text" name="date_evaluation" value="' . (isset($plan['DATE_EVALUATION']) ? htmlspecialchars($plan['DATE_EVALUATION']) : '') . '">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Précisions:</label>
+                        <textarea name="precisions">' . (isset($plan['PRECISIONS']) ? htmlspecialchars($plan['PRECISIONS']) : '') . '</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Hypothèse:</label>
+                        <textarea name="hypothese">' . (isset($plan['HYPOTHESE']) ? htmlspecialchars($plan['HYPOTHESE']) : '') . '</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Médication:</label>
+                        <input type="text" name="medication" value="' . (isset($plan['MEDICATION']) ? htmlspecialchars($plan['MEDICATION']) : '') . '">
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">SPHÈRE(S) PROBLÉMATIQUE(S)</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sphere_comportementale" name="sphere_comportementale" ' . (in_array('Comportementale', $spheres_array) ? 'checked' : '') . '>
+                            <label for="sphere_comportementale">Comportementale</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="sphere_apprentissage" name="sphere_apprentissage" ' . (in_array('Apprentissage', $spheres_array) ? 'checked' : '') . '>
+                            <label for="sphere_apprentissage">Apprentissage</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Précisions (Manifestations observées) - Comportementale:</label>
+                        <textarea name="manifestations_comportementale">' . (isset($plan['MANIFESTATIONS_COMPORTEMENTALE']) ? htmlspecialchars($plan['MANIFESTATIONS_COMPORTEMENTALE']) : '') . '</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Précisions (Manifestations observées) - Apprentissage:</label>
+                        <textarea name="manifestations_apprentissage">' . (isset($plan['MANIFESTATIONS_APPRENTISSAGE']) ? htmlspecialchars($plan['MANIFESTATIONS_APPRENTISSAGE']) : '') . '</textarea>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">BESOINS ET OBJECTIFS</div>
+                    <div class="form-group">
+                        <textarea name="besoins_objectifs" rows="5">' . (isset($plan['BESOINS_OBJECTIFS']) ? htmlspecialchars($plan['BESOINS_OBJECTIFS']) : '') . '</textarea>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">MESURES D\'APPUI</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_temps_supp" name="mes_temps_supp" ' . (in_array('Temps supplémentaire', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_temps_supp">1/3 de temps supplémentaire</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_dictionnaire" name="mes_dictionnaire" ' . (in_array('Dictionnaire électronique', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_dictionnaire">Utilisation du dictionnaire électronique</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_calculatrice" name="mes_calculatrice" ' . (in_array('Calculatrice', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_calculatrice">Utilisation de la calculatrice</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_place_pref" name="mes_place_pref" ' . (in_array('Place préférentielle', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_place_pref">Place préférentielle</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_reponses_orales" name="mes_reponses_orales" ' . (in_array('Réponses orales', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_reponses_orales">Accepter les réponses orales</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_verifier_comp" name="mes_verifier_comp" ' . (in_array('Vérifier compréhension', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_verifier_comp">Vérifier la compréhension</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_ordinateur" name="mes_ordinateur" ' . (in_array('Ordinateur', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_ordinateur">Permettre l\'utilisation de l\'ordinateur</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_materiel_manip" name="mes_materiel_manip" ' . (in_array('Matériel manipulation', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_materiel_manip">Matériel de manipulation</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_logiciel_correction" name="mes_logiciel_correction" ' . (in_array('Logiciel correction', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_logiciel_correction">Utilisation d\'un logiciel de correction</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_coquilles" name="mes_coquilles" ' . (in_array('Coquilles insonorisantes', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_coquilles">Coquilles insonorisantes</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_word" name="mes_word" ' . (in_array('Word', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_word">Utilisation du logiciel Word</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_fragmenter" name="mes_fragmenter" ' . (in_array('Fragmenter tâche', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_fragmenter">Fragmenter la tâche</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_synthetiseur" name="mes_synthetiseur" ' . (in_array('Synthétiseur vocal', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_synthetiseur">Utilisation d\'un synthétiseur vocal</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="mes_diminuer" name="mes_diminuer" ' . (in_array('Diminuer exigences', $mesures_array) ? 'checked' : '') . '>
+                            <label for="mes_diminuer">Diminuer les exigences</label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Autres/Précisions (ex: récupérations):</label>
+                        <textarea name="autres_mesures">' . (isset($plan['AUTRES_MESURES']) ? htmlspecialchars($plan['AUTRES_MESURES']) : '') . '</textarea>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">RECOMMANDATIONS ET COMMENTAIRES</div>
+                    <div class="form-group">
+                        <textarea name="recommandations" rows="5">' . (isset($plan['RECOMMANDATIONS']) ? htmlspecialchars($plan['RECOMMANDATIONS']) : '') . '</textarea>
+                    </div>
+                </div>
+                
+                <div class="section">
+                    <div class="section-title">SIGNATURES DES COLLABORATEURS</div>
+                    <p style="margin-bottom: 20px; font-style: italic;">Nous avons pris connaissance du plan d\'intervention et nous nous engageons à collaborer à sa réalisation.</p>
+                    
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <label>Autorité parentale:</label>
+                            <input type="text" class="signature-ts" name="autorite_parentale_1" placeholder="" value="' . (isset($plan['AUTORITE_PARENTALE_1']) ? htmlspecialchars($plan['AUTORITE_PARENTALE_1']) : '') . '" style="margin-top: 10px;">
+                            <label style="margin-top: 10px;">Date:</label>
+                            <input type="date" name="date_signature_parent_1" value="' . (isset($plan['DATE_SIGNATURE_PARENT_1']) ? $plan['DATE_SIGNATURE_PARENT_1'] :date('Y-m-d')) . '">
+                        </div>
+                        
+                        <div class="signature-box">
+                            <label>Autorité parentale:</label>
+                            <input type="text" class="signature-ts" name="autorite_parentale_2" placeholder="" value="' . (isset($plan['AUTORITE_PARENTALE_2']) ? htmlspecialchars($plan['AUTORITE_PARENTALE_2']) : '') . '" style="margin-top: 10px;">
+                            <label style="margin-top: 10px;">Date:</label>
+                            <input type="date" name="date_signature_parent_2" value="' . (isset($plan['DATE_SIGNATURE_PARENT_2']) ? $plan['DATE_SIGNATURE_PARENT_2'] : date('Y-m-d')) . '">
+                        </div>
+                    </div>
+                    
+                    <div class="signature-section" style="margin-top: 20px;">
+                        <div class="signature-box">
+                            <label>Élève:</label> 
+                            <input type="text" class="signature-ts" name="eleve_signature" placeholder="" value="' . (isset($plan['ELEVE_SIGNATURE']) ? htmlspecialchars($plan['ELEVE_SIGNATURE']) : '') . '" style="margin-top: 10px;">
+                            <label style="margin-top: 10px;">Date:</label>
+                            <input type="date" name="date_signature_eleve" value="' . (isset($plan['DATE_SIGNATURE_ELEVE']) ? $plan['DATE_SIGNATURE_ELEVE'] : date('Y-m-d')) . '">
+                        </div>
+                        
+                        <div class="signature-box">
+                            <label>Direction:</label>
+                            <input type="text" class="signature-ts" name="direction_signature" placeholder="" value="' . (isset($plan['DIRECTION_SIGNATURE']) ? htmlspecialchars($plan['DIRECTION_SIGNATURE']) : '') . '" style="margin-top: 10px;">
+                            <label style="margin-top: 10px;">Date:</label>
+                            <input type="date" name="date_signature_direction" value="' . (isset($plan['DATE_SIGNATURE_DIRECTION']) ? $plan['DATE_SIGNATURE_DIRECTION'] : date('Y-m-d')) . '">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-container">
+                    <button type="button" onclick="printPlan()" class="btn-print">Imprimer le plan</button>
+                    <button type="submit" name="save_plan_intervention" class="btn-save">Enregistrer le plan</button>
+                </div>
+            </form>
+        </div>
+        
+        <script>
+        function printPlan() {
+            var printWindow = window.open(\'\', \'_blank\');
+            var content = document.querySelector(\'.container\').cloneNode(true);
+            
+            var buttons = content.querySelectorAll(\'.btn-save, .btn-print, .button-container\');
+            buttons.forEach(function(btn) {
+                btn.style.display = \'none\';
+            });
+            
+            var printHTML = `
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Plan d\'intervention</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            background: white;
+                            margin: 0;
+                            padding: 20px;
+                        }
+                        
+                        .container {
+                            max-width: 900px;
+                            margin: 0 auto;
+                            background-color: white;
+                            padding: 40px;
+                        }
+                        
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        
+                        h1 {
+                            font-size: 28px;
+                            color: #333;
+                            margin-bottom: 10px;
+                            font-weight: bold;
+                        }
+                        
+                        .section {
+                            margin-bottom: 25px;
+                            page-break-inside: avoid;
+                        }
+                        
+                        .section-title {
+                            background-color: #e8e8e8;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin-bottom: 15px;
+                            border-left: 4px solid #4a90e2;
+                        }
+                        
+                        .form-group {
+                            margin-bottom: 15px;
+                        }
+                        
+                        label {
+                            display: block;
+                            margin-bottom: 5px;
+                            font-weight: 600;
+                            color: #555;
+                        }
+                        
+                        input[type="text"],
+                        input[type="date"],
+                        textarea {
+                            width: 100%;
+                            padding: 8px 12px;
+                            border: none;
+                            border-bottom: 1px solid #000;
+                            background: transparent;
+                            font-size: 14px;
+                        }
+                        
+                        textarea {
+                            min-height: 80px;
+                        }
+                        
+                        .checkbox-group {
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 10px;
+                            margin-top: 10px;
+                        }
+                        
+                        .checkbox-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        
+                        .signature-section {
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 20px;
+                            margin-top: 30px;
+                            page-break-inside: avoid;
+                        }
+                        
+                        .signature-box {
+                            border: 1px solid #000;
+                            padding: 15px;
+                            min-height: 100px;
+                        }
+                        
+                        .form-row {
+                            display: flex;
+                            gap: 20px;
+                            margin-bottom: 15px;
+                        }
+                        
+                        .btn-save, .btn-print, .button-container {
+                            display: none !important;
+                        }
+                        
+                        @page {
+                            margin: 1cm;
+                            size: auto;
+                        }
+                        
+                        @media print {
+                            body {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            
+                            @page {
+                                margin: 1cm;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${content.innerHTML}
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            printWindow.onload = function() {
+                printWindow.focus();
+                printWindow.print();
+                setTimeout(function() {
+                    printWindow.close();
+                }, 100);
+            };
+        }
+        </script>
+    </body>
+    </html>
+    ';
+}
+// END ID 14 Plan d'intervention
+
+// START ID 15 Profil d'élève
+if ($_REQUEST['category_id'] == 15) {
+
+    // Handle form submission
+    if (isset($_POST['save_profil_eleves'])) {
+        $student_id = UserStudentID();
+        $syear = UserSyear();
+        $school_id = UserSchool();
+        
+        // Check if a profil already exists for this student
+        $existing_profil = DBGet(DBQuery("SELECT ID FROM profil_eleves 
+                                        WHERE STUDENT_ID = '" . $student_id . "' 
+                                        AND SYEAR = '" . $syear . "' 
+                                        AND SCHOOL_ID = '" . $school_id . "'"));
+        
+        if (count($existing_profil) > 0) {
+            // Update existing profil
+            $sql = "UPDATE profil_eleves SET 
+                    PROFIL_DATE = '" . $_POST['profil_date'] . "',
+                    ACADEMIC_STRENGTHS = '" . str_replace("'", "''", $_POST['academic_strengths']) . "',
+                    SOCIAL_STRENGTHS = '" . str_replace("'", "''", $_POST['social_strengths']) . "',
+                    BEHAVIORAL_STRENGTHS = '" . str_replace("'", "''", $_POST['behavioral_strengths']) . "',
+                    CREATIVE_STRENGTHS = '" . str_replace("'", "''", $_POST['creative_strengths']) . "',
+                    ACADEMIC_CHALLENGES = '" . str_replace("'", "''", $_POST['academic_challenges']) . "',
+                    SOCIAL_CHALLENGES = '" . str_replace("'", "''", $_POST['social_challenges']) . "',
+                    BEHAVIORAL_CHALLENGES = '" . str_replace("'", "''", $_POST['behavioral_challenges']) . "',
+                    LEARNING_CHALLENGES = '" . str_replace("'", "''", $_POST['learning_challenges']) . "',
+                    INTERESTS = '" . str_replace("'", "''", $_POST['interests']) . "',
+                    LEARNING_STYLE = '" . str_replace("'", "''", $_POST['learning_style']) . "',
+                    PREFERRED_ACTIVITIES = '" . str_replace("'", "''", $_POST['preferred_activities']) . "',
+                    HOBBIES = '" . str_replace("'", "''", $_POST['hobbies']) . "',
+                    TEACHING_STRATEGIES = '" . str_replace("'", "''", $_POST['teaching_strategies']) . "',
+                    MOTIVATION_STRATEGIES = '" . str_replace("'", "''", $_POST['motivation_strategies']) . "',
+                    BEHAVIOR_STRATEGIES = '" . str_replace("'", "''", $_POST['behavior_strategies']) . "',
+                    COMMUNICATION_STRATEGIES = '" . str_replace("'", "''", $_POST['communication_strategies']) . "',
+                    SHORT_TERM_GOAL_1 = '" . str_replace("'", "''", $_POST['short_term_goal_1']) . "',
+                    SHORT_TERM_DEADLINE_1 = " . ($_POST['short_term_deadline_1'] ? "'" . $_POST['short_term_deadline_1'] . "'" : "NULL") . ",
+                    SHORT_TERM_STATUS_1 = '" . $_POST['short_term_status_1'] . "',
+                    SHORT_TERM_GOAL_2 = '" . str_replace("'", "''", $_POST['short_term_goal_2']) . "',
+                    SHORT_TERM_DEADLINE_2 = " . ($_POST['short_term_deadline_2'] ? "'" . $_POST['short_term_deadline_2'] . "'" : "NULL") . ",
+                    SHORT_TERM_STATUS_2 = '" . $_POST['short_term_status_2'] . "',
+                    SHORT_TERM_GOAL_3 = '" . str_replace("'", "''", $_POST['short_term_goal_3']) . "',
+                    SHORT_TERM_DEADLINE_3 = " . ($_POST['short_term_deadline_3'] ? "'" . $_POST['short_term_deadline_3'] . "'" : "NULL") . ",
+                    SHORT_TERM_STATUS_3 = '" . $_POST['short_term_status_3'] . "',
+                    LONG_TERM_GOAL_1 = '" . str_replace("'", "''", $_POST['long_term_goal_1']) . "',
+                    LONG_TERM_DEADLINE_1 = " . ($_POST['long_term_deadline_1'] ? "'" . $_POST['long_term_deadline_1'] . "'" : "NULL") . ",
+                    LONG_TERM_STATUS_1 = '" . $_POST['long_term_status_1'] . "',
+                    LONG_TERM_GOAL_2 = '" . str_replace("'", "''", $_POST['long_term_goal_2']) . "',
+                    LONG_TERM_DEADLINE_2 = " . ($_POST['long_term_deadline_2'] ? "'" . $_POST['long_term_deadline_2'] . "'" : "NULL") . ",
+                    LONG_TERM_STATUS_2 = '" . $_POST['long_term_status_2'] . "',
+                    FAMILY_SUPPORT = '" . str_replace("'", "''", $_POST['family_support']) . "',
+                    SCHOOL_RESOURCES = '" . str_replace("'", "''", $_POST['school_resources']) . "',
+                    EXTERNAL_SERVICES = '" . str_replace("'", "''", $_POST['external_services']) . "',
+                    ACCOMMODATIONS = '" . str_replace("'", "''", $_POST['accommodations']) . "',
+                    TEACHER_OBSERVATIONS = '" . str_replace("'", "''", $_POST['teacher_observations']) . "',
+                    PARENT_FEEDBACK = '" . str_replace("'", "''", $_POST['parent_feedback']) . "',
+                    STUDENT_SELF_ASSESSMENT = '" . str_replace("'", "''", $_POST['student_self_assessment']) . "',
+                    ADDITIONAL_NOTES = '" . str_replace("'", "''", $_POST['additional_notes']) . "',
+                    PERSON_1_NAME = '" . str_replace("'", "''", $_POST['person_1_name']) . "',
+                    PERSON_1_ROLE = '" . str_replace("'", "''", $_POST['person_1_role']) . "',
+                    PERSON_1_CONTACT = '" . str_replace("'", "''", $_POST['person_1_contact']) . "',
+                    PERSON_2_NAME = '" . str_replace("'", "''", $_POST['person_2_name']) . "',
+                    PERSON_2_ROLE = '" . str_replace("'", "''", $_POST['person_2_role']) . "',
+                    PERSON_2_CONTACT = '" . str_replace("'", "''", $_POST['person_2_contact']) . "',
+                    PERSON_3_NAME = '" . str_replace("'", "''", $_POST['person_3_name']) . "',
+                    PERSON_3_ROLE = '" . str_replace("'", "''", $_POST['person_3_role']) . "',
+                    PERSON_3_CONTACT = '" . str_replace("'", "''", $_POST['person_3_contact']) . "',
+                    TEACHER_SIGNATURE = '" . str_replace("'", "''", $_POST['teacher_signature']) . "',
+                    TEACHER_DATE = " . ($_POST['teacher_date'] ? "'" . $_POST['teacher_date'] . "'" : "NULL") . ",
+                    PARENT_SIGNATURE = '" . str_replace("'", "''", $_POST['parent_signature']) . "',
+                    PARENT_DATE = " . ($_POST['parent_date'] ? "'" . $_POST['parent_date'] . "'" : "NULL") . "
+                    WHERE STUDENT_ID = '" . $student_id . "' 
+                    AND SYEAR = '" . $syear . "' 
+                    AND SCHOOL_ID = '" . $school_id . "'";
+            
+            DBQuery($sql);
+            echo '<div class="alert alert-success">Profile d\'élève mis à jour avec succès!</div>';
+        } else {
+            // Insert new profil
+            $sql = "INSERT INTO profil_eleves (
+                    STUDENT_ID, SYEAR, SCHOOL_ID, STUDENT_NAME, BIRTH_DATE, GRADE_LEVEL,
+                    PROFIL_DATE, ACADEMIC_STRENGTHS, SOCIAL_STRENGTHS, BEHAVIORAL_STRENGTHS,
+                    CREATIVE_STRENGTHS, ACADEMIC_CHALLENGES, SOCIAL_CHALLENGES, BEHAVIORAL_CHALLENGES,
+                    LEARNING_CHALLENGES, INTERESTS, LEARNING_STYLE, PREFERRED_ACTIVITIES, HOBBIES,
+                    TEACHING_STRATEGIES, MOTIVATION_STRATEGIES, BEHAVIOR_STRATEGIES, COMMUNICATION_STRATEGIES,
+                    SHORT_TERM_GOAL_1, SHORT_TERM_DEADLINE_1, SHORT_TERM_STATUS_1,
+                    SHORT_TERM_GOAL_2, SHORT_TERM_DEADLINE_2, SHORT_TERM_STATUS_2,
+                    SHORT_TERM_GOAL_3, SHORT_TERM_DEADLINE_3, SHORT_TERM_STATUS_3,
+                    LONG_TERM_GOAL_1, LONG_TERM_DEADLINE_1, LONG_TERM_STATUS_1,
+                    LONG_TERM_GOAL_2, LONG_TERM_DEADLINE_2, LONG_TERM_STATUS_2,
+                    FAMILY_SUPPORT, SCHOOL_RESOURCES, EXTERNAL_SERVICES, ACCOMMODATIONS,
+                    TEACHER_OBSERVATIONS, PARENT_FEEDBACK, STUDENT_SELF_ASSESSMENT, ADDITIONAL_NOTES,
+                    PERSON_1_NAME, PERSON_1_ROLE, PERSON_1_CONTACT,
+                    PERSON_2_NAME, PERSON_2_ROLE, PERSON_2_CONTACT,
+                    PERSON_3_NAME, PERSON_3_ROLE, PERSON_3_CONTACT,
+                    TEACHER_SIGNATURE, TEACHER_DATE, PARENT_SIGNATURE, PARENT_DATE
+                ) VALUES (
+                    '" . $student_id . "',
+                    '" . $syear . "',
+                    '" . $school_id . "',
+                    '" . str_replace("'", "''", $_POST['student_name']) . "',
+                    '" . $_POST['birth_date'] . "',
+                    '" . str_replace("'", "''", $_POST['grade_level']) . "',
+                    '" . $_POST['profil_date'] . "',
+                    '" . str_replace("'", "''", $_POST['academic_strengths']) . "',
+                    '" . str_replace("'", "''", $_POST['social_strengths']) . "',
+                    '" . str_replace("'", "''", $_POST['behavioral_strengths']) . "',
+                    '" . str_replace("'", "''", $_POST['creative_strengths']) . "',
+                    '" . str_replace("'", "''", $_POST['academic_challenges']) . "',
+                    '" . str_replace("'", "''", $_POST['social_challenges']) . "',
+                    '" . str_replace("'", "''", $_POST['behavioral_challenges']) . "',
+                    '" . str_replace("'", "''", $_POST['learning_challenges']) . "',
+                    '" . str_replace("'", "''", $_POST['interests']) . "',
+                    '" . str_replace("'", "''", $_POST['learning_style']) . "',
+                    '" . str_replace("'", "''", $_POST['preferred_activities']) . "',
+                    '" . str_replace("'", "''", $_POST['hobbies']) . "',
+                    '" . str_replace("'", "''", $_POST['teaching_strategies']) . "',
+                    '" . str_replace("'", "''", $_POST['motivation_strategies']) . "',
+                    '" . str_replace("'", "''", $_POST['behavior_strategies']) . "',
+                    '" . str_replace("'", "''", $_POST['communication_strategies']) . "',
+                    '" . str_replace("'", "''", $_POST['short_term_goal_1']) . "',
+                    " . ($_POST['short_term_deadline_1'] ? "'" . $_POST['short_term_deadline_1'] . "'" : "NULL") . ",
+                    '" . $_POST['short_term_status_1'] . "',
+                    '" . str_replace("'", "''", $_POST['short_term_goal_2']) . "',
+                    " . ($_POST['short_term_deadline_2'] ? "'" . $_POST['short_term_deadline_2'] . "'" : "NULL") . ",
+                    '" . $_POST['short_term_status_2'] . "',
+                    '" . str_replace("'", "''", $_POST['short_term_goal_3']) . "',
+                    " . ($_POST['short_term_deadline_3'] ? "'" . $_POST['short_term_deadline_3'] . "'" : "NULL") . ",
+                    '" . $_POST['short_term_status_3'] . "',
+                    '" . str_replace("'", "''", $_POST['long_term_goal_1']) . "',
+                    " . ($_POST['long_term_deadline_1'] ? "'" . $_POST['long_term_deadline_1'] . "'" : "NULL") . ",
+                    '" . $_POST['long_term_status_1'] . "',
+                    '" . str_replace("'", "''", $_POST['long_term_goal_2']) . "',
+                    " . ($_POST['long_term_deadline_2'] ? "'" . $_POST['long_term_deadline_2'] . "'" : "NULL") . ",
+                    '" . $_POST['long_term_status_2'] . "',
+                    '" . str_replace("'", "''", $_POST['family_support']) . "',
+                    '" . str_replace("'", "''", $_POST['school_resources']) . "',
+                    '" . str_replace("'", "''", $_POST['external_services']) . "',
+                    '" . str_replace("'", "''", $_POST['accommodations']) . "',
+                    '" . str_replace("'", "''", $_POST['teacher_observations']) . "',
+                    '" . str_replace("'", "''", $_POST['parent_feedback']) . "',
+                    '" . str_replace("'", "''", $_POST['student_self_assessment']) . "',
+                    '" . str_replace("'", "''", $_POST['additional_notes']) . "',
+                    '" . str_replace("'", "''", $_POST['person_1_name']) . "',
+                    '" . str_replace("'", "''", $_POST['person_1_role']) . "',
+                    '" . str_replace("'", "''", $_POST['person_1_contact']) . "',
+                    '" . str_replace("'", "''", $_POST['person_2_name']) . "',
+                    '" . str_replace("'", "''", $_POST['person_2_role']) . "',
+                    '" . str_replace("'", "''", $_POST['person_2_contact']) . "',
+                    '" . str_replace("'", "''", $_POST['person_3_name']) . "',
+                    '" . str_replace("'", "''", $_POST['person_3_role']) . "',
+                    '" . str_replace("'", "''", $_POST['person_3_contact']) . "',
+                    '" . str_replace("'", "''", $_POST['teacher_signature']) . "',
+                    " . ($_POST['teacher_date'] ? "'" . $_POST['teacher_date'] . "'" : "NULL") . ",
+                    '" . str_replace("'", "''", $_POST['parent_signature']) . "',
+                    " . ($_POST['parent_date'] ? "'" . $_POST['parent_date'] . "'" : "NULL") . "
+                )";
+            
+            DBQuery($sql);
+            echo '<div class="alert alert-success">Profile d\'élève créé avec succès!</div>';
+        }
+    }
+    
+    // Fetch existing profil data
+    $profil_data = DBGet(DBQuery("SELECT * FROM profil_eleves 
+                                WHERE STUDENT_ID = '" . UserStudentID() . "' 
+                                AND SYEAR = '" . UserSyear() . "' 
+                                AND SCHOOL_ID = '" . UserSchool() . "'"));
+    
+    if (count($profil_data) > 0) {
+        $profil = $profil_data[1];
+    } else {
+        $profil = array();
+    }
+    
+    // Fetch student's information
+    $student_info = DBGet(DBQuery("SELECT s.FIRST_NAME, s.LAST_NAME, s.BIRTHDATE, sg.TITLE as GRADE_LEVEL 
+                                   FROM students s
+                                   JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID
+                                   JOIN school_gradelevels sg ON se.GRADE_ID = sg.ID 
+                                   WHERE s.STUDENT_ID = '" . UserStudentID() . "' 
+                                   AND se.SYEAR = '" . UserSyear() . "' 
+                                   AND se.SCHOOL_ID = '" . UserSchool() . "' 
+                                   ORDER BY se.START_DATE DESC 
+                                   LIMIT 1"));
+    
+    // Set default values from student info if profil doesn't exist
+    $profil['STUDENT_NAME'] = isset($student_info[1]) ? $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'] : '';
+    $profil['BIRTH_DATE'] = isset($student_info[1]['BIRTHDATE']) ? $student_info[1]['BIRTHDATE'] : '';
+    $profil['GRADE_LEVEL'] = isset($student_info[1]['GRADE_LEVEL']) ? $student_info[1]['GRADE_LEVEL'] : '';
+    
+    echo '
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Profile d\'Élève</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                background-color: white;
+                padding: 40px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 3px solid #333;
+                padding-bottom: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+                color: #333;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+            
+            .section {
+                margin-bottom: 25px;
+            }
+            
+            .section-title {
+                background-color: #e8e8e8;
+                padding: 10px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                border-left: 4px solid #4a90e2;
+            }
+            
+            .form-row {
+                display: flex;
+                gap: 20px;
+                margin-bottom: 15px;
+                align-items: center;
+            }
+            
+            .form-group {
+                flex: 1;
+                margin-bottom: 15px;
+            }
+            
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 600;
+                color: #555;
+            }
+            
+            input[type="text"],
+            textarea,
+            select {
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #605d5dff;
+                border-radius: 4px;
+                font-size: 14px;
+                box-sizing: border-box;
+            }
+
+            input[type="date"] {
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #605d5dff;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            
+            textarea {
+                min-height: 80px;
+                resize: vertical;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+            
+            th, td {
+                border: 1px solid #ddd;
+                padding: 10px;
+                text-align: left;
+            }
+            
+            th {
+                background-color: #f0f0f0;
+                font-weight: bold;
+            }
+            
+            .signature-section {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 40px;
+                gap: 30px;
+            }
+            
+            .signature-box {
+                flex: 1;
+                border: 1px solid #ddd;
+                padding: 15px;
+                min-height: 100px;
+            }
+            
+            .signature-box label {
+                margin-bottom: 10px;
+            }
+            
+            .btn-save {
+                background-color: #4a90e2;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 20px;
+                display: block;
+                margin-left: auto;
+            }
+            
+            .btn-save:hover {
+                background-color: #357abd;
+            }
+            
+            .info-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }
+            
+            .alert {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 4px;
+            }
+            
+            .alert-success {
+                background-color: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+            }
+            
+            .btn-print {
+                background-color: #28a745;
+                color: white;
+                padding: 12px 30px;
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 20px;
+                margin-right: 10px;
+            }
+
+            .btn-print:hover {
+                background-color: #218838;
+            }
+
+            .button-container {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .signature-ts{
+                text-align: left;
+                font-family: "Lucida Handwriting Std",  sans-serif;
+                font-size:12px; 
+                padding 10px;
+                border: none;
+                alignv: bottom;
+                padding-top:20px;
+                width: 50%;
+            }
+            @media print {
+                .btn-save,
+                .btn-print,
+                .button-container {
+                    display: none !important;
+                }
+                
+                .navbar,
+                .navbar-header,
+                .navbar-collapse,
+                .sidebar,
+                .panel-heading,
+                .heading-elements,
+                .btn-group,
+                nav,
+                .nav,
+                .nav-tabs,
+                .tabs,
+                form > div.row,
+                form > div.panel,
+                .page-header,
+                .breadcrumb {
+                    display: none !important;
+                }
+                
+                ul[role="tablist"],
+                .nav-tabs,
+                .panel > .panel-heading {
+                    display: none !important;
+                }
+                
+                .container {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 20px !important;
+                    box-shadow: none !important;
+                }
+                
+                body {
+                    background: white !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                
+                input[type="text"],
+                input[type="date"],
+                textarea,
+                select {
+                    border: none;
+                    border-bottom: 1px solid #000;
+                    background: transparent;
+                }
+                
+                table {
+                    page-break-inside: avoid;
+                }
+                
+                .section {
+                    page-break-inside: avoid;
+                }
+                
+                @page {
+                    margin: 1cm;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>PROFIL D\'ÉLÈVE</h1>
+            </div>
+
+            <form method="POST" action="">
+                <div class="section">
+                    <div class="section-title">INFORMATIONS DE L\'ÉLÈVE</div>
+                    <div class="info-grid">
+                        <div class="form-group">
+                            <label>Nom de l\'élève:</label>
+                            <input type="text" name="student_name" value="' . htmlspecialchars($profil['STUDENT_NAME']) . '" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Date de naissance:</label>
+                            <input type="date" name="birth_date" value="' . $profil['BIRTH_DATE'] . '" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Niveau scolaire:</label>
+                            <input type="text" name="grade_level" value="' . htmlspecialchars($profil['GRADE_LEVEL']) . '" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Date du profil:</label>
+                            <input type="date" name="profil_date" value="' . (isset($profil['PROFIL_DATE']) ? $profil['PROFIL_DATE'] : date('Y-m-d')) . '"  readonly
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">FORCES DE L\'ÉLÈVE</div>
+                    <div class="form-group">
+                        <label>Forces académiques:</label>
+                        <textarea name="academic_strengths" placeholder="Décrivez les forces académiques de l\'élève...">' . (isset($profil['ACADEMIC_STRENGTHS']) ? htmlspecialchars($profil['ACADEMIC_STRENGTHS']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Forces sociales:</label>
+                        <textarea name="social_strengths" placeholder="Décrivez les forces sociales de l\'élève...">' . (isset($profil['SOCIAL_STRENGTHS']) ? htmlspecialchars($profil['SOCIAL_STRENGTHS']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Forces comportementales:</label>
+                        <textarea name="behavioral_strengths" placeholder="Décrivez les forces comportementales de l\'élève...">' . (isset($profil['BEHAVIORAL_STRENGTHS']) ? htmlspecialchars($profil['BEHAVIORAL_STRENGTHS']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Forces créatives/artistiques:</label>
+                        <textarea name="creative_strengths" placeholder="Décrivez les forces créatives de l\'élève...">' . (isset($profil['CREATIVE_STRENGTHS']) ? htmlspecialchars($profil['CREATIVE_STRENGTHS']) : '') . '</textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">DÉFIS / DIFFICULTÉS</div>
+                    <div class="form-group">
+                        <label>Défis académiques:</label>
+                        <textarea name="academic_challenges" placeholder="Décrivez les défis académiques...">' . (isset($profil['ACADEMIC_CHALLENGES']) ? htmlspecialchars($profil['ACADEMIC_CHALLENGES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Défis sociaux:</label>
+                        <textarea name="social_challenges" placeholder="Décrivez les défis sociaux...">' . (isset($profil['SOCIAL_CHALLENGES']) ? htmlspecialchars($profil['SOCIAL_CHALLENGES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Défis comportementaux:</label>
+                        <textarea name="behavioral_challenges" placeholder="Décrivez les défis comportementaux...">' . (isset($profil['BEHAVIORAL_CHALLENGES']) ? htmlspecialchars($profil['BEHAVIORAL_CHALLENGES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Difficultés d\'apprentissage:</label>
+                        <textarea name="learning_challenges" placeholder="Décrivez les difficultés d\'apprentissage...">' . (isset($profil['LEARNING_CHALLENGES']) ? htmlspecialchars($profil['LEARNING_CHALLENGES']) : '') . '</textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">INTÉRÊTS ET PRÉFÉRENCES</div>
+                    <div class="form-group">
+                        <label>Centres d\'intérêt:</label>
+                        <textarea name="interests" placeholder="Quels sont les intérêts de l\'élève?">' . (isset($profil['INTERESTS']) ? htmlspecialchars($profil['INTERESTS']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Style d\'apprentissage préféré:</label>
+                        <select name="learning_style">
+                            <option value="">Sélectionner</option>
+                            <option value="visuel" ' . ((isset($profil['LEARNING_STYLE']) && $profil['LEARNING_STYLE'] == 'visuel') ? 'selected' : '') . '>Visuel</option>
+                            <option value="auditif" ' . ((isset($profil['LEARNING_STYLE']) && $profil['LEARNING_STYLE'] == 'auditif') ? 'selected' : '') . '>Auditif</option>
+                            <option value="kinesthesique" ' . ((isset($profil['LEARNING_STYLE']) && $profil['LEARNING_STYLE'] == 'kinesthesique') ? 'selected' : '') . '>Kinesthésique</option>
+                            <option value="mixte" ' . ((isset($profil['LEARNING_STYLE']) && $profil['LEARNING_STYLE'] == 'mixte') ? 'selected' : '') . '>Mixte</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Activités préférées:</label>
+                        <textarea name="preferred_activities" placeholder="Quelles activités l\'élève préfère-t-il?">' . (isset($profil['PREFERRED_ACTIVITIES']) ? htmlspecialchars($profil['PREFERRED_ACTIVITIES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Passe-temps et loisirs:</label>
+                        <textarea name="hobbies" placeholder="Quels sont les passe-temps de l\'élève?">' . (isset($profil['HOBBIES']) ? htmlspecialchars($profil['HOBBIES']) : '') . '</textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">STRATÉGIES EFFICACES</div>
+                    <div class="form-group">
+                        <label>Stratégies d\'enseignement:</label>
+                        <textarea name="teaching_strategies" placeholder="Quelles stratégies d\'enseignement fonctionnent bien?">' . (isset($profil['TEACHING_STRATEGIES']) ? htmlspecialchars($profil['TEACHING_STRATEGIES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Stratégies de motivation:</label>
+                        <textarea name="motivation_strategies" placeholder="Comment motiver cet élève?">' . (isset($profil['MOTIVATION_STRATEGIES']) ? htmlspecialchars($profil['MOTIVATION_STRATEGIES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Stratégies de gestion du comportement:</label>
+                        <textarea name="behavior_strategies" placeholder="Quelles approches fonctionnent pour gérer le comportement?">' . (isset($profil['BEHAVIOR_STRATEGIES']) ? htmlspecialchars($profil['BEHAVIOR_STRATEGIES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Stratégies de communication:</label>
+                        <textarea name="communication_strategies" placeholder="Comment communiquer efficacement avec cet élève?">' . (isset($profil['COMMUNICATION_STRATEGIES']) ? htmlspecialchars($profil['COMMUNICATION_STRATEGIES']) : '') . '</textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">OBJECTIFS À COURT TERME (3-6 MOIS)</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50%">Objectif</th>
+                                <th style="width: 30%">Échéance</th>
+                                <th style="width: 20%">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" name="short_term_goal_1" value="' . (isset($profil['SHORT_TERM_GOAL_1']) ? htmlspecialchars($profil['SHORT_TERM_GOAL_1']) : '') . '"></td>
+                                <td><input type="date" name="short_term_deadline_1" value="' . (isset($profil['SHORT_TERM_DEADLINE_1']) ? $profil['SHORT_TERM_DEADLINE_1'] : '') . '"></td>
+                                <td>
+                                    <select name="short_term_status_1">
+                                        <option value="">Sélectionner</option>
+                                        <option value="en_cours" ' . ((isset($profil['SHORT_TERM_STATUS_1']) && $profil['SHORT_TERM_STATUS_1'] == 'en_cours') ? 'selected' : '') . '>En cours</option>
+                                        <option value="atteint" ' . ((isset($profil['SHORT_TERM_STATUS_1']) && $profil['SHORT_TERM_STATUS_1'] == 'atteint') ? 'selected' : '') . '>Atteint</option>
+                                        <option value="non_atteint" ' . ((isset($profil['SHORT_TERM_STATUS_1']) && $profil['SHORT_TERM_STATUS_1'] == 'non_atteint') ? 'selected' : '') . '>Non atteint</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" name="short_term_goal_2" value="' . (isset($profil['SHORT_TERM_GOAL_2']) ? htmlspecialchars($profil['SHORT_TERM_GOAL_2']) : '') . '"></td>
+                                <td><input type="date" name="short_term_deadline_2" value="' . (isset($profil['SHORT_TERM_DEADLINE_2']) ? $profil['SHORT_TERM_DEADLINE_2'] : '') . '"></td>
+                                <td>
+                                    <select name="short_term_status_2">
+                                        <option value="">Sélectionner</option>
+                                        <option value="en_cours" ' . ((isset($profil['SHORT_TERM_STATUS_2']) && $profil['SHORT_TERM_STATUS_2'] == 'en_cours') ? 'selected' : '') . '>En cours</option>
+                                        <option value="atteint" ' . ((isset($profil['SHORT_TERM_STATUS_2']) && $profil['SHORT_TERM_STATUS_2'] == 'atteint') ? 'selected' : '') . '>Atteint</option>
+                                        <option value="non_atteint" ' . ((isset($profil['SHORT_TERM_STATUS_2']) && $profil['SHORT_TERM_STATUS_2'] == 'non_atteint') ? 'selected' : '') . '>Non atteint</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" name="short_term_goal_3" value="' . (isset($profil['SHORT_TERM_GOAL_3']) ? htmlspecialchars($profil['SHORT_TERM_GOAL_3']) : '') . '"></td>
+                                <td><input type="date" name="short_term_deadline_3" value="' . (isset($profil['SHORT_TERM_DEADLINE_3']) ? $profil['SHORT_TERM_DEADLINE_3'] : '') . '"></td>
+                                <td>
+                                    <select name="short_term_status_3">
+                                        <option value="">Sélectionner</option>
+                                        <option value="en_cours" ' . ((isset($profil['SHORT_TERM_STATUS_3']) && $profil['SHORT_TERM_STATUS_3'] == 'en_cours') ? 'selected' : '') . '>En cours</option>
+                                        <option value="atteint" ' . ((isset($profil['SHORT_TERM_STATUS_3']) && $profil['SHORT_TERM_STATUS_3'] == 'atteint') ? 'selected' : '') . '>Atteint</option>
+                                        <option value="non_atteint" ' . ((isset($profil['SHORT_TERM_STATUS_3']) && $profil['SHORT_TERM_STATUS_3'] == 'non_atteint') ? 'selected' : '') . '>Non atteint</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">OBJECTIFS À LONG TERME (6-12 MOIS)</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50%">Objectif</th>
+                                <th style="width: 30%">Échéance</th>
+                                <th style="width: 20%">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" name="long_term_goal_1" value="' . (isset($profil['LONG_TERM_GOAL_1']) ? htmlspecialchars($profil['LONG_TERM_GOAL_1']) : '') . '"></td>
+                                <td><input type="date" name="long_term_deadline_1" value="' . (isset($profil['LONG_TERM_DEADLINE_1']) ? $profil['LONG_TERM_DEADLINE_1'] : '') . '"></td>
+                                <td>
+                                    <select name="long_term_status_1">
+                                        <option value="">Sélectionner</option>
+                                        <option value="en_cours" ' . ((isset($profil['LONG_TERM_STATUS_1']) && $profil['LONG_TERM_STATUS_1'] == 'en_cours') ? 'selected' : '') . '>En cours</option>
+                                        <option value="atteint" ' . ((isset($profil['LONG_TERM_STATUS_1']) && $profil['LONG_TERM_STATUS_1'] == 'atteint') ? 'selected' : '') . '>Atteint</option>
+                                        <option value="non_atteint" ' . ((isset($profil['LONG_TERM_STATUS_1']) && $profil['LONG_TERM_STATUS_1'] == 'non_atteint') ? 'selected' : '') . '>Non atteint</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" name="long_term_goal_2" value="' . (isset($profil['LONG_TERM_GOAL_2']) ? htmlspecialchars($profil['LONG_TERM_GOAL_2']) : '') . '"></td>
+                                <td><input type="date" name="long_term_deadline_2" value="' . (isset($profil['LONG_TERM_DEADLINE_2']) ? $profil['LONG_TERM_DEADLINE_2'] : '') . '"></td>
+                                <td>
+                                    <select name="long_term_status_2">
+                                        <option value="">Sélectionner</option>
+                                        <option value="en_cours" ' . ((isset($profil['LONG_TERM_STATUS_2']) && $profil['LONG_TERM_STATUS_2'] == 'en_cours') ? 'selected' : '') . '>En cours</option>
+                                        <option value="atteint" ' . ((isset($profil['LONG_TERM_STATUS_2']) && $profil['LONG_TERM_STATUS_2'] == 'atteint') ? 'selected' : '') . '>Atteint</option>
+                                        <option value="non_atteint" ' . ((isset($profil['LONG_TERM_STATUS_2']) && $profil['LONG_TERM_STATUS_2'] == 'non_atteint') ? 'selected' : '') . '>Non atteint</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">SOUTIEN ET RESSOURCES</div>
+                    <div class="form-group">
+                        <label>Soutien familial:</label>
+                        <textarea name="family_support" placeholder="Décrivez le soutien de la famille...">' . (isset($profil['FAMILY_SUPPORT']) ? htmlspecialchars($profil['FAMILY_SUPPORT']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Ressources scolaires disponibles:</label>
+                        <textarea name="school_resources" placeholder="Quelles ressources scolaires sont disponibles?">' . (isset($profil['SCHOOL_RESOURCES']) ? htmlspecialchars($profil['SCHOOL_RESOURCES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Services externes:</label>
+                        <textarea name="external_services" placeholder="Services externes (orthophonie, psychologie, etc.)...">' . (isset($profil['EXTERNAL_SERVICES']) ? htmlspecialchars($profil['EXTERNAL_SERVICES']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Accommodations et adaptations:</label>
+                        <textarea name="accommodations" placeholder="Quelles accommodations sont en place?">' . (isset($profil['ACCOMMODATIONS']) ? htmlspecialchars($profil['ACCOMMODATIONS']) : '') . '</textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">OBSERVATIONS ET NOTES</div>
+                    <div class="form-group">
+                        <label>Observations de l\'enseignant(e):</label>
+                        <textarea name="teacher_observations" placeholder="Observations importantes de l\'enseignant...">' . (isset($profil['TEACHER_OBSERVATIONS']) ? htmlspecialchars($profil['TEACHER_OBSERVATIONS']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Rétroaction des parents:</label>
+                        <textarea name="parent_feedback" placeholder="Commentaires et observations des parents...">' . (isset($profil['PARENT_FEEDBACK']) ? htmlspecialchars($profil['PARENT_FEEDBACK']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Auto-évaluation de l\'élève:</label>
+                        <textarea name="student_self_assessment" placeholder="Comment l\'élève se perçoit-il?">' . (isset($profil['STUDENT_SELF_ASSESSMENT']) ? htmlspecialchars($profil['STUDENT_SELF_ASSESSMENT']) : '') . '</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes additionnelles:</label>
+                        <textarea name="additional_notes" placeholder="Autres informations pertinentes...">' . (isset($profil['ADDITIONAL_NOTES']) ? htmlspecialchars($profil['ADDITIONAL_NOTES']) : '') . '</textarea>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">PERSONNES RESSOURCES</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nom</th>
+                                <th>Rôle</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" name="person_1_name" value="' . (isset($profil['PERSON_1_NAME']) ? htmlspecialchars($profil['PERSON_1_NAME']) : '') . '"></td>
+                                <td><input type="text" name="person_1_role" value="' . (isset($profil['PERSON_1_ROLE']) ? htmlspecialchars($profil['PERSON_1_ROLE']) : '') . '"></td>
+                                <td><input type="text" name="person_1_contact" value="' . (isset($profil['PERSON_1_CONTACT']) ? htmlspecialchars($profil['PERSON_1_CONTACT']) : '') . '"></td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" name="person_2_name" value="' . (isset($profil['PERSON_2_NAME']) ? htmlspecialchars($profil['PERSON_2_NAME']) : '') . '"></td>
+                                <td><input type="text" name="person_2_role" value="' . (isset($profil['PERSON_2_ROLE']) ? htmlspecialchars($profil['PERSON_2_ROLE']) : '') . '"></td>
+                                <td><input type="text" name="person_2_contact" value="' . (isset($profil['PERSON_2_CONTACT']) ? htmlspecialchars($profil['PERSON_2_CONTACT']) : '') . '"></td>
+                            </tr>
+                            <tr>
+                                <td><input type="text" name="person_3_name" value="' . (isset($profil['PERSON_3_NAME']) ? htmlspecialchars($profil['PERSON_3_NAME']) : '') . '"></td>
+                                <td><input type="text" name="person_3_role" value="' . (isset($profil['PERSON_3_ROLE']) ? htmlspecialchars($profil['PERSON_3_ROLE']) : '') . '"></td>
+                                <td><input type="text" name="person_3_contact" value="' . (isset($profil['PERSON_3_CONTACT']) ? htmlspecialchars($profil['PERSON_3_CONTACT']) : '') . '"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="signature-section">
+                    <div class="signature-box">
+                        <label>Signature de l\'enseignant(e):</label>
+                        <div style="margin-top: 40px;">
+                            <input class="signature-ts" type="text" name="teacher_signature" placeholder="" value="' . (isset($profil['TEACHER_SIGNATURE']) ? htmlspecialchars($profil['TEACHER_SIGNATURE']) : '') . '">
+                            <input type="date" name="teacher_date" style="margin-top: 10px;" value="' . (isset($profil['TEACHER_DATE']) ? $profil['TEACHER_DATE'] : date('Y-m-d')) . '">
+                        </div>
+                    </div>
+                    <div class="signature-box">
+                        <label>Signature du parent/tuteur:</label>
+                        <div style="margin-top: 40px;">
+                            <input class="signature-ts" type="text" name="parent_signature" placeholder="" value="' . (isset($profil['PARENT_SIGNATURE']) ? htmlspecialchars($profil['PARENT_SIGNATURE']) : '') . '">
+                            <input type="date" name="parent_date" style="margin-top: 10px;" value="' . (isset($profil['PARENT_DATE']) ? $profil['PARENT_DATE'] : date('Y-m-d')) . '">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-container">
+                    <button type="button" onclick="printProfile()" class="btn-print">Imprimer le profil</button>
+                    <button type="submit" name="save_profil_eleves" class="btn-save">Enregistrer le profil</button>
+                </div>
+            </form>
+        </div>
+
+        <script>
+        function printProfile() {
+            var printWindow = window.open(\'\', \'_blank\');
+            var content = document.querySelector(\'.container\').cloneNode(true);
+            
+            var buttons = content.querySelectorAll(\'.btn-save, .btn-print, .button-container\');
+            buttons.forEach(function(btn) {
+                btn.style.display = \'none\';
+            });
+            
+            var printHTML = `
+                <!DOCTYPE html>
+                <html lang="fr">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Profile d\'Élève</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            background: white;
+                            margin: 0;
+                            padding: 20px;
+                        }
+                        
+                        .container {
+                            max-width: 900px;
+                            margin: 0 auto;
+                            background-color: white;
+                            padding: 40px;
+                        }
+                        
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 3px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        
+                        h1 {
+                            font-size: 28px;
+                            color: #333;
+                            margin-bottom: 10px;
+                            font-weight: bold;
+                        }
+                        
+                        .section {
+                            margin-bottom: 25px;
+                            page-break-inside: avoid;
+                        }
+                        
+                        .section-title {
+                            background-color: #e8e8e8;
+                            padding: 10px;
+                            font-weight: bold;
+                            margin-bottom: 15px;
+                            border-left: 4px solid #4a90e2;
+                        }
+                        
+                        .form-group {
+                            margin-bottom: 15px;
+                        }
+                        
+                        label {
+                            display: block;
+                            margin-bottom: 5px;
+                            font-weight: 600;
+                            color: #555;
+                        }
+                        
+                        input[type="text"],
+                        input[type="date"],
+                        textarea,
+                        select {
+                            width: 100%;
+                            padding: 8px 12px;
+                            border: none;
+                            border-bottom: 1px solid #000;
+                            background: transparent;
+                            font-size: 14px;
+                        }
+                        
+                        textarea {
+                            min-height: 80px;
+                        }
+                        
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 10px;
+                            page-break-inside: avoid;
+                        }
+                        
+                        th, td {
+                            border: 1px solid #000;
+                            padding: 10px;
+                            text-align: left;
+                        }
+                        
+                        th {
+                            background-color: #f0f0f0;
+                            font-weight: bold;
+                        }
+                        
+                        .signature-section {
+                            display: flex;
+                            justify-content: space-between;
+                            margin-top: 40px;
+                            gap: 30px;
+                            page-break-inside: avoid;
+                        }
+                        
+                        .signature-box {
+                            flex: 1;
+                            border: 1px solid #000;
+                            padding: 15px;
+                            min-height: 100px;
+                        }
+                        
+                        .info-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 15px;
+                        }
+                        
+                        .btn-save, .btn-print, .button-container {
+                            display: none !important;
+                        }
+                        
+                        @page {
+                            margin: 1cm;
+                            size: auto;
+                        }
+                        
+                        @media print {
+                            body {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            
+                            @page {
+                                margin: 1cm;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${content.innerHTML}
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            printWindow.onload = function() {
+                printWindow.focus();
+                printWindow.print();
+                setTimeout(function() {
+                    printWindow.close();
+                }, 100);
+            };
+        }
+        </script>
+    </body>
+    </html>
+    ';
+}
+// END ID 15 Profil d'élève
+
                     if (!strpos($_REQUEST['include'], '/'))
                         include('modules/students/includes/' . $_REQUEST['include'] . '.php');
                     else {
@@ -1820,7 +4225,7 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
                         //$separator = '<HR>';
                         include('modules/students/includes/OtherInfoInc.php');
                     }
-
+                if ($_REQUEST['category_id'] != '13' && $_REQUEST['category_id'] != '14' && $_REQUEST['category_id'] != '15' ){ 
                     if (isset($_REQUEST['goal_id']) && $_REQUEST['goal_id'] != 'new' && !isset($_REQUEST['progress_id']))
                         $buttons = SubmitButton(_save, '', 'id="mod_student_btn" class="btn btn-primary pull-right" onclick="formcheck_student_student(this);"');
                     else {
@@ -1841,6 +4246,7 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
                                 $buttons = SubmitButton(_save, '', 'id="mod_student_btn" class="btn btn-primary" onclick="formcheck_student_student(this);"');
                         }
                     }
+                }
                     echo PopTable('footer', $buttons);
                     echo '</div>';
                     echo '</FORM>';

@@ -157,7 +157,7 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                 // unset($table);
             } elseif ($table == 'student_field_categories') {
                 if (trim($_REQUEST['tables']['new']['TITLE']) != '') {
-                    $chk_title = DBGet(DBQuery('SELECT COUNT(*) AS TITLE_FOUND FROM student_field_categories WHERE TITLE=\'' . str_replace("'", "''", trim($_REQUEST['tables']['new']['TITLE'])) . '\''));
+                    $chk_title = DBGet(DBQuery('SELECT COUNT(*) AS TITLE_FOUND FROM student_field_categories WHERE TITLE="\'' . str_replace("'", "''", trim($_REQUEST['tables']['new']['TITLE'])) . '\'"'));
                     if ($chk_title[1]['TITLE_FOUND'] != 0)
                         $err_msg = "<div class=\"alert bg-danger alert-styled-left\">" . _titleAlreadyExists . "</div>";
                     // else {
