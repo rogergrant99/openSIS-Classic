@@ -417,7 +417,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                     $diff = $final_admim_grade - $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL'];
                     if($diff && $diff < 15 && $final_admim_grade){
                         $assignment=1;
-                        $percent=$final_admim_grade/round($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL']);
+                        $percent=$final_admim_grade/$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL'];
                         foreach ($assign_ids as $key => $val) {
                             $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']=$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']*$percent;
                             if($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE'] > 100)
@@ -2201,7 +2201,7 @@ function _myround($value){
     if($value== 'N/A') return ''; 
     if($value== '0') return '0';
     // return round(round($value,2),0);
-    return($value !==null ? round(round($value,2),0) . '' : '');
+    return($value !==null ? round($value, 0) . '' : '');
 }
 
 function CadoTeacherComlpetion($teacher_id,$course_id,$course_period_id,$short_name){

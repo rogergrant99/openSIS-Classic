@@ -64,3 +64,50 @@ ADD COLUMN `does_no_planning` varchar(1) NULL;
 
 course_details Structure V2:
 select `c`.`title` AS `course_name`,`c`.`short_name` AS `course_number`,`c`.`grade_level` AS `grade_level`,`cp`.`school_id` AS `school_id`,`cp`.`syear` AS `syear`,`cp`.`marking_period_id` AS `marking_period_id`,`cp`.`short_name` AS `short_name`,`c`.`subject_id` AS `subject_id`,`cp`.`course_id` AS `course_id`,`cp`.`course_period_id` AS `course_period_id`,`cp`.`teacher_id` AS `teacher_id`,`c`.`rollover_id` AS `rollover_id`,`cp`.`secondary_teacher_id` AS `secondary_teacher_id`,`cp`.`tertiary_teacher_id` AS `tertiary_teacher_id` ,`cp`.`does_no_planning` AS `does_no_planning` ,`c`.`title` AS `course_title`,`cp`.`title` AS `cp_title`,`cp`.`grade_scale_id` AS `grade_scale_id`,`cp`.`marking_period_id` AS `mpid`,`cp`.`mp` AS `mp`,`cp`.`credits` AS `credits`,`cp`.`begin_date` AS `begin_date`,`cp`.`end_date` AS `end_date` from (`opensis`.`course_periods` `cp` join `opensis`.`courses` `c`) where `cp`.`course_id` = `c`.`course_id`
+
+/*  add habillement table */
+CREATE TABLE IF NOT EXISTS `habillement` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `STUDENT_ID` int(11) NOT NULL,
+  `SCHOOL_ID` int(11) NOT NULL,
+  `SYEAR` int(4) NOT NULL,
+  `WEEK_START` date NOT NULL COMMENT 'Lundi de la semaine',
+  `WEEK_END` date NOT NULL COMMENT 'Dimanche de la semaine',
+  `COMPLIANT` enum('Y','N') NOT NULL DEFAULT 'N' COMMENT 'Y=Conforme, N=Non conforme',
+  `CREATED_AT` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `UPDATED_AT` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `unique_student_week` (`STUDENT_ID`, `SCHOOL_ID`, `SYEAR`, `WEEK_START`),
+  KEY `idx_student` (`STUDENT_ID`),
+  KEY `idx_school_year` (`SCHOOL_ID`, `SYEAR`),
+  KEY `idx_week` (`WEEK_START`, `WEEK_END`),
+  KEY `idx_compliant` (`COMPLIANT`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci COMMENT='Suivi de la conformité vestimentaire par semaine';
+
+-- Index pour améliorer les performances des requêtes
+CREATE INDEX idx_student_week ON habillement(STUDENT_ID, WEEK_START);
+CREATE INDEX idx_school_syear_week ON habillement(SCHOOL_ID, SYEAR, WEEK_START);
+
+
+
+SELECT 
+    COUNT(DISTINCT school_date) AS nombre_de_jours
+FROM 
+    attendance_calendar
+WHERE 
+    school_date BETWEEN '2025-08-29' AND '2025-11-07';
+
+
+SELECT 
+    COUNT(DISTINCT school_date) AS nombre_de_jours
+FROM 
+    attendance_calendar
+WHERE 
+    school_date BETWEEN '2025-11-10' AND '2026-02-27';
+
+SELECT 
+    COUNT(DISTINCT school_date) AS nombre_de_jours
+FROM 
+    attendance_calendar
+WHERE 
+    school_date BETWEEN '2026-03-02' AND '2026-06-23';

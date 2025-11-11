@@ -28,14 +28,18 @@
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
 include 'modules/attendance/ConfigInc.php';
-if ($_REQUEST['period']) {
-    $_SESSION['CpvId'] = $_REQUEST['period'];
-}
 $qr_att = DBGet(DBQuery("select count(course_period_id) as tot from course_period_var where course_period_id='" . UserCoursePeriod() . "'"));
 if ($qr_att[1]['TOT'] > 1) {
-    $qr_att1 = DBGet(DBQuery("select ID from course_period_var where course_period_id='" . UserCoursePeriod() . "' group by(COURSE_PERIOD_ID)"));
-
+    $days_arr = array("1" => 'M', "2" => 'T', "3" => 'W', "4" => 'H', "5" => 'F', "6" => 'S', "7" => 'U');
+    $d=$days_arr[Date('N')];
+    $qr_att1 = DBGet(DBQuery("select ID from course_period_var where course_period_id='" . UserCoursePeriod() . "' AND days LIKE'%".$d."%' "));
+    // $qr_att1 = DBGet(DBQuery("select ID from course_period_var where course_period_id='" . UserCoursePeriod() . "' group by(COURSE_PERIOD_ID)"));
+//print_r($qr_att1 );
     $_SESSION['CpvId_attn'] = $qr_att1[1]['ID'];
+    $_SESSION['CpvId'] = $qr_att1[1]['ID'];
+}
+if ($_REQUEST['period']) {
+    $_SESSION['CpvId'] = $_REQUEST['period'];
 }
 $temp_date = $_REQUEST['date'];
 $From = $_REQUEST['From'];
@@ -198,6 +202,14 @@ $cq_cpid = ($_REQUEST['cp_id_miss_attn'] != '' ? $_REQUEST['cp_id_miss_attn'] : 
 $current_Q = 'SELECT ATTENDANCE_TEACHER_CODE,STUDENT_ID,ADMIN,COMMENT FROM ' . $table . ' WHERE SCHOOL_DATE=\'' . date('Y-m-d', strtotime($date)) . '\'AND PERIOD_ID=\'' . UserPeriod() . '\' AND COURSE_PERIOD_ID=\'' . $cq_cpid . '\'' . ($table == 'lunch_period' ? ' AND TABLE_NAME=\'' . $tabl . '\'' : '');
 $current_RET = DBGet(DBQuery($current_Q), array(), array('STUDENT_ID'));
 
+// Get current week's start and end dates (Monday to Sunday)
+$current_week_start = date('Y-m-d', strtotime('monday this week', strtotime($date)));
+$current_week_end = date('Y-m-d', strtotime('sunday this week', strtotime($date)));
+
+// Get habillement data for current week
+$habillement_Q = 'SELECT STUDENT_ID, WEEK_START, COMPLIANT FROM habillement WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' AND WEEK_START=\'' . $current_week_start . '\'';
+$habillement_RET = DBGet(DBQuery($habillement_Q), array(), array('STUDENT_ID'));
+
 if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax'])) {
 
     $already_attn_flag = 0;
@@ -215,11 +227,11 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax'])) {
     $attendanceAlreadyTakenTwo = DBGet(DBQuery('SELECT * FROM `attendance_completed` WHERE SCHOOL_DATE = \'' . $date . '\' ' . $cpClauseAddOn . ' AND PERIOD_ID=\'' . UserPeriod() . '\' AND STAFF_ID = \'' . User('STAFF_ID') . '\''));
 
 
-    if ($attendanceAlreadyTaken && count($attendanceAlreadyTakenTwo) == 0) {
-        // print_r(ErrorMessage(array('Attendance is already taken for the students on selected day and period.'), 'note'));
-        // die;
-        $already_attn_flag++;
-    }
+    // if ($attendanceAlreadyTaken && count($attendanceAlreadyTakenTwo) == 0) {
+    //     // print_r(ErrorMessage(array('Attendance is already taken for the students on selected day and period.'), 'note'));
+    //     // die;
+    //     $already_attn_flag++;
+    // }
     if($already_attn_flag == 0)
     {
     foreach ($_REQUEST['attendance'] as $student_id => $value) {
@@ -250,6 +262,35 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax'])) {
         if ($_REQUEST['table'] == '0')
             UpdateAttendanceDaily($student_id, $date);
     }
+        // ============================================================================
+        // FIXED HABILLEMENT PROCESSING SECTION
+        // ============================================================================
+        // Process habillement data for ALL students in the attendance list
+        // Only store non-compliant (false) values in the database
+        foreach ($_REQUEST['attendance'] as $student_id => $value) {
+            // Check if this student's habillement checkbox was NOT checked
+            // Remember: unchecked checkboxes don't appear in POST data
+            if (!isset($_REQUEST['habillement'][$student_id])) {
+                // Student is NOT compliant - need to insert/update record
+                $hab_check = DBGet(DBQuery('SELECT ID FROM habillement WHERE STUDENT_ID=\'' . $student_id . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' AND WEEK_START=\'' . $current_week_start . '\''));
+                
+                if (!count($hab_check)) {
+                    // No existing record - insert new non-compliant record
+                    DBQuery('INSERT INTO habillement (STUDENT_ID, SCHOOL_ID, SYEAR, WEEK_START, WEEK_END, COMPLIANT, CREATED_AT) VALUES (\'' . $student_id . '\', \'' . UserSchool() . '\', \'' . UserSyear() . '\', \'' . $current_week_start . '\', \'' . $current_week_end . '\', \'N\', NOW())');
+                } else {
+                    // Existing record found - update to non-compliant
+                    DBQuery('UPDATE habillement SET COMPLIANT=\'N\', UPDATED_AT=NOW() WHERE ID=\'' . $hab_check[1]['ID'] . '\'');
+                }
+            } else {
+                // Student IS compliant - checkbox was checked
+                // Delete any non-compliant record (we only store false values)
+                DBQuery('DELETE FROM habillement WHERE STUDENT_ID=\'' . $student_id . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' AND WEEK_START=\'' . $current_week_start . '\'');
+            }
+        }
+        // ============================================================================
+        // END HABILLEMENT PROCESSING
+        // ============================================================================
+          
     if ($_REQUEST['table'] == '0') {
         // echo 'SELECT \'completed\' AS COMPLETED FROM attendance_completed WHERE (STAFF_ID=\''.User('STAFF_ID').'\' OR SUBSTITUTE_STAFF_ID=\''.  User('STAFF_ID').'\') AND SCHOOL_DATE=\''.date('Y-m-d',strtotime($date)).'\' AND PERIOD_ID=\''.UserPeriod().'\' ';
         $RET = DBGet(DBQuery('SELECT \'completed\' AS COMPLETED FROM attendance_completed WHERE (STAFF_ID=\'' . User('STAFF_ID') . '\' OR SUBSTITUTE_STAFF_ID=\'' . User('STAFF_ID') . '\') AND SCHOOL_DATE=\'' . date('Y-m-d', strtotime($date)) . '\' AND PERIOD_ID=\'' . UserPeriod() . '\' and course_period_id=\'' . ($cq_cpid != '' ? $cq_cpid : UserCoursePeriod()) . '\''));
@@ -268,6 +309,8 @@ if ($_REQUEST['attendance'] && ($_POST['attendance'] || $_REQUEST['ajax'])) {
     }
 
     $current_RET = DBGet(DBQuery($current_Q), array(), array('STUDENT_ID'));
+    // Refresh habillement data
+    $habillement_RET = DBGet(DBQuery($habillement_Q), array(), array('STUDENT_ID'));
     unset($_SESSION['_REQUEST_vars']['attendance']);
 }
    else
@@ -288,15 +331,20 @@ if (is_countable($codes_RET) && count($codes_RET)) {
             $extra['functions']['CODE_' . $code['ID']] = '_makeRadioSelected';
         else
             $extra['functions']['CODE_' . $code['ID']] = '_makeRadio';
-        $columns['CODE_' . $code['ID']] = '<div style="width: 50px; max-width:50px; white-space:normal;  **overflow: auto;**" class="text-center">'.$code['TITLE'].'</div>';
+        $columns['CODE_' . $code['ID']] = '<div style="width: 50px; max-width:50px; white-space:normal;  overflow: auto;" class="text-center">'.$code['TITLE'].'</div>';
     }
 } else
     $columns = array();
+
+// Add Habillement column
+$extra['SELECT'] .= ',s.STUDENT_ID AS HABILLEMENT';
+$columns['HABILLEMENT'] = '<div style="width: 80px; max-width:80px; white-space:normal; overflow: auto;" class="text-center">Habillement</div>';
+
 $extra['SELECT'] .= ',s.STUDENT_ID AS COMMENT';
 $columns += array('COMMENT' => _comment);
 if (!is_array($extra['functions']))
     $extra['functions'] = array();
-$extra['functions'] += array('FULL_NAME' => '_makeTipMessage', 'COMMENT' => 'makeCommentInput');
+$extra['functions'] += array('FULL_NAME' => '_makeTipMessage', 'HABILLEMENT' => 'makeHabillementCheckbox', 'COMMENT' => 'makeCommentInput');
 $extra['DATE'] = date("Y-m-d", strtotime($date));
 
 if (isset($_REQUEST['cpv_id_miss_attn'])) {
@@ -353,23 +401,23 @@ $date_note = $date != date('Y-m-d') ? ' <span class="text-danger m-l-10"><i clas
 # commented as requested
 
 
-if ($_REQUEST['table'] == '0') {
-    $completed_RET = DBGet(DBQuery('SELECT \'Y\' as COMPLETED,STAFF_ID,SUBSTITUTE_STAFF_ID,IS_TAKEN_BY_SUBSTITUTE_STAFF FROM attendance_completed WHERE (STAFF_ID=\'' . User('STAFF_ID') . '\' OR SUBSTITUTE_STAFF_ID=\'' . User('STAFF_ID') . '\') AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . UserPeriod() . '\' AND CPV_ID=\'' . CpvId() . '\''));
-    if ($completed_RET) {
-        if ($completed_RET[1]['IS_TAKEN_BY_SUBSTITUTE_STAFF'] != 'Y' && User('STAFF_ID') == $completed_RET[1]['SUBSTITUTE_STAFF_ID'])
-            $note = ErrorMessage(array('<IMG SRC=assets/check.gif>'._primaryTeacherHasTakenAttendanceTodayForThisPeriod.'.'), 'note');
-        elseif ($completed_RET[1]['IS_TAKEN_BY_SUBSTITUTE_STAFF'] == 'Y' && User('STAFF_ID') == $completed_RET[1]['STAFF_ID'])
-            $note = ErrorMessage(array('<i class="icon-checkmark4"></i> '._secondaryTeacherHasTakenAttendanceTodayForThisPeriod.'.'), 'note');
-        else
-            $note = ErrorMessage(array('<i class="icon-checkmark4"></i> '._youHaveTakenAttendanceTodayForThisPeriod.'.'), 'note', 'style="margin-bottom: 0;"');
-    }
+// if ($_REQUEST['table'] == '0') {
+//     $completed_RET = DBGet(DBQuery('SELECT \'Y\' as COMPLETED,STAFF_ID,SUBSTITUTE_STAFF_ID,IS_TAKEN_BY_SUBSTITUTE_STAFF FROM attendance_completed WHERE (STAFF_ID=\'' . User('STAFF_ID') . '\' OR SUBSTITUTE_STAFF_ID=\'' . User('STAFF_ID') . '\') AND SCHOOL_DATE=\'' . $date . '\' AND PERIOD_ID=\'' . UserPeriod() . '\' AND CPV_ID=\'' . CpvId() . '\''));
+//     if ($completed_RET) {
+//         if ($completed_RET[1]['IS_TAKEN_BY_SUBSTITUTE_STAFF'] != 'Y' && User('STAFF_ID') == $completed_RET[1]['SUBSTITUTE_STAFF_ID'])
+//             $note = ErrorMessage(array('<IMG SRC=assets/check.gif>'._primaryTeacherHasTakenAttendanceTodayForThisPeriod.'.'), 'note');
+//         elseif ($completed_RET[1]['IS_TAKEN_BY_SUBSTITUTE_STAFF'] == 'Y' && User('STAFF_ID') == $completed_RET[1]['STAFF_ID'])
+//             $note = ErrorMessage(array('<i class="icon-checkmark4"></i> '._secondaryTeacherHasTakenAttendanceTodayForThisPeriod.'.'), 'note');
+//         else
+//             $note = ErrorMessage(array('<i class="icon-checkmark4"></i> '._youHaveTakenAttendanceTodayForThisPeriod.'.'), 'note', 'style="margin-bottom: 0;"');
+//     }
 
-    if ($_SESSION['miss_attn'] == 1) {
-        $get_profile_type = DBGet(DBQuery('SELECT PROFILE FROM user_profiles WHERE ID=' . UserProfileID()));
-        if (($_REQUEST['username'] == 'admin' || $get_profile_type[1]['PROFILE'] == 'admin'))  //&& $_REQUEST['modfunc']=='attn'
-            $note1 = '<a href=Modules.php?modname=users/TeacherPrograms.php?include=attendance/MissingAttendance.php&From=' . $From . '&to=' . $to . ' class="text-primary"><i class="icon-square-left"></i> '._backToMissingAttendanceList.' </a>';
-    }
-}
+//     if ($_SESSION['miss_attn'] == 1) {
+//         $get_profile_type = DBGet(DBQuery('SELECT PROFILE FROM user_profiles WHERE ID=' . UserProfileID()));
+//         if (($_REQUEST['username'] == 'admin' || $get_profile_type[1]['PROFILE'] == 'admin'))  //&& $_REQUEST['modfunc']=='attn'
+//             $note1 = '<a href=Modules.php?modname=users/TeacherPrograms.php?include=attendance/MissingAttendance.php&From=' . $From . '&to=' . $to . ' class="text-primary"><i class="icon-square-left"></i> '._backToMissingAttendanceList.' </a>';
+//     }
+// }
 
 
 
@@ -419,10 +467,9 @@ if ($profile[1]['PROFILE'] != "admin" && UserCoursePeriod() != '') {
 
 
             $fi = str_split($period['DAYS']);
-
-            $days_arr = array("Monday" => 'M', "Tuesday" => 'T', "Wednesday" => 'W', "Thursday" => 'H', "Friday" => 'F', "Saturday" => 'S', "Sunday" => 'U');
-            $d = $days_arr[$date1];
-            $period_select .= "<OPTION value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" . $period['SHORT_NAME'] . ($period['MARKING_PERIOD_ID'] != $fy_id ? ' ' . GetMP($period['MARKING_PERIOD_ID'], 'SHORT_NAME') : '') . (strlen($period['DAYS']) < 5 ? ' ' . $period['DAYS'] : '') . ' - ' . $period['COURSE_TITLE'] . "</OPTION>";
+            $days_arr = array("M" => 'Lundi', "T" => 'Mardi', "W" => 'Mercredi', "H" => 'Jeudi', "F" => 'Vendredi', "S" => 'Samedi', "U" => 'Dimanche');
+            $d = $days_arr[$fi[0]];
+            $period_select .= "<OPTION value=$period[ID]" . ((CpvId() == $period['ID']) ? ' SELECTED' : '') . ">" .  $d .  ' - ' . $period['SHORT_NAME'] .  ' - ' . $period['COURSE_TITLE'] . "</OPTION>";
             if (CpvId() == $period['ID']) {
                 $_SESSION['UserPeriod'] = $period['PERIOD_ID'];
             }
@@ -525,9 +572,9 @@ if (!$mp_id) {
             $extra_sql = 'SELECT COUNT(*) AS day_exist FROM attendance_calendar WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\' AND SCHOOL_DATE=\'' . date('Y-m-d', strtotime($date)) . '\'';
             $extra_ret = DBGET(DBQuery($extra_sql));
             if (isset($extra_ret[1]['DAY_EXIST']) && $extra_ret[1]['DAY_EXIST'] == 0)
-                echo '<div class="panel-body p-b-0"><div class="alert alert-danger alert-bordered">You cannot take attendance on this day, it is a school holiday</div>';
+                echo '<div class="panel-body p-b-0"><div class="alert alert-danger alert-bordered">Vous ne pouvez pas prendre les présences pour ce jour, c\'est un jour férié scolaire.</div>';
             else
-                echo '<div class="panel-body p-b-0"><div class="alert alert-danger alert-bordered">You cannot take attendance for this period on this day</div>';
+                echo '<div class="panel-body p-b-0"><div class="alert alert-danger alert-bordered">Vous ne pouvez pas prendre les présences pour cette période ce jour-là.</div>';
         }
     }
 }
@@ -641,4 +688,13 @@ function makeCommentInput($student_id, $column) {
     return TextInput($current_RET[$student_id][1]['COMMENT'], 'comment[' . $student_id . ']', '', 'maxlength=80', true, true);
 }
 
-?>
+function makeHabillementCheckbox($student_id, $column) {
+    global $habillement_RET, $current_week_start;
+    
+    // Check if student has a non-compliant record for this week
+    $is_compliant = !isset($habillement_RET[$student_id]) || $habillement_RET[$student_id][1]['COMPLIANT'] != 'N';
+    
+    // Checkbox is checked by default (compliant = true), unless there's a non-compliant record
+    return '<TABLE align=center><TR><TD><label class="checkbox-inline m-0"><INPUT type=checkbox name=habillement[' . $student_id . '] value="1"' . ($is_compliant ? ' CHECKED' : '') . '><span></span></label></TD></TR></TABLE>';
+}
+

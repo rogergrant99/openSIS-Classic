@@ -218,11 +218,10 @@ if ($_REQUEST['modfunc'] == 'save') {
                 foreach ($assign_ids[$student['STUDENT_ID']] as $key => $val) {
                     $tot_id_grade[$student['STUDENT_ID']][$val[0]] = $tot_id_grade[$student['STUDENT_ID']][$val[0]]  * $assign_id_weigth[$student['STUDENT_ID']][$val[0]] ;
                     if($total_id_weight[$student['STUDENT_ID']][$val[0]]){
-                        $tot_weight_grade+= ($tot_id_grade[$student['STUDENT_ID']][$val[0]]/ 100) / $total_id_weight[$student['STUDENT_ID']][$val[0]] ;
+                        $tot_weight_grade+= round($tot_id_grade[$student['STUDENT_ID']][$val[0]]/ 100) / $total_id_weight[$student['STUDENT_ID']][$val[0]] ;
                         $total_assignment_types_weight += $assign_id_weigth[$student['STUDENT_ID']][$val[0]];
                     }
                 }
-                echo $total_assignment_types_weight;
                 $tot_weight_grade = ($tot_weight_grade * 100) / $total_assignment_types_weight;
                 $count=1;
                 foreach ($grades_RET as $key => $val) {

@@ -2056,4 +2056,5 @@ define("_noSubject", "Aucun sujet");
 define("_reponse", "Réponse à : ");
 define("_planification", "Planification de cours");
 define("_doesNoPlanning", "Ne fait pas de planification");
+define("_habillement", "Habillement libre");
 ?>

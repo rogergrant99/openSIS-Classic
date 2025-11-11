@@ -29,6 +29,7 @@ include('../../RedirectModulesInc.php');
 $menu['attendance']['admin'] = array(
 						'attendance/Administration.php'=>_administration,
 						'attendance/AddAbsences.php'=>_addAbsences,
+						'attendance/habillementReport.php'=>_habillement,
 						1=>_reports,
 						'attendance/AttendanceData.php?list_by_day=true'=>_attendanceReport,
 						'attendance/Percent.php'=>_averageDailyAttendance,

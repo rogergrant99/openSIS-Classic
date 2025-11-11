@@ -30,6 +30,9 @@ include('../../RedirectModulesInc.php');
 include('lang/language.php');
 
 
+function event_dot($color = "0000FF", $size = "6") {
+    return '<span class="event-dot" style="display:inline-block;width:' . $size . 'px;height:' . $size . 'px;background-color:#' . $color . ';border-radius:50%;margin-right:3px;vertical-align:middle;"></span>';
+}
 //if(isset($_REQUEST['dup_msg']) && $_REQUEST['dup_msg']=='modl_cal')
 //{
 //    unset($_REQUEST);
@@ -676,8 +679,1396 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'list_events') {
     echo '</div></FORM>';
 }
 
-if (!$_REQUEST['modfunc']) {
+if ($_REQUEST['modfunc'] == 'annual_view'){
+    $events_RET = DBGet(DBQuery('SELECT ID, SCHOOL_DATE, TITLE, DESCRIPTION, CALENDAR_ID 
+        FROM calendar_events 
+        WHERE SYEAR=\'' . UserSyear() . '\' 
+        AND (CALENDAR_ID=\'' . $_REQUEST['calendar_id'] . '\' OR CALENDAR_ID=\'0\') 
+        ORDER BY SCHOOL_DATE'));
+    
+    // Fetch attendance calendar data to determine school days
+    $attendance_RET = DBGet(DBQuery('SELECT SCHOOL_DATE, MINUTES, BLOCK 
+        FROM attendance_calendar 
+        WHERE SYEAR=\'' . UserSyear() . '\' 
+        AND SCHOOL_ID=\'' . UserSchool() . '\' 
+        AND CALENDAR_ID=\'' . $_REQUEST['calendar_id'] . '\' 
+        ORDER BY SCHOOL_DATE'));
+    
+    // Get calendar details
+    $calendar_details = DBGet(DBQuery('SELECT TITLE, DAYS 
+        FROM school_calendars 
+        WHERE CALENDAR_ID=\'' . $_REQUEST['calendar_id'] . '\''));
+    
+    // Organize events by date
+    $events_by_date = array();
+    if (is_array($events_RET) && count($events_RET) > 0) {
+        foreach ($events_RET as $event) {
+            if (isset($event['SCHOOL_DATE']) && $event['SCHOOL_DATE']) {
+                $date = date('Y-m-d', strtotime($event['SCHOOL_DATE']));
+                if (!isset($events_by_date[$date])) {
+                    $events_by_date[$date] = array();
+                }
+                $events_by_date[$date][] = $event;
+            }
+        }
+    }
+    
+    // Organize attendance days
+    $school_days = array();
+    if (is_array($attendance_RET) && count($attendance_RET) > 0) {
+        foreach ($attendance_RET as $day) {
+            if (isset($day['SCHOOL_DATE']) && $day['SCHOOL_DATE']) {
+                $date = date('Y-m-d', strtotime($day['SCHOOL_DATE']));
+                $school_days[$date] = array(
+                    'minutes' => isset($day['MINUTES']) ? $day['MINUTES'] : 0,
+                    'block' => isset($day['BLOCK']) ? $day['BLOCK'] : ''
+                );
+            }
+        }
+    }
+    
+    // Calculate monthly statistics
+    function getMonthStats($month, $year, $school_days, $events_by_date) {
+        $start = date('Y-m-d', mktime(0, 0, 0, $month, 1, $year));
+        $end = date('Y-m-d', mktime(0, 0, 0, $month + 1, 0, $year));
+        
+        $student_count = 0;
+        $teacher_count = 0;
+        $current = strtotime($start);
+        $end_ts = strtotime($end);
+        
+        while ($current <= $end_ts) {
+            $date_key = date('Y-m-d', $current);
+            
+            // Vérifier si c'est un jour d'école
+            $is_school_day = isset($school_days[$date_key]) && $school_days[$date_key]['minutes'] > 0;
+            
+            // Vérifier les événements spéciaux
+            $is_teacher_start = false;
+            $is_pedagogical_day = false;
+            $is_statutory_holiday = false;
+            
+            if (isset($events_by_date[$date_key])) {
+                foreach ($events_by_date[$date_key] as $event) {
+                    if (isset($event['TITLE'])) {
+                        $event_title = trim($event['TITLE']);
+                        if ($event_title === 'Rentrée des enseignants') {
+                            $is_teacher_start = true;
+                        }
+                        if ($event_title === 'Journée pédagogique') {
+                            $is_pedagogical_day = true;
+                        }
+                        if ($event_title === 'Congé férié') {
+                            $is_statutory_holiday = true;
+                        }
+                    }
+                }
+            }
+            
+            // Compter pour les étudiants (jours d'école normaux seulement, pas les journées pédagogiques ni rentrée enseignants)
+            if ($is_school_day && !$is_pedagogical_day && !$is_teacher_start && !$is_statutory_holiday) {
+                $student_count++;
+            }
+            
+            // Compter pour les enseignants
+            // Inclure: jours d'école normaux + rentrée des enseignants + journées pédagogiques
+            // Exclure: congés fériés (sauf si c'est aussi un jour d'école ou événement enseignant)
+            if ($is_teacher_start || $is_pedagogical_day) {
+                // Toujours compter les événements spécifiques aux enseignants
+                $teacher_count++;
+            } elseif ($is_school_day && !$is_statutory_holiday) {
+                // Compter les jours d'école normaux (qui ne sont pas des congés fériés)
+                $teacher_count++;
+            }
+            
+            $current = strtotime('+1 day', $current);
+        }
+        
+        return array('students' => $student_count, 'teachers' => $teacher_count);
+    }
 
+    // Calculate total days for the year
+    function getTotalYearDays($months_data) {
+        $total_students = 0;
+        $total_teachers = 0;
+        
+        foreach ($months_data as $month) {
+            $total_students += $month['students'];
+            $total_teachers += $month['teachers'];
+        }
+        
+        return array('students' => $total_students, 'teachers' => $total_teachers);
+    }
+    
+    // Get school year dates
+    $fy_RET = DBGet(DBQuery('SELECT START_DATE, END_DATE 
+        FROM school_years 
+        WHERE SCHOOL_ID=\'' . UserSchool() . '\' 
+        AND SYEAR=\'' . UserSyear() . '\''));
+    
+    $start_year = isset($fy_RET[1]['START_DATE']) ? date('Y', strtotime($fy_RET[1]['START_DATE'])) : date('Y');
+    $end_year = isset($fy_RET[1]['END_DATE']) ? date('Y', strtotime($fy_RET[1]['END_DATE'])) : date('Y');
+    
+    // Generate months array
+    $months_data = array();
+    $month_names_fr = array(
+        8 => 'AOÛT', 9 => 'SEPTEMBRE', 10 => 'OCTOBRE', 11 => 'NOVEMBRE', 12 => 'DÉCEMBRE',
+        1 => 'JANVIER', 2 => 'FÉVRIER', 3 => 'MARS', 4 => 'AVRIL', 5 => 'MAI', 6 => 'JUIN'
+    );
+        
+    foreach ([8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6] as $month) {
+        $year = ($month >= 8) ? $start_year : $end_year;
+        $stats = getMonthStats($month, $year, $school_days, $events_by_date);
+        $months_data[] = array(
+            'name' => $month_names_fr[$month],
+            'month' => $month,
+            'year' => $year,
+            'students' => $stats['students'],
+            'teachers' => $stats['teachers']
+        );
+    }
+        
+    if (User('PROFILE') != 'student')
+        DrawBC("" . _schoolSetup . " > " . ProgramTitle());
+    else
+        DrawBC("School Info > " . ProgramTitle());
+    ?>
+        
+    <style>
+        .annual-header {
+            text-align: center !important;
+            margin-bottom: 30px;
+        }
+        .annual-header h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center !important;
+        }
+        .annual-header h3 {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-align: center !important;
+            margin: 20px auto;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .month-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: visible;
+        }
+        .month-header {
+            background: #444;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .month-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+        }
+        .day-header {
+            background: #ddd;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            border: 1px solid #5d5d5dff;
+        }
+        .day-cell {
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #5c5c5cff;
+            font-size: 0.9em;
+            position: relative;
+            cursor: pointer;
+        }
+        .day-cell:hover {
+            background: #f0f0f0 !important;
+        }
+        .day-cell.weekend {
+            background: #f5f5f5;
+        }
+        .day-cell.school-day {
+            background: white;
+        }
+        .day-cell.half-day {
+            background: #efd843ff !important;
+        }
+        .day-cell.event-day {
+            background: #e3f2fd;
+        }
+        .day-cell.holiday {
+            background: #ffebee;
+        }
+        .day-cell.statutory-holiday {
+            background: #8bb6d0ff;
+        }
+        .day-cell.parent-meeting {
+            background: #c05fe0ff;
+        }
+        .day-cell.sec-start-day {
+            background: #956abeae;
+        }
+        .day-cell.pri-start-day {
+            background: #9bd790ff;
+        }
+        .day-cell.teacher-start-day {
+            background: #dec0d3ff;
+        }
+        .day-cell.last-school-day {
+            background: #8c7155af;
+        }
+       .day-cell .event-indicator {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #2196F3;
+        }
+        .month-footer {
+            background: #f5f5f5;
+            padding: 8px;
+            font-size: 0.85em;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #ddd;
+        }
+        .legend-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        .legend-container h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            text-align: center;
+        }
+        .legend-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75em;
+        }
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .event-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            max-width: 250px;
+            min-width: 150px;
+            word-wrap: break-word;
+            white-space: normal;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            margin-bottom: 5px;
+            z-index: 1000;
+            pointer-events: none; /* Prevents tooltip from interfering with mouse */
+        }
+
+        .day-cell {
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #5c5c5cff;
+            font-size: 0.9em;
+            position: relative; /* This is crucial! */
+            cursor: pointer;
+        }
+
+        .day-cell:hover .event-tooltip {
+            display: block;
+        }
+        .day-cell.today {
+            border: 3px solid #ff6b6b !important;
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            font-weight: bold;
+            position: relative;
+        }
+
+        .day-cell.today::before {
+            content: '●';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            color: #ff6b6b;
+            font-size: 10px;
+        }
+
+        @media print {
+            /* Masquer UNIQUEMENT les éléments de navigation et boutons */
+            .panel-heading,
+            .btn,
+            button,
+            .print-toolbar {
+            display: none !important;
+        }
+        
+        /* Garder le panel mais sans style */
+        .panel {
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Afficher le contenu */
+        .panel-body {
+            display: block !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        /* Optimiser la mise en page pour l'impression */
+        body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .print-wrapper,
+        .annual-calendar-container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Réduire l'en-tête */
+        .annual-header {
+            margin-bottom: 5px !important;
+            page-break-after: avoid;
+        }
+        
+        .annual-header h1 {
+            font-size: 1.2em !important;
+            margin: 0 0 5px 0 !important;
+        }
+        
+        .annual-header h3 {
+            font-size: 1em !important;
+            margin: 0 0 5px 0 !important;
+        }
+        
+        /* Ajuster la grille du calendrier pour tenir sur une page */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Réduire la taille des cartes de mois */
+        .month-card {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #333;
+            font-size: 0.7em;
+        }
+        
+        /* Réduire l'en-tête du mois */
+        .month-header {
+            background: #444 !important;
+            color: white !important;
+            padding: 4px !important;
+            font-size: 0.9em !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Réduire les cellules de jours */
+        .day-header {
+            background: #ddd !important;
+            padding: 2px !important;
+            font-size: 0.7em !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        
+        /* Réduire le pied de page du mois */
+        .month-footer {
+            padding: 3px !important;
+            font-size: 0.65em !important;
+        }
+        
+        /* Réduire la légende */
+        .legend-container {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            border: 1px solid #333;
+            padding: 5px !important;
+            font-size: 0.65em;
+            background: white !important;
+        }
+        
+        .legend-container h2 {
+            font-size: 0.9em !important;
+            margin: 0 0 3px 0 !important;
+        }
+        
+        .legend-grid {
+            gap: 2px !important;
+        }
+        
+        .legend-item {
+            gap: 4px !important;
+            font-size: 0.75em !important;
+        }
+        
+        .legend-color {
+            width: 12px !important;
+            height: 12px !important;
+            border: 1px solid #333 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+        
+        /* Forcer les couleurs spécifiques de la légende */
+        .legend-item:nth-child(1) .legend-color {
+            background: #dec0d3 !important;
+        }
+
+        .legend-item:nth-child(2) .legend-color {
+            background: #9bd790 !important;
+        }
+
+        .legend-item:nth-child(3) .legend-color {
+            background: #956abe !important;
+        }
+        
+        .legend-item:nth-child(4) .legend-color {
+            background: #efd843 !important;
+        }
+        
+        .legend-item:nth-child(5) .legend-color {
+            background: #8bb6d0 !important;
+        }
+                
+        .legend-item:nth-child(6) .legend-color {
+            background: #8c7155 !important;
+        }
+
+        
+        .legend-item:nth-child(7) .legend-color {
+            background: #c05fe0 !important;
+        }
+
+        /* Préserver les couleurs des événements */
+        .day-cell.half-day {
+            background: #efd843 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.statutory-holiday {
+            background: #8bb6d0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.parent-meeting {
+            background: #c05fe0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.sec-start-day {
+            background: #956abe !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.pri-start-day {
+            background: #9bd790 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.teacher-start-day {
+            background: #dec0d3 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.last-school-day {
+            background: #8c7155 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.school-day {
+            background: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Mettre en évidence aujourd'hui */
+        .day-cell.today {
+            border: 2px solid #ff6b6b !important;
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.today::before {
+            font-size: 6px !important;
+        }
+        
+        /* Masquer les tooltips et indicateurs d'événements */
+        .event-tooltip,
+        .event-indicator {
+            display: none !important;
+        }
+        /* Optimiser la mise en page pour l'impression */
+        body {
+            margin: 0;
+            padding: 10mm;
+            background: white;
+        }
+        
+        .print-wrapper,
+        .annual-calendar-container {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Ajuster la grille du calendrier pour l'impression */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            page-break-inside: avoid;
+        }
+        
+        /* Optimiser les cartes de mois */
+        .month-card {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            box-shadow: none;
+            border: 1px solid #333;
+        }
+        
+        /* Améliorer la lisibilité */
+        .month-header {
+            background: #444 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-header {
+            background: #ddd !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Préserver les couleurs des événements */
+        .day-cell.half-day {
+            background: #efd843 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.statutory-holiday {
+            background: #8bb6d0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.parent-meeting {
+            background: #c05fe0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.sec-start-day {
+            background: #956abe !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.pri-start-day {
+            background: #9bd790 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.teacher-start-day {
+            background: #dec0d3 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.last-school-day {
+            background: #8c7155 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        .day-cell.school-day {
+            background: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Mettre en évidence aujourd'hui pour l'impression */
+        .day-cell.today {
+            border: 2px solid #ff6b6b !important;
+            font-weight: bold !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Optimiser la légende */
+        .legend-container {
+            page-break-inside: avoid;
+            break-inside: avoid;
+            border: 1px solid #333;
+        }
+        
+        .legend-color {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        
+        /* Masquer les tooltips */
+        .event-tooltip {
+            display: none !important;
+        }
+        
+        /* Optimiser l'en-tête */
+        .annual-header h3 {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+        
+        /* Ajuster la taille des polices */
+        .day-cell {
+            font-size: 0.85em;
+        }
+        
+        .month-footer {
+            font-size: 0.75em;
+        }
+        
+        /* Option : Forcer l'impression en couleur */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+    }
+    @page {
+        size: A4 landscape;
+        margin: 8mm 5mm;
+    }
+    }
+    </style>
+    <div class="print-wrapper">
+        <div class="annual-calendar-container">
+            <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="panel-title">
+                            <A HREF="Modules.php?modname=<?php echo $_REQUEST['modname']; ?>&modfunc=monthly_view&calendar_id=<?php echo $_REQUEST['calendar_id']; ?>" class="btn btn-default">
+                                <i class="fa fa-calendar"></i> Vue mensuelle
+                            </A>
+                        </h6>
+                    </div>
+                    <div class="col-md-8 text-md-right text-lg-right">
+        <button onclick="printCalendar();" class="btn btn-primary m-l-5">
+            <i class="fa fa-print"></i> Imprimer
+        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="annual-header">
+                    <h3><?php echo isset($calendar_details[1]['TITLE']) ? $calendar_details[1]['TITLE'] : 'Calendrier'; ?></h3>
+                </div>
+                
+                <div class="calendar-grid">
+                    <?php foreach ($months_data as $month_data): ?>
+                        <?php
+                        $days_in_month = date('t', mktime(0, 0, 0, $month_data['month'], 1, $month_data['year']));
+                        $first_day = date('w', mktime(0, 0, 0, $month_data['month'], 1, $month_data['year']));
+                        ?>
+                        
+                        <div class="month-card">
+                            <div class="month-header">
+                                <?php echo $month_data['name']; ?>
+                            </div>
+                            
+        <div class="month-grid">
+        <?php
+            $day_names = array('L', 'M', 'M', 'J', 'V');
+            foreach ($day_names as $day_name) {
+                echo '<div class="day-header">' . $day_name . '</div>';
+            }
+            
+            // Calcul du premier jour ouvrable (Lundi = 1)
+            $first_day_of_month = date('N', mktime(0, 0, 0, $month_data['month'], 1, $month_data['year']));
+            
+            // Si c'est samedi (6) ou dimanche (7), on commence à 0, sinon on décale
+            if ($first_day_of_month == 6 || $first_day_of_month == 7) {
+                $offset = 0;
+            } else {
+                $offset = $first_day_of_month - 1;
+            }
+            
+            // Afficher les cellules vides au début
+            for ($i = 0; $i < $offset; $i++) {
+                echo '<div class="day-cell" style=""></div>';
+            }
+            
+            // Compteur de cellules pour savoir combien on en a affiché
+            $cell_count = $offset;
+            
+            // Afficher les jours du mois (seulement les jours ouvrables)
+            for ($day = 1; $day <= $days_in_month; $day++) {
+                $date_key = sprintf('%04d-%02d-%02d', $month_data['year'], $month_data['month'], $day);
+                $day_of_week = date('w', strtotime($date_key));
+                
+                // Sauter les weekends
+                if ($day_of_week == 0 || $day_of_week == 6) {
+                    continue;
+                }
+                
+                $is_school_day = isset($school_days[$date_key]);
+                $has_events = isset($events_by_date[$date_key]);
+                
+                // Détection des types d'événements
+                $is_pedagogical_day = false;
+                $is_statutory_holiday = false;
+                $is_parent_meeting = false;
+                $is_secondary_start = false;
+                $is_primary_start = false;
+                $is_teacher_start = false;
+                $last_school_day = false;
+
+                if ($has_events) {
+                    foreach ($events_by_date[$date_key] as $event) {
+                        if (isset($event['TITLE'])) {
+                            $event_title = trim($event['TITLE']);
+                            if ($event_title === 'Journée pédagogique') {
+                                $is_pedagogical_day = true;
+                            }
+                            if ($event_title === 'Congé férié') {
+                                $is_statutory_holiday = true;
+                            }
+                            if ($event_title === 'Rencontre des parents') {
+                                $is_parent_meeting = true;
+                            }
+                            if ($event_title === 'Rentrée secondaire') {
+                                $is_secondary_start = true;
+                            }
+                            if ($event_title === 'Rentrée primaire') {
+                                $is_primary_start = true;
+                            }
+                            if ($event_title === 'Rentrée des enseignants') {
+                                $is_teacher_start = true;
+                            }
+                            if ($event_title === 'Dernière journée d\'école') {
+                                $last_school_day = true;
+                            }
+                        }
+                    }
+                }
+
+                // Vérifier si c'est aujourd'hui
+                $today = date('Y-m-d');
+                $is_today = ($date_key === $today);
+                
+                // Détermination de la classe CSS
+                $class = 'day-cell';
+                if ($is_today) {
+                    $class .= ' today';
+                }
+                if ($is_statutory_holiday) {
+                    $class .= ' statutory-holiday';
+                } elseif ($is_parent_meeting) {
+                    $class .= ' parent-meeting';
+                } elseif ($is_pedagogical_day) {
+                    $class .= ' half-day';
+                } elseif ($is_secondary_start) {
+                    $class .= ' sec-start-day';
+                } elseif ($is_primary_start) {
+                    $class .= ' pri-start-day';
+                } elseif ($is_teacher_start) {
+                    $class .= ' teacher-start-day';
+                } elseif ($last_school_day) {
+                    $class .= ' last-school-day';
+                } elseif ($is_school_day) {
+                    if ($school_days[$date_key]['minutes'] == 999) {
+                        $class .= ' school-day';
+                    } else {
+                        $class .= ' half-day';
+                    }
+                } else {
+                    $class .= ' ';
+                }                  
+                
+                echo '<div class="' . $class . '" title="' . $date_key . '">';
+                echo $day;
+                
+                if ($has_events) {
+                    echo '<div class="event-indicator"></div>';
+                    $event_titles = array();
+                    foreach ($events_by_date[$date_key] as $event) {
+                        if (isset($event['TITLE']) && $event['TITLE']) {
+                            $event_titles[] = htmlspecialchars($event['TITLE']);
+                        }
+                    }
+                    if (count($event_titles) > 0) {
+                        echo '<div class="event-tooltip">' . implode('<br>', $event_titles) . '</div>';
+                    }
+                }
+                
+                echo '</div>';
+                $cell_count++;
+            }
+            
+            // NOUVELLE PARTIE : Remplir avec des cellules vides pour atteindre 5 semaines (25 cellules)
+            $total_cells_needed = 25; // 5 semaines × 5 jours
+            $empty_cells_needed = $total_cells_needed - $cell_count;
+            
+            for ($i = 0; $i < $empty_cells_needed; $i++) {
+                echo '<div class="day-cell" style=""></div>';
+            }
+        ?>
+        </div>          
+            <div class="month-footer">
+                <span><strong>É:</strong> <?php echo $month_data['students']; ?></span>
+                <span><strong>Ens:</strong> <?php echo $month_data['teachers']; ?></span>
+            </div>
+        </div>
+        <?php endforeach; ?>
+                <!-- Legend as 13th grid item -->
+                <div class="legend-container">
+                    <h2>Légende</h2>
+                    <div class="legend-grid">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #dec0d3;"></div>
+                            <span>Rentrée des enseignants</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #9bd790;"></div>
+                            <span>Rentrée primaire</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #956abe;"></div>
+                            <span>Rentrée secondaire</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #efd843;"></div>
+                            <span>Journée pédagogique</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8bb6d0;"></div>
+                            <span>Congé férié</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8c7155;"></div>
+                            <span>Dernière journée d'école</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #c05fe0;"></div>
+                            <span>Rencontre des parents</span>
+                        </div>
+                        <div class="legend-item">
+                            <span>* <?php $res=getTotalYearDays($months_data); echo $res['students']; ?> Journées de classe pour les élèves</span>
+                        </div>
+                    </div>
+                    </div>
+                </div> <!-- End of calendar-grid -->
+            </div> <!-- .panel-body -->
+        </div> <!-- .panel -->       
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            const dayCells = document.querySelectorAll('.day-cell');
+            
+            dayCells.forEach(cell => {
+                const tooltip = cell.querySelector('.event-tooltip');
+                if (tooltip) {
+                    cell.addEventListener('mouseenter', function(e) {
+                        // Show tooltip
+                        tooltip.style.display = 'block';
+                        
+                        // Get positions
+                        const cellRect = cell.getBoundingClientRect();
+                        const tooltipRect = tooltip.getBoundingClientRect();
+                        
+                        // Position relative to the cell (using CSS positioning)
+                        tooltip.style.bottom = '100%';
+                        tooltip.style.left = '50%';
+                        tooltip.style.transform = 'translateX(-50%)';
+                        tooltip.style.marginBottom = '5px';
+                        
+                        // Check if tooltip goes off-screen and adjust
+                        setTimeout(() => {
+                            const tooltipRect = tooltip.getBoundingClientRect();
+                            
+                            // If tooltip goes off right edge
+                            if (tooltipRect.right > window.innerWidth) {
+                                tooltip.style.left = 'auto';
+                                tooltip.style.right = '0';
+                                tooltip.style.transform = 'none';
+                            }
+                            
+                            // If tooltip goes off left edge
+                            if (tooltipRect.left < 0) {
+                                tooltip.style.left = '0';
+                                tooltip.style.right = 'auto';
+                                tooltip.style.transform = 'none';
+                            }
+                            
+                            // If tooltip goes off top, show below instead
+                            if (tooltipRect.top < 0) {
+                                tooltip.style.bottom = 'auto';
+                                tooltip.style.top = '100%';
+                                tooltip.style.marginBottom = '0';
+                                tooltip.style.marginTop = '5px';
+                            }
+                        }, 0);
+                    });
+                    
+                    cell.addEventListener('mouseleave', function() {
+                        tooltip.style.display = 'none';
+                        // Reset styles
+                        tooltip.style.bottom = '100%';
+                        tooltip.style.top = 'auto';
+                        tooltip.style.left = '50%';
+                        tooltip.style.right = 'auto';
+                        tooltip.style.transform = 'translateX(-50%)';
+                    });
+                }
+            });
+            });
+            function printCalendar() {
+            // Ouvrir une fenêtre maximisée
+            var printWindow = window.open('', '_blank', 'fullscreen=yes,scrollbars=yes');
+            
+            // Récupérer le contenu du calendrier
+            var calendarContainer = document.querySelector('.annual-calendar-container').cloneNode(true);
+            
+            // Supprimer le panel-heading (boutons) du clone
+            var panelHeading = calendarContainer.querySelector('.panel-heading');
+            if (panelHeading) {
+                panelHeading.remove();
+            }
+            
+            var calendarHTML = calendarContainer.outerHTML;
+            
+            // Copier tous les styles
+            var allStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                .map(el => el.outerHTML)
+                .join('\n');
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Calendrier Annuel - Aperçu avant impression</title>
+                    ${allStyles}
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                        }
+                        
+                        .print-toolbar {
+                            background: #f8f9fa;
+                            border-bottom: 2px solid #dee2e6;
+                            padding: 15px 20px;
+                            position: sticky;
+                            top: 0;
+                            z-index: 1000;
+                            display: flex;
+                            justify-content: center;  /* CENTERED */
+                            align-items: center;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        
+                        .print-toolbar h2 {
+                            margin: 0;
+                            font-size: 1.5em;
+                            color: #333;
+                        }
+                        
+                        .print-toolbar button {
+                            background: #5c96d4ff;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            margin-left: 10px;
+                            font-weight: 500;
+                        }
+                        
+                        .print-toolbar button:hover {
+                            background: #558ac2ff;
+                        }
+                        
+                        .print-toolbar button.close-btn {
+                            background: #dc3545;
+                        }
+                        
+                        .print-toolbar button.close-btn:hover {
+                            background: #c82333;
+                        }
+                        
+                        /* Masquer les éléments indésirables */
+                        .panel-heading,
+                        button:not(.print-toolbar button),
+                        .btn {
+                            display: none !important;
+                        }
+                        
+                        @media print {
+                            /* Masquer TOUS les éléments non nécessaires */
+                            .panel-heading,
+                            .btn,
+                            button,
+                            .print-toolbar,
+                            nav,
+                            header,
+                            footer,
+                            .sidebar,
+                            .breadcrumb,
+                            #menu,
+                            #header,
+                            #footer {
+                                display: none !important;
+                            }
+                            
+                            /* Supprimer toutes les marges et paddings de la page */
+                            body, html {
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                background: white;
+                                width: 100%;
+                                height: 100%;
+                            }
+                            
+                            /* Forcer tout le contenu sur une seule page */
+                            * {
+                                page-break-inside: avoid !important;
+                                page-break-before: avoid !important;
+                                page-break-after: avoid !important;
+                            }
+                            
+                            /* Garder le panel mais sans marges ni paddings */
+                            .panel {
+                                border: none !important;
+                                box-shadow: none !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                page-break-inside: avoid !important;
+                            }
+                            
+                            /* Afficher le contenu sans marges */
+                            .panel-body {
+                                display: block !important;
+                                padding: 0 !important;
+                                margin: 0 !important;
+                                page-break-inside: avoid !important;
+                            }
+                            
+                            /* Optimiser le wrapper */
+                            .print-wrapper,
+                            .annual-calendar-container {
+                                width: 100%;
+                                max-width: 100%;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                page-break-inside: avoid !important;
+                            }
+                            
+                            /* Réduire l'en-tête au maximum */
+                            .annual-header {
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                page-break-after: avoid !important;
+                                page-break-inside: avoid !important;
+                            }
+                            
+                            .annual-header h1 {
+                                font-size: 0 !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                display: none !important;
+                            }
+                            
+                            .annual-header h3 {
+                                font-size: 1em !important;
+                                margin: 0 0 3px 0 !important;
+                                padding: 0 !important;
+                                page-break-after: avoid !important;
+                            }
+                            
+                            /* Optimiser la grille du calendrier */
+                            .calendar-grid {
+                                display: grid;
+                                grid-template-columns: repeat(4, 1fr);
+                                gap: 3px;
+                                page-break-inside: avoid !important;
+                                break-inside: avoid !important;
+                                width: 100%;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
+                            
+                            /* Optimiser les cartes de mois */
+                            .month-card {
+                                page-break-inside: avoid !important;
+                                break-inside: avoid !important;
+                                box-shadow: none;
+                                border: 1px solid #333;
+                                font-size: 0.68em;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
+                            
+                            /* Optimiser l'en-tête du mois */
+                            .month-header {
+                                background: #444 !important;
+                                color: white !important;
+                                padding: 3px !important;
+                                font-size: 0.85em !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            /* Optimiser les cellules de jours */
+                            .day-header {
+                                background: #ddd !important;
+                                padding: 2px !important;
+                                font-size: 0.65em !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell {
+                                min-height: 28px !important;
+                                font-size: 0.75em !important;
+                                padding: 1px !important;
+                            }
+                            
+                            /* Optimiser le pied de page du mois */
+                            .month-footer {
+                                padding: 2px 4px !important;
+                                font-size: 0.6em !important;
+                            }
+                            
+                            /* Optimiser la légende */
+                            .legend-container {
+                                page-break-inside: avoid !important;
+                                break-inside: avoid !important;
+                                border: 1px solid #333;
+                                padding: 4px !important;
+                                font-size: 0.6em;
+                                background: white !important;
+                                margin: 0 !important;
+                            }
+                            
+                            .legend-container h2 {
+                                font-size: 0.85em !important;
+                                margin: 0 0 2px 0 !important;
+                            }
+                            
+                            .legend-grid {
+                                gap: 1px !important;
+                            }
+                            
+                            .legend-item {
+                                gap: 3px !important;
+                                font-size: 0.7em !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                            }
+                            
+                            .legend-color {
+                                width: 10px !important;
+                                height: 10px !important;
+                                border: 1px solid #333 !important;
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                                color-adjust: exact !important;
+                            }
+                            
+                            /* Forcer les couleurs spécifiques */
+                            .legend-item:nth-child(1) .legend-color {
+                                background: #dec0d3 !important;
+                            }
+                            .legend-item:nth-child(2) .legend-color {
+                                background: #9bd790 !important;
+                            }
+                            .legend-item:nth-child(3) .legend-color {
+                                background: #956abe !important;
+                            }
+                            .legend-item:nth-child(4) .legend-color {
+                                background: #efd843 !important;
+                            }
+                            .legend-item:nth-child(5) .legend-color {
+                                background: #8bb6d0 !important;
+                            }
+                            .legend-item:nth-child(6) .legend-color {
+                                background: #8c7155 !important;
+                            }
+                            .legend-item:nth-child(7) .legend-color {
+                                background: #c05fe0 !important;
+                            }
+                            
+                            /* Préserver les couleurs des événements */
+                            .day-cell.half-day {
+                                background: #efd843 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.statutory-holiday {
+                                background: #8bb6d0 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.parent-meeting {
+                                background: #c05fe0 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.sec-start-day {
+                                background: #956abe !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.pri-start-day {
+                                background: #9bd790 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.teacher-start-day {
+                                background: #dec0d3 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.last-school-day {
+                                background: #8c7155 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            .day-cell.school-day {
+                                background: white !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            
+                            /* Mettre en évidence aujourd'hui */
+                            .day-cell.today {
+                                border: 2px solid #ff6b6b !important;
+                                font-weight: bold !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                                display: none;
+                            }
+                            
+                            .day-cell.today::before {
+                                font-size: 5px !important;
+                            }
+                            
+                            /* Masquer les tooltips et indicateurs */
+                            .event-tooltip,
+                            .event-indicator {
+                                display: none !important;
+                            }
+                        }
+
+                        /* Configuration de la page */
+                        @page {
+                            size: A4 landscape;
+                            margin: 8mm 5mm;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-toolbar"> 
+                        <div>
+                            <button onclick="window.print();">🖨️ Imprimer</button>
+                            <button onclick="window.close();" class="close-btn">✕ Fermer</button>
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        ${calendarHTML}
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            }
+        </script>
+        </div>
+        </div> <!-- .annual-calendar-container -->
+    </div> <!-- .print-wrapper -->   
+    <?php
+    exit;
+}
+
+// Vue mensuelle
+if (!$_REQUEST['modfunc'] || $_REQUEST['modfunc'] == 'monthly_view'){  
     if (User('PROFILE') != 'student')
         DrawBC("" . _schoolSetup . " > " . ProgramTitle());
     else
@@ -798,38 +2189,50 @@ if (!$_REQUEST['modfunc']) {
         }
     }
 
-    if ($_REQUEST['calendar_id']) {
-        echo '<div class="panel panel-default">';
-        echo '<div class="panel-body">';
-        echo '<div class="form-inline">';
-        // DrawHeaderHome('<div class="inline-block">' . PrepareDate(strtoupper(date("d-M-y", $time)), '', false, array('M' => date("m", $time), 'Y' => date("y", $time), 'submit' => true, 'view' => 'month')) . '</div>' . ' <A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=list_events&calendar_id=' . $_REQUEST['calendar_id'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="btn btn-default m-l-5">' . _listEvents . '</A>', (User('PROFILE') == 'admin' ? SubmitButton(_save, '', 'class="btn btn-primary pull-right"  onclick="self_disable(this);"') : ''));
-        DrawHeaderHome(' <A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=list_events&calendar_id=' . $_REQUEST['calendar_id'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="btn btn-default m-l-5">' . _listEvents . '</A>', (User('PROFILE') == 'admin' ? SubmitButton(_save, '', 'class="btn btn-primary pull-right"  onclick="self_disable(this);"') : ''));
-        echo '</div>'; //.form-inline
-        echo '</div>'; //.panel-body
-        echo '</div>'; //.panel
+
+
+
+
+if (is_countable($error) && count($error)) {
+    if ($isajax != "ajax")
+        echo ErrorMessage($error, 'fatal');
+    else
+        echo ErrorMessage1($error, 'fatal');
+} else {
+echo "<div class=\"panel panel-default\">";
+echo '<div class="panel-heading">';
+
+// Première ligne : Boutons Vue annuelle et Liste d'événements
+if ($_REQUEST['calendar_id']) {
+    echo '<div class="row">';
+    echo '<div class="col-md-4">';
+    echo '<h6 class="panel-title">';
+    echo '<A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=annual_view&calendar_id=' . $_REQUEST['calendar_id'] . ' class="btn btn-default"><i class="fa fa-calendar"></i> Vue annuelle</A> ';
+    echo '</h6>';
+    echo '</div>';
+    echo '<div class="col-md-8 text-md-right text-lg-right">';
+    echo '<A HREF=Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=list_events&calendar_id=' . $_REQUEST['calendar_id'] . '&month=' . $_REQUEST['month'] . '&year=' . $_REQUEST['year'] . ' class="btn btn-default">' . _listEvents . '</A>';
+    
+    if (User('PROFILE') == 'admin') {
+        echo ' ' . SubmitButton(_save, '', 'class="btn btn-primary m-l-5" onclick="self_disable(this);"');
     }
+    echo '</div>';
+    echo '</div>'; // fin .row
+    
+    // Deuxième ligne : Navigation par mois
+    echo '<div class="row" style="margin-top: 15px;">';
+    echo $link; // Ici se trouve la navigation par mois (chevrons et date)
+    echo '</div>'; // fin .row
+}
 
-
-
-    if (is_countable($error) && count($error)) {
-        if ($isajax != "ajax")
-            echo ErrorMessage($error, 'fatal');
-        else
-            echo ErrorMessage1($error, 'fatal');
-    } else {
-
-
-        echo "<div class=\"panel panel-default\">";
-        echo '<div class="panel-heading">';
-        DrawHeaderHome($link);
-        echo '</div>'; //.panel-heading
-        $events_RET = DBGet(DBQuery('SELECT ce.ID,DATE_FORMAT(ce.SCHOOL_DATE,\'%d-%b-%y\') AS SCHOOL_DATE,ce.TITLE FROM calendar_events ce,calendar_events_visibility cev WHERE ce.SCHOOL_DATE BETWEEN \'' . date('Y-m-d', $time) . '\' AND \'' . date('Y-m-d', mktime(0, 0, 0, $_REQUEST['month'], $last, $_REQUEST['year'])) . '\' AND SYEAR=\'' . UserSyear() . '\' AND ce.calendar_id=\'' . $_REQUEST['calendar_id'] . '\'  AND ce.CALENDAR_ID=cev.CALENDAR_ID AND cev.PROFILE_ID=' . User('PROFILE_ID') . ' UNION SELECT ID,DATE_FORMAT(SCHOOL_DATE,\'%d-%b-%y\') AS SCHOOL_DATE,TITLE FROM calendar_events WHERE SCHOOL_DATE BETWEEN \'' . date('Y-m-d', $time) . '\' AND \'' . date('Y-m-d', mktime(0, 0, 0, $_REQUEST['month'], $last, $_REQUEST['year'])) . '\' AND SYEAR=\'' . UserSyear() . '\' AND CALENDAR_ID=0'), array(), array('SCHOOL_DATE'));
+echo '</div>'; //.panel-heading
+    
+    $events_RET = DBGet(DBQuery('SELECT ce.ID,DATE_FORMAT(ce.SCHOOL_DATE,\'%d-%b-%y\') AS SCHOOL_DATE,ce.TITLE FROM calendar_events ce,calendar_events_visibility cev WHERE ce.SCHOOL_DATE BETWEEN \'' . date('Y-m-d', $time) . '\' AND \'' . date('Y-m-d', mktime(0, 0, 0, $_REQUEST['month'], $last, $_REQUEST['year'])) . '\' AND SYEAR=\'' . UserSyear() . '\' AND ce.calendar_id=\'' . $_REQUEST['calendar_id'] . '\'  AND ce.CALENDAR_ID=cev.CALENDAR_ID AND cev.PROFILE_ID=' . User('PROFILE_ID') . ' UNION SELECT ID,DATE_FORMAT(SCHOOL_DATE,\'%d-%b-%y\') AS SCHOOL_DATE,TITLE FROM calendar_events WHERE SCHOOL_DATE BETWEEN \'' . date('Y-m-d', $time) . '\' AND \'' . date('Y-m-d', mktime(0, 0, 0, $_REQUEST['month'], $last, $_REQUEST['year'])) . '\' AND SYEAR=\'' . UserSyear() . '\' AND CALENDAR_ID=0'), array(), array('SCHOOL_DATE'));
 
         if (User('PROFILE') == 'parent' || User('PROFILE') == 'student')
             $assignments_RET = DBGet(DBQuery('SELECT a.ASSIGNMENT_TYPE_ID AS TYPE,a.ASSIGNMENT_ID AS ID,DATE_FORMAT(a.DUE_DATE,\'%d-%b-%y\')AS SCHOOL_DATE,a.TITLE,gat.TITLE AS TYPE_TITLE,\'Y\' AS ASSIGNED FROM gradebook_assignments a JOIN schedule s ON(a.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID OR a.COURSE_ID=s.COURSE_ID)JOIN gradebook_assignment_types gat ON a.ASSIGNMENT_TYPE_ID=gat.ASSIGNMENT_TYPE_ID WHERE s.STUDENT_ID=\'' . UserStudentID() . '\' AND s.DROPPED!=\'Y\' AND gat.TITLE!="1ère communication" AND(CURRENT_DATE>=a.ASSIGNED_DATE OR CURRENT_DATE<=a.ASSIGNED_DATE)AND(a.DUE_DATE IS NULL OR CURRENT_DATE<=a.DUE_DATE)'), array(), array('SCHOOL_DATE'));
                 elseif (User('PROFILE') == 'teacher')
             $assignments_RET = DBGet(DBQuery('SELECT ASSIGNMENT_ID AS ID,DATE_FORMAT(a.DUE_DATE,\'%d-%b-%y\') AS SCHOOL_DATE,a.TITLE,CASE WHEN a.ASSIGNED_DATE<=CURRENT_DATE OR a.ASSIGNED_DATE IS NULL THEN \'Y\' ELSE NULL END AS ASSIGNED FROM gradebook_assignments a JOIN gradebook_assignment_types gat ON a.ASSIGNMENT_TYPE_ID = gat.ASSIGNMENT_TYPE_ID WHERE a.STAFF_ID=\'' . User('STAFF_ID') . '\' AND gat.TITLE != "1ère communication" AND a.DUE_DATE BETWEEN \'' . date('Y-m-d', $time) . '\' AND \'' . date('Y-m-d', mktime(0, 0, 0, $_REQUEST['month'], $last, $_REQUEST['year'])) . '\''), array(), array('SCHOOL_DATE'));
-
         $skip = date("w", $time);
         echo '<div class="table-responsive">';
         echo "<TABLE class=\"table table-bordered table-calendar\" border=0 cellpadding=3 cellspacing=1><thead><TR class=calendar_header align=center>";
@@ -894,7 +2297,8 @@ if (!$_REQUEST['modfunc']) {
                     else
                         $e_title = substr($event['TITLE'], 0, 70) . '';
 
-                    echo '<TR><TD>' . button("dot", "0000FF", "", "6") . '</TD><TD> <A style="font-size: 12px;" class=\"event\" HREF=# onclick="CalendarModal(\'' . $event['ID'] . '\',' . $_REQUEST['calendar_id'] . ',\'' . $date . '\',\'' . $_REQUEST['year'] . '\',\'' . MonthNWSwitch($_REQUEST['month']) . '\',\'tochar\')"; return false;>' . ($event['TITLE'] ? $e_title : '***') . '</b></A></TD></TR>';
+                    echo '<TR><TD>' . event_dot("0000FF", "6") . '</TD><TD> <A style="font-size: 12px;" class=\"event\" HREF=# onclick="CalendarModal(\'' . $event['ID'] . '\',' . $_REQUEST['calendar_id'] . ',\'' . $date . '\',\'' . $_REQUEST['year'] . '\',\'' . MonthNWSwitch($_REQUEST['month']) . '\',\'tochar\')"; return false;>' . ($event['TITLE'] ? $e_title : '***') . '</b></A></TD></TR>';
+                    // echo '<TR><TD>' . button("dot", "0000FF", "", "6") . '</TD><TD> <A style="font-size: 12px;" class="event" HREF=# onclick="window.open(\'ForWindow.php?modname=' . $_REQUEST['modname'] . '&modfunc=detail&event_id=' . $event['ID'] . '&calendar_id=' . $_REQUEST['calendar_id'] . '&school_date=' . $date . '&year=' . $_REQUEST['year'] . '&month=' . MonthNWSwitch($_REQUEST['month'], 'tochar') . '\', \'event_window\', \'width=600,height=500,scrollbars=yes,resizable=yes\'); return false;">' . ($event['TITLE'] ? $e_title : '***') . '</b></A></TD></TR>';
                 }
                 if (is_countable($assignments_RET[$date]) && count($assignments_RET[$date])) {
                     foreach ($assignments_RET[$date] as $event)
