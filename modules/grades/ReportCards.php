@@ -370,8 +370,8 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                         }
                         if($val['ASSIGN_TYP_WG'] > 0 && $val['ASSIGN_WEIGHT'] > 0){
                             if($val['WEIGHT_GRADE'] != 'N/A')
-                                $total_id_weight[$val['ASSIGNMENT_TYPE_ID']]+= $val['ASSIGN_WEIGHT'] * $val['ASSIGN_TYP_WG'] / 100;
-                            $tot_id_grade[$val['ASSIGNMENT_TYPE_ID']]+= $val['POINTS2'] / $val['TOTAL_POINTS'] * ((($val['ASSIGN_WEIGHT'] * $val['ASSIGN_TYP_WG'])) / 100);
+                                $total_id_weight[$val['ASSIGNMENT_TYPE_ID']]+= $val['ASSIGN_WEIGHT'] * $val['ASSIGN_TYP_WG'];
+                            $tot_id_grade[$val['ASSIGNMENT_TYPE_ID']]+= $val['POINTS2'] / $val['TOTAL_POINTS'] * ((($val['ASSIGN_WEIGHT'] * $val['ASSIGN_TYP_WG'])) );
                             $assign_ids[$val['ASSIGNMENT_TYPE_ID']] = $val['ASSIGNMENT_TYPE_ID'];
                             $assign_id_weigth[$val['ASSIGNMENT_TYPE_ID']]= $val['ASSIGN_TYP_WG'];
                         }
@@ -381,7 +381,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                 foreach ($assign_ids as $key => $val) {
                     $tot_id_grade[$key] = $tot_id_grade[$key]  * $assign_id_weigth[$key] ;
                     if($total_id_weight[$key]){
-                            $tot_weight_grade+= ($tot_id_grade[$key]/ 100) / $total_id_weight[$key] ;
+                            $tot_weight_grade+= ($tot_id_grade[$key]) / $total_id_weight[$key] ;
                     }
                 }
                 $assignment=1;
@@ -409,7 +409,7 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                         $data['RESULTS']['COURSE'][$course_count]['ASSIGNMENT'][$assignment-1]['YEAR'][$year_loop]['FINALEXAMWEIGTH']=$exam_weight;
                     }
                 }
-                $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL']=_makeLetterGrade($tot_weight_grade,$course_period_id,$course['TEACHER_ID'],"%");
+                $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL']=_makeLetterGrade($tot_weight_grade /100 ,$course_period_id,$course['TEACHER_ID'],"%"); 
                 $sql='SELECT GRADE_PERCENT , COMMENT FROM student_report_card_grades WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND MARKING_PERIOD_ID=\''.  $quart['MARKING_PERIOD_ID'] . '\' AND STUDENT_ID=\''.$student_id . '\'';
                 $final_grade=DBGet(DBQuery($sql));
                 if($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL']){
