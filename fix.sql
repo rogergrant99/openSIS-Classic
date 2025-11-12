@@ -180,7 +180,7 @@ CREATE TABLE `profil_eleves` (
   `STUDENT_NAME` varchar(255) DEFAULT NULL,
   `BIRTH_DATE` date DEFAULT NULL,
   `GRADE_LEVEL` varchar(50) DEFAULT NULL,
-  `PROFILE_DATE` date DEFAULT NULL,
+  `PROFIL_DATE` date DEFAULT NULL,
   
   -- Section: Forces de l'élève
   `ACADEMIC_STRENGTHS` text,
