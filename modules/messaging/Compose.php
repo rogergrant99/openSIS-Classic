@@ -32,8 +32,7 @@ DrawBC(""._messaging." > " . ProgramTitle());
 //PopTable('header', 'Compose Message');
 global $content;
 
-if(isset($_SESSION['BODY_EMPTY']) && $_SESSION['BODY_EMPTY']!='')
-{
+if(isset($_SESSION['BODY_EMPTY']) && $_SESSION['BODY_EMPTY']!=''){
     // echo '<div class="alert bg-danger alert-styled-left">Message body cannot be empty</div>';
     echo '<div class="alert alert-danger alert-bordered"><button type="button" class="close" data-dismiss="alert"><span>×</span><span class="sr-only">'._close.'</span></button>'._messageBodyCannotBeEmpty.'</div>';
     unset($_SESSION['BODY_EMPTY']);
@@ -51,7 +50,7 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
     if (User('PROFILE') == 'admin' || User('PROFILE') == 'teacher') {
         echo "<DIV id=course_div>";
     }
-    if (isset($_REQUEST['mod']) && $_REQUEST['mod'] == 'draft') {
+if (isset($_REQUEST['mod']) && $_REQUEST['mod'] == 'draft') {
         $mail_id = $_REQUEST['mail_id'];
         $query = "select * from msg_inbox where mail_id='$mail_id'";
         $result = DBGet(DBQuery($query));
@@ -64,23 +63,21 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
             $mail_id = $v['MAIL_ID'];
             $mail_body = base64_decode($v['msgbody']);
         }
-    }
-    if (!isset($_REQUEST['modto']) && !isset($_REQUEST['mod'])) {
+}
+if (!isset($_REQUEST['modto']) && !isset($_REQUEST['mod'])) {
         $to_user = '';
         $to_cc = '';
         $to_bcc = '';
         $mail_subject = '';
         $mail_id = '';
         $mail_body = '';
-    }
-    echo '<div class="panel-body">';
-
-    echo '<div class="row">';
-    //echo '<div class="col-md-8">';
-
-    echo '<div class="form-group">';
-    echo '<div class="input-group">';
-    if (isset($_REQUEST['modto']) && $_REQUEST['m'] == 'reply') {
+}
+echo '<div class="panel-body">';
+echo '<div class="row">';
+//echo '<div class="col-md-8">';
+echo '<div class="form-group">';
+echo '<div class="input-group">';
+if (isset($_REQUEST['modto']) && $_REQUEST['m'] == 'reply') {
         $to_user = $_REQUEST['modto'];
         //print_r($_REQUEST);
         $name =  base64_decode($_REQUEST['fullname']);
@@ -109,137 +106,746 @@ if ($_REQUEST['modfunc'] != 'choose_course') {
         // return false;
         // header("Location: Modules.php?modname=messaging/Compose.php&modto=admin"); // Redirect to your desired page
         // exit();
+}
+echo TextInput_mail_hidden($to_user, 'txtToUser', '', 'onkeyup="nameslist(this.value,1)" autocomplete = "off" class=form-control');
+echo '</div>'; //.input-group
+echo '<ul class="dropdown-menu" id="ajax_response"></ul>';
+echo '</div>'; //.form-group
+//echo '</div>'; //.col-md-8
+echo '<div class="col-md-4 form-inline">';
+echo '<div class="input-group">';
+if (User('PROFILE') == 'teacher' ){
+    $to_bcc = 'admin@cado.ca';
+    $course_RET = DBGet(DBQuery('SELECT short_name,grade_level FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_period_id=' . UserCoursePeriod() . ''));
+    $level= $course_RET[1]['GRADE_LEVEL'] ;
+    $level_pri_contacts=DBGet(DBQuery('SELECT CONCAT(st.first_name," ",st.last_name)AS STUDENT_NAME,st.student_id,CONCAT(p.first_name," ",p.last_name)AS CONTACT,p.STAFF_ID,la.username AS email FROM students st LEFT JOIN students_join_people sjp ON st.student_id=sjp.student_id AND sjp.emergency_type="Primary" LEFT JOIN people p ON sjp.person_id=p.staff_id LEFT JOIN login_authentication la ON p.staff_id=la.user_id WHERE la.profile_id = 4 AND st.is_disable IS NULL AND st.STUDENT_ID IN(SELECT STUDENT_ID FROM schedule WHERE dropped="N")AND st.student_id IN(SELECT stu.student_id FROM student_enrollment se LEFT JOIN students stu ON se.student_id=stu.student_id WHERE se.grade_id=' . $level . ' AND syear= \'' . UserSyear() . '\'  AND stu.is_disable IS NULL) ORDER BY st.first_name'));
+    $level_sec_contacts=DBGet(DBQuery('SELECT CONCAT(st.first_name," ",st.last_name)AS STUDENT_NAME,st.student_id,CONCAT(p.first_name," ",p.last_name)AS CONTACT,p.STAFF_ID,la.username AS email FROM students st LEFT JOIN students_join_people sjp ON st.student_id=sjp.student_id AND sjp.emergency_type="Secondary" LEFT JOIN people p ON sjp.person_id=p.staff_id LEFT JOIN login_authentication la ON p.staff_id=la.user_id WHERE la.profile_id = 4 AND st.is_disable IS NULL AND st.STUDENT_ID IN(SELECT STUDENT_ID FROM schedule WHERE dropped="N")AND st.student_id IN(SELECT stu.student_id FROM student_enrollment se LEFT JOIN students stu ON se.student_id=stu.student_id WHERE se.grade_id=' . $level . ' AND syear= \'' . UserSyear() . '\'  AND stu.is_disable IS NULL) ORDER BY st.first_name'));
+
+    if($level <8){
+        $level_name='Tous les parents du primaire ';
+        $level_name .= $level-1;
     }
-    echo TextInput_mail_hidden($to_user, 'txtToUser', '', 'onkeyup="nameslist(this.value,1)" autocomplete = "off" class=form-control');
-    echo '</div>'; //.input-group
-    echo '<ul class="dropdown-menu" id="ajax_response"></ul>';
-    echo '</div>'; //.form-group
-
-    //echo '</div>'; //.col-md-8
-    echo '<div class="col-md-4 form-inline">';
-    echo '<div class="input-group">';
-
-    if (User('PROFILE') == 'teacher' ){
-        $to_bcc = 'admin@cado.ca';
-        $course_RET = DBGet(DBQuery('SELECT short_name,grade_level FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_period_id=' . UserCoursePeriod() . ''));
-        $level= $course_RET[1]['GRADE_LEVEL'] ;
-        $level_pri_contacts=DBGet(DBQuery('SELECT CONCAT(st.first_name," ",st.last_name)AS STUDENT_NAME,st.student_id,CONCAT(p.first_name," ",p.last_name)AS CONTACT,p.STAFF_ID,la.username AS email FROM students st LEFT JOIN students_join_people sjp ON st.student_id=sjp.student_id AND sjp.emergency_type="Primary" LEFT JOIN people p ON sjp.person_id=p.staff_id LEFT JOIN login_authentication la ON p.staff_id=la.user_id WHERE la.profile_id = 4 AND st.is_disable IS NULL AND st.STUDENT_ID IN(SELECT STUDENT_ID FROM schedule WHERE dropped="N")AND st.student_id IN(SELECT stu.student_id FROM student_enrollment se LEFT JOIN students stu ON se.student_id=stu.student_id WHERE se.grade_id=' . $level . ' AND syear= \'' . UserSyear() . '\'  AND stu.is_disable IS NULL) ORDER BY st.first_name'));
-        $level_sec_contacts=DBGet(DBQuery('SELECT CONCAT(st.first_name," ",st.last_name)AS STUDENT_NAME,st.student_id,CONCAT(p.first_name," ",p.last_name)AS CONTACT,p.STAFF_ID,la.username AS email FROM students st LEFT JOIN students_join_people sjp ON st.student_id=sjp.student_id AND sjp.emergency_type="Secondary" LEFT JOIN people p ON sjp.person_id=p.staff_id LEFT JOIN login_authentication la ON p.staff_id=la.user_id WHERE la.profile_id = 4 AND st.is_disable IS NULL AND st.STUDENT_ID IN(SELECT STUDENT_ID FROM schedule WHERE dropped="N")AND st.student_id IN(SELECT stu.student_id FROM student_enrollment se LEFT JOIN students stu ON se.student_id=stu.student_id WHERE se.grade_id=' . $level . ' AND syear= \'' . UserSyear() . '\'  AND stu.is_disable IS NULL) ORDER BY st.first_name'));
-        if($level <8){
-            $level_name='Tous les parents du primaire ';
-            $level_name .= $level-1;
-        }
-        else{
-            $level_name='Tous les parents du secondaire ';
-            $level_name .= $level-7;
-        }
-        DBQuery('delete from mail_groupmembers where group_id='. $level+10 .'');
-        DBQuery('delete from mail_group where group_id='. $level+10  .'');
-        DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . $level+10 . ',"'  . $level_name .  '" ,\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
-        foreach ($level_pri_contacts as $member){
-            if(str_contains($member['EMAIL'], "@")) 
-                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . $level+10 . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        foreach ($level_sec_contacts as $member){
-            if(str_contains($member['EMAIL'], "@")) 
-                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . $level+10 . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        // echo '<pre>'; print_r($level_pri_contacts); echo'</pre>';
-        // echo '<pre>'; print_r($level_sec_contacts); echo '</pre>';
-
-        $primaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
-        $secondaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id)) as CONTACT2 , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
-        DBQuery('delete from mail_groupmembers where group_id='. UserCoursePeriod() .'');
-        DBQuery('delete from mail_group where group_id='. UserCoursePeriod() .'');
-        DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',"Tous les parents de ' . $course_RET[1]['SHORT_NAME'] . '",\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
-        foreach ($primaryContactlist as $member){
-           if(str_contains($member['EMAIL'], "@")) 
-                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        foreach ($secondaryContactlist as $member){
-           if(str_contains($member['EMAIL'], "@")) 
-                 DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        }
-        if($level >7){
-            $primaryContactlist=$secondaryContactlist=[];
-        }
-        $index=count($primaryContactlist)+1;
-        $primaryContactlist[$index]['EMAIL']='admin@cado.ca';
-        $primaryContactlist[$index]['STUDENT_NAME']='admin';
-        $primaryContactlist[$index]['CONTACT']='CADO';
-        // echo '<pre>'; print_r($primaryContactlist); echo '</pre>';
-        echo "<SELECT name='groups' class=\"form-control ' . $hidden . ' \" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>"._select_recipient ."</OPTION>";
-        $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where group_id ='" . UserCoursePeriod() . "' OR  group_id ='" . $level+10 . "'  AND SCHOOL_ID= '".UserSchool()."'"));
-       if($level <8){
-            foreach ($groupList as $groupArr) {
-                $option = $groupArr['GROUP_NAME'];
-                $value = $groupArr['GROUP_ID'];
-                if ($_REQUEST['sel_group'] == $value)
-                    echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
-                else
-                    echo "<OPTION value=\"$option\">$option</OPTION>";
-            }
-       }
-
-        foreach ($primaryContactlist as $key_index =>  $groupArr) {
-            $option = $groupArr['EMAIL'];
-            if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
-                // echo 'yes';
-                $option .= ',';
-                $option .= $secondaryContactlist[$key_index]['EMAIL'];
-            } 
-            $value = $groupArr['STUDENT_NAME'];
-            $value .= '&nbsp(';
-            $value .= $groupArr['CONTACT']; 
-            if( $secondaryContactlist[$key_index]['EMAIL'] != '' ){
-                $value .= ' - ';
-                $value .= $secondaryContactlist[$key_index]['CONTACT2']; 
-            }
-            if(!$option)
-                $value .= '&nbsp***courriel manquant*** ';                    
-            $value .= ')';
-            if ($_REQUEST['sel_group'] == $value)
-                echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
-            else
-                echo "<OPTION value=\"$option\">$value</OPTION>";
-        }
-        echo '</SELECT>';
-        echo '<span class="input-group-btn">';
+    else{
+        $level_name='Tous les parents du secondaire ';
+        $level_name .= $level-7;
     }
-    if (User('PROFILE') == 'admin' ){
-        $teacherList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . '))order by first_name'));
-        $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and is_disable ='N' and staff_id order by last_name"));
-        DBQuery('delete from mail_groupmembers where group_id="2"');
-        foreach ($member_select as $member)
-                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(2,\'' . $member['EMAIL'] . '\',2,\'' . UserSchool(). '\')');
-        $member_select = DBGet(DBQuery("SELECT  username as EMAIL FROM login_authentication WHERE user_id IN (select staff_id from people where profile='parent' and profile_id=4 and is_disable is null and staff_id IN (select person_id from students_join_people ) ) and profile_id=4 "));
-        DBQuery('delete from mail_groupmembers where group_id="1"');
-        foreach ($member_select as $member)
-                DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(1,\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
-        $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
-        if($_REQUEST['m'] != 'reply'){
-            echo "<SELECT name='groups' class=\"form-control\" onChange=\"list_of_groups(this.options[this.selectedIndex].value);\"><OPTION value=''>Faites votre sélection.</OPTION>";
-            foreach ($groupList as $groupArr) {
-                $option = $groupArr['GROUP_NAME'];
-                $value = $groupArr['GROUP_ID'];
-                if ($_REQUEST['sel_group'] == $value)
-                    echo "<OPTION selected='selected' value=\"$value\">$option</OPTION>";
-                else
-                    echo "<OPTION value=\"$option\">$option</OPTION>";
+
+    // Create groups in database
+    DBQuery('delete from mail_groupmembers where group_id='. ($level+10) .'');
+    DBQuery('delete from mail_group where group_id='. ($level+10) .'');
+    DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . ($level+10) . ',"'  . $level_name .  '" ,\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
+
+    foreach ($level_pri_contacts as $member){
+        if(str_contains($member['EMAIL'], "@")) 
+            DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . ($level+10) . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+    }
+
+    foreach ($level_sec_contacts as $member){
+        if(str_contains($member['EMAIL'], "@")) 
+            DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . ($level+10) . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+    }
+
+    $primaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+    $secondaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id)) as CONTACT2 , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+
+    DBQuery('delete from mail_groupmembers where group_id='. UserCoursePeriod() .'');
+    DBQuery('delete from mail_group where group_id='. UserCoursePeriod() .'');
+    DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',"Tous les parents de ' . $course_RET[1]['SHORT_NAME'] . '",\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
+
+    foreach ($primaryContactlist as $member){
+        if(str_contains($member['EMAIL'], "@")) 
+             DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+    }
+
+    foreach ($secondaryContactlist as $member){
+        if(str_contains($member['EMAIL'], "@")) 
+             DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+    }
+
+    if($level >7){
+        $primaryContactlist=$secondaryContactlist=[];
+    }
+
+    $index=count($primaryContactlist)+1;
+    $primaryContactlist[$index]['EMAIL']='admin@cado.ca';
+    $primaryContactlist[$index]['STUDENT_NAME']='admin';
+    $primaryContactlist[$index]['CONTACT']='CADO';
+
+    // Get group list for bulk options
+    $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where group_id ='" . UserCoursePeriod() . "' OR  group_id ='" . ($level+10) . "'  AND SCHOOL_ID= '".UserSchool()."'"));
+
+    // Build recipient data for JavaScript
+    $recipientData = array();
+
+    // Debug: Get group members to construct email list
+    $groupEmailMap = array();
+    foreach ($groupList as $groupArr) {
+        $groupId = $groupArr['GROUP_ID'];
+        $members = DBGet(DBQuery("SELECT USER_NAME FROM mail_groupmembers WHERE GROUP_ID = " . $groupId));
+        $emailList = array();
+        foreach ($members as $member) {
+            if (!empty($member['USER_NAME'])) {
+                $emailList[] = $member['USER_NAME'];
             }
-            foreach ($teacherList as $groupArr) {
-                $option = $groupArr['EMAIL'];
-                $value = $groupArr['GROUP_NAME'];
-                if ($_REQUEST['sel_group'] == $value)
-                    echo "<OPTION selected='selected' value=\"$value\">$value</OPTION>";
-                else
-                    echo "<OPTION value=\"$option\">$value</OPTION>";
+        }
+        $groupEmailMap[$groupArr['GROUP_NAME']] = implode(',', $emailList);
+    }
+
+    // Add group options if primary level
+    if($level < 8) {
+        foreach ($groupList as $groupArr) {
+            $groupName = $groupArr['GROUP_NAME'];
+            $recipientData[] = array(
+                'type' => 'group',
+                'value' => isset($groupEmailMap[$groupName]) ? $groupEmailMap[$groupName] : '',
+                'label' => $groupName,
+                'is_group' => true,
+                'group_name' => $groupName  // ADD THIS LINE
+            );
+        }
+    }
+
+    // Add individual contacts - DBGet returns arrays with numeric keys starting at 1
+    foreach ($primaryContactlist as $key_index => $groupArr) {
+        $emails = !empty($groupArr['EMAIL']) ? $groupArr['EMAIL'] : '';
+        $studentName = !empty($groupArr['STUDENT_NAME']) ? $groupArr['STUDENT_NAME'] : '';
+        $contact1 = !empty($groupArr['CONTACT']) ? $groupArr['CONTACT'] : '';
+        $contact2 = '';
+
+        // Check if secondary contact exists at same index
+        if (isset($secondaryContactlist[$key_index])) {
+            $email2 = !empty($secondaryContactlist[$key_index]['EMAIL']) ? $secondaryContactlist[$key_index]['EMAIL'] : '';
+            if (!empty($email2)) {
+                if ($emails != '') {
+                    $emails .= ',' . $email2;
+                } else {
+                    $emails = $email2;
                 }
             }
-        echo '</SELECT>';
-        echo '<span class="input-group-btn">';
+            $contact2 = !empty($secondaryContactlist[$key_index]['CONTACT2']) ? $secondaryContactlist[$key_index]['CONTACT2'] : '';
+        }
+
+        $label = $studentName . ' (' . $contact1;
+        if (!empty($contact2)) {
+            $label .= ' - ' . $contact2;
+        }
+        if(empty($emails)) {
+            $label .= ' ***courriel manquant***';
+        }
+        $label .= ')';
+
+        $recipientData[] = array(
+            'type' => 'individual',
+            'value' => $emails,
+            'label' => $label,
+            'is_group' => false
+        );
     }
-    if (User('PROFILE') == 'parent'){
+
+    // Create hidden input for selected recipients
+    echo '<input type="hidden" id="selectedRecipients" name="selectedRecipients" value="" />';
+    echo '<input type="hidden" id="selectedGroupName" name="selectedGroupName" value="" />';  // ADD THIS
+
+    // Container with flexbox layout for button and display
+    echo '<div style="display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px;">';
+
+    // Display button to open popup
+    echo '<button type="button" class="btn btn-default btn-sm" onclick="openRecipientPopup(); return false;" style="flex-shrink: 0; padding: 0px 8px; font-size: 12px;">';
+    echo '<i class="icon-users" style="font-size: 12px;"></i> Sélectionner les destinataires';
+    echo '</button>';
+
+    // Selected recipients display to the right
+    echo '<div id="selectedRecipientsDisplay" style="flex: none; padding: 0px; border-radius: 4px; min-height: 10px;">';
+    echo '<span class="text-muted">Aucun destinataire sélectionné</span>';
+    echo '</div>';
+
+    echo '</div>'; // Close flex container
+    // Add the popup modal HTML
+    echo '<div id="recipientPopup" class="modal" style="display: none;">';
+    echo '<div class="modal-content" style="max-width: 700px; max-height: 80vh;">';
+    echo '<h3 style="margin: 0 0 15px 0;">Sélectionner les destinataires</h3>';
+    echo '<div id="recipientCheckboxList" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">';
+
+    // Generate checkboxes - completely simplified structure
+    foreach ($recipientData as $index => $recipient) {
+        $checkboxId = 'recipient_' . $index;
+        $class = $recipient['is_group'] ? 'recipient-group' : 'recipient-individual';
+        $bgColor = $recipient['is_group'] ? 'background-color: #e3f2fd;' : '';
+        $fontWeight = $recipient['is_group'] ? 'font-weight: bold;' : '';
+        $labelText = $recipient['label'];
+        $valueText = $recipient['value'];
+        $groupName = isset($recipient['group_name']) ? $recipient['group_name'] : '';  // ADD THIS
+
+        echo '<div class="recipient-item ' . $class . '" style="padding: 6px 8px; margin: 4px 0; ' . $bgColor . ' border-radius: 3px; display: flex; align-items: center;">';
+        echo '<input type="checkbox" id="' . $checkboxId . '" class="recipient-checkbox" ';
+        echo 'style="margin: 0; margin-right: 8px; flex-shrink: 0; width: auto;" ';
+        echo 'data-value="' . htmlspecialchars($valueText, ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'data-label="' . htmlspecialchars($labelText, ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'data-type="' . htmlspecialchars($recipient['type'], ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'data-group-name="' . htmlspecialchars($groupName, ENT_QUOTES, 'UTF-8') . '" ';  // ADD THIS
+        echo 'onchange="handleRecipientChange(this)" />';
+        echo '<label for="' . $checkboxId . '" style="cursor: pointer; margin: 0; ' . $fontWeight . ' flex: 1;">';
+        echo htmlspecialchars($labelText, ENT_QUOTES, 'UTF-8');
+        echo '</label>';
+        echo '</div>';
+    }
+
+    echo '</div>'; // Close recipientCheckboxList
+    echo '<div class="modal-buttons" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; text-align: right;">';
+    echo '<button type="button" class="btn btn-secondary" onclick="closeRecipientPopup(); return false;" style="margin-right: 10px;">Annuler</button>';
+    echo '<button type="button" class="btn btn-primary" onclick="confirmRecipients(); return false;">Confirmer</button>';
+    echo '</div>';
+    echo '</div>'; // Close modal-content
+    echo '</div>'; // Close recipientPopup
+
+    // Add JavaScript for popup functionality
+    // Replace the entire JavaScript section with this:
+    echo '<script>
+    let selectedRecipients = [];
+
+    function openRecipientPopup() {
+        document.getElementById("recipientPopup").style.display = "block";
+        return false;
+    }
+
+    function closeRecipientPopup() {
+        document.getElementById("recipientPopup").style.display = "none";
+        return false;
+    }
+
+    function handleRecipientChange(checkbox) {
+    const isGroup = checkbox.getAttribute("data-type") === "group";
+
+    if (isGroup && checkbox.checked) {
+        // When a group is selected:
+        // 1. Uncheck all OTHER groups
+        document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+            if (cb !== checkbox) {
+                cb.checked = false;
+            }
+        });
+        
+        // 2. Uncheck and disable all individual checkboxes
+        document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']").forEach(cb => {
+            cb.checked = false;
+            cb.disabled = true;
+        });
+    } else if (!isGroup && checkbox.checked) {
+        // When an individual is selected:
+        // Uncheck and disable all group checkboxes
+        document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+            cb.checked = false;
+            cb.disabled = true;
+        });
+    }
+
+    // Re-enable appropriate checkboxes if nothing is selected
+    const anyGroupChecked = document.querySelectorAll(".recipient-checkbox[data-type=\'group\']:checked").length > 0;
+    const anyIndividualChecked = document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']:checked").length > 0;
+
+    if (!anyGroupChecked && !anyIndividualChecked) {
+        // Nothing selected - enable everything
+        document.querySelectorAll(".recipient-checkbox").forEach(cb => {
+            cb.disabled = false;
+        });
+    } else if (anyGroupChecked) {
+        // A group is selected - only enable other groups
+        document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+            cb.disabled = false;
+        });
+        document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']").forEach(cb => {
+            cb.disabled = true;
+        });
+    } else if (anyIndividualChecked) {
+        // Individuals are selected - only enable other individuals
+        document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']").forEach(cb => {
+            cb.disabled = false;
+        });
+        document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+            cb.disabled = true;
+        });
+    }
+    }
+
+    function confirmRecipients() {
+        selectedRecipients = [];
+        const checkedBoxes = document.querySelectorAll(".recipient-checkbox:checked");
+
+        checkedBoxes.forEach(checkbox => {
+            selectedRecipients.push({
+                value: checkbox.getAttribute("data-value"),
+                label: checkbox.getAttribute("data-label"),
+                type: checkbox.getAttribute("data-type"),
+                group_name: checkbox.getAttribute("data-group-name") || null
+            });
+        });
+
+        updateRecipientDisplay();
+        document.getElementById("selectedRecipients").value = JSON.stringify(selectedRecipients);
+        
+        // Update txtToUser
+        const recipientEmails = selectedRecipients.map(r => r.value).join(",");
+        if (document.getElementById("txtToUser")) {
+            document.getElementById("txtToUser").value = recipientEmails;
+        }
+        
+        // NEW: Set group name if applicable
+        if (selectedRecipients.length > 0 && selectedRecipients[0].type === \'group\') {
+            document.getElementById("selectedGroupName").value = selectedRecipients[0].label;
+        } else {
+            document.getElementById("selectedGroupName").value = \'\';
+        }
+        
+        closeRecipientPopup();
+        return false;
+    }
+
+    function updateRecipientDisplay() {
+        const displayDiv = document.getElementById("selectedRecipientsDisplay");
+        if (selectedRecipients.length === 0) {
+            displayDiv.innerHTML = \'<span class="text-muted">Aucun destinataire sélectionné</span>\';
+        } else {
+            let html = \'<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">\';
+            selectedRecipients.forEach((recipient, index) => {
+                const bgColor = recipient.type === "group" ? "#007bff" : "#28a745";
+                html += \'<span style="background: \' + bgColor + \'; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; display: inline-flex; align-items: center; white-space: nowrap;">\' +
+                    recipient.label +
+                    \'<button type="button" onclick="removeRecipient(\' + index + \'); return false;" style="background: none; border: none; color: white; cursor: pointer; margin-left: 4px; font-size: 14px; padding: 0; line-height: 1;">×</button>\' +
+                    \'</span>\';
+            });
+            html += \'</div>\';
+            displayDiv.innerHTML = html;
+        }
+        // Update the txtToUser field for backend compatibility
+        const recipientEmails = selectedRecipients.map(r => r.value).join(",");
+        if (document.getElementById("txtToUser")) {
+            document.getElementById("txtToUser").value = recipientEmails;
+        }
+    }
+
+    function removeRecipient(index) {
+        selectedRecipients.splice(index, 1);
+        updateRecipientDisplay();
+        document.getElementById("selectedRecipients").value = JSON.stringify(selectedRecipients);
+        return false;
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById("recipientPopup");
+        if (event.target === modal) {
+            closeRecipientPopup();
+        }
+    }
+    </script>';
+
+    echo '<style>
+    #recipientPopup {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    #recipientPopup .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .recipient-checkbox:disabled {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+    }
+
+    .recipient-item {
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+    }
+
+    .recipient-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .recipient-item.recipient-group:hover {
+        background-color: #d1e7fd;
+    }
+
+    .recipient-item label {
+        user-select: none;
+    }
+
+    #recipientCheckboxList {
+        scrollbar-width: thin;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Ensure horizontal display */
+    #selectedRecipientsDisplay {
+        display: block !important;
+    }
+
+    #selectedRecipientsDisplay > div {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+    }
+    </style>';
+}
+
+if (User('PROFILE') == 'admin' ){
+    $to_bcc = 'admin@cado.ca';
+    
+    // Get teacher list
+    $teacherList = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as GROUP_NAME ,STAFF_ID, (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = "teacher" and is_disable ="N" and staff_id in (SELECT TEACHER_ID FROM course_periods WHERE course_period_id IN (SELECT course_period_id FROM schedule WHERE SYEAR= ' . UserSyear() . '))order by first_name'));
+    
+    // Maintain existing group creation logic
+    $member_select = DBGet(DBQuery("SELECT (SELECT  username FROM login_authentication WHERE user_id=STAFF_ID and profile_id=2) AS EMAIL FROM staff where profile = 'teacher' and is_disable ='N' and staff_id order by last_name"));
+    DBQuery('delete from mail_groupmembers where group_id="2"');
+    foreach ($member_select as $member)
+        DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(2,\'' . $member['EMAIL'] . '\',2,\'' . UserSchool(). '\')');
+    
+    $member_select = DBGet(DBQuery("SELECT  username as EMAIL FROM login_authentication WHERE user_id IN (select staff_id from people where profile='parent' and profile_id=4 and is_disable is null and staff_id IN (select person_id from students_join_people ) ) and profile_id=4 "));
+    DBQuery('delete from mail_groupmembers where group_id="1"');
+    foreach ($member_select as $member)
+        DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(1,\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
+    
+    // Get existing groups
+    $groupList = DBGet(DBQuery("SELECT GROUP_ID,GROUP_NAME FROM mail_group where user_name='" . $userName . "' AND SCHOOL_ID= '".UserSchool()."'"));
+    
+    // Build recipient data for JavaScript (similar to teacher profile)
+    $recipientData = array();
+    
+    // Get group members to construct email list
+    $groupEmailMap = array();
+    foreach ($groupList as $groupArr) {
+        $groupId = $groupArr['GROUP_ID'];
+        $members = DBGet(DBQuery("SELECT USER_NAME FROM mail_groupmembers WHERE GROUP_ID = " . $groupId));
+        $emailList = array();
+        foreach ($members as $member) {
+            if (!empty($member['USER_NAME'])) {
+                $emailList[] = $member['USER_NAME'];
+            }
+        }
+        $groupEmailMap[$groupArr['GROUP_NAME']] = implode(',', $emailList);
+    }
+    
+    // Add group options
+    foreach ($groupList as $groupArr) {
+        $groupName = $groupArr['GROUP_NAME'];
+        $recipientData[] = array(
+            'type' => 'group',
+            'value' => isset($groupEmailMap[$groupName]) ? $groupEmailMap[$groupName] : '',
+            'label' => $groupName,
+            'is_group' => true,
+            'group_name' => $groupName
+        );
+    }
+    
+    // Add individual teachers
+    foreach ($teacherList as $groupArr) {
+        $email = !empty($groupArr['EMAIL']) ? $groupArr['EMAIL'] : '';
+        $teacherName = !empty($groupArr['GROUP_NAME']) ? $groupArr['GROUP_NAME'] : '';
+        
+        $label = $teacherName;
+        if(empty($email)) {
+            $label .= ' ***courriel manquant***';
+        }
+        
+        $recipientData[] = array(
+            'type' => 'individual',
+            'value' => $email,
+            'label' => $label,
+            'is_group' => false
+        );
+    }
+    
+    // Create hidden inputs for selected recipients
+    echo '<input type="hidden" id="selectedRecipients" name="selectedRecipients" value="" />';
+    echo '<input type="hidden" id="selectedGroupName" name="selectedGroupName" value="" />';
+    
+    // Container with flexbox layout for button and display
+    echo '<div style="display: flex; align-items: flex-start; gap: 15px; margin-bottom: 15px;">';
+    
+    // Display button to open popup
+    echo '<button type="button" class="btn btn-default btn-sm" onclick="openRecipientPopup(); return false;" style="flex-shrink: 0; padding: 0px 8px; font-size: 12px;">';
+    echo '<i class="icon-users" style="font-size: 12px;"></i> Sélectionner les destinataires';
+    echo '</button>';
+    
+    // Selected recipients display to the right
+    echo '<div id="selectedRecipientsDisplay" style="flex: none; padding: 0px; border-radius: 4px; min-height: 10px;">';
+    echo '<span class="text-muted">Aucun destinataire sélectionné</span>';
+    echo '</div>';
+    
+    echo '</div>'; // Close flex container
+    
+    // Add the popup modal HTML
+    echo '<div id="recipientPopup" class="modal" style="display: none;">';
+    echo '<div class="modal-content" style="max-width: 700px; max-height: 80vh;">';
+    echo '<h3 style="margin: 0 0 15px 0;">Sélectionner les destinataires</h3>';
+    echo '<div id="recipientCheckboxList" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">';
+    
+    // Generate checkboxes
+    foreach ($recipientData as $index => $recipient) {
+        $checkboxId = 'recipient_' . $index;
+        $class = $recipient['is_group'] ? 'recipient-group' : 'recipient-individual';
+        $bgColor = $recipient['is_group'] ? 'background-color: #e3f2fd;' : '';
+        $fontWeight = $recipient['is_group'] ? 'font-weight: bold;' : '';
+        $labelText = $recipient['label'];
+        $valueText = $recipient['value'];
+        $groupName = isset($recipient['group_name']) ? $recipient['group_name'] : '';
+        
+        echo '<div class="recipient-item ' . $class . '" style="padding: 6px 8px; margin: 4px 0; ' . $bgColor . ' border-radius: 3px; display: flex; align-items: center;">';
+        echo '<input type="checkbox" id="' . $checkboxId . '" class="recipient-checkbox" ';
+        echo 'style="margin: 0; margin-right: 8px; flex-shrink: 0; width: auto;" ';
+        echo 'data-value="' . htmlspecialchars($valueText, ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'data-label="' . htmlspecialchars($labelText, ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'data-type="' . htmlspecialchars($recipient['type'], ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'data-group-name="' . htmlspecialchars($groupName, ENT_QUOTES, 'UTF-8') . '" ';
+        echo 'onchange="handleRecipientChange(this)" />';
+        echo '<label for="' . $checkboxId . '" style="cursor: pointer; margin: 0; ' . $fontWeight . ' flex: 1;">';
+        echo htmlspecialchars($labelText, ENT_QUOTES, 'UTF-8');
+        echo '</label>';
+        echo '</div>';
+    }
+    
+    echo '</div>'; // Close recipientCheckboxList
+    echo '<div class="modal-buttons" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; text-align: right;">';
+    echo '<button type="button" class="btn btn-secondary" onclick="closeRecipientPopup(); return false;" style="margin-right: 10px;">Annuler</button>';
+    echo '<button type="button" class="btn btn-primary" onclick="confirmRecipients(); return false;">Confirmer</button>';
+    echo '</div>';
+    echo '</div>'; // Close modal-content
+    echo '</div>'; // Close recipientPopup
+    
+    // Add JavaScript (same as teacher profile)
+    echo '<script>
+    let selectedRecipients = [];
+
+    function openRecipientPopup() {
+        document.getElementById("recipientPopup").style.display = "block";
+        return false;
+    }
+
+    function closeRecipientPopup() {
+        document.getElementById("recipientPopup").style.display = "none";
+        return false;
+    }
+
+    function handleRecipientChange(checkbox) {
+        const isGroup = checkbox.getAttribute("data-type") === "group";
+
+        if (isGroup && checkbox.checked) {
+            document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+                if (cb !== checkbox) {
+                    cb.checked = false;
+                }
+            });
+            
+            document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']").forEach(cb => {
+                cb.checked = false;
+                cb.disabled = true;
+            });
+        } else if (!isGroup && checkbox.checked) {
+            document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+                cb.checked = false;
+                cb.disabled = true;
+            });
+        }
+
+        const anyGroupChecked = document.querySelectorAll(".recipient-checkbox[data-type=\'group\']:checked").length > 0;
+        const anyIndividualChecked = document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']:checked").length > 0;
+
+        if (!anyGroupChecked && !anyIndividualChecked) {
+            document.querySelectorAll(".recipient-checkbox").forEach(cb => {
+                cb.disabled = false;
+            });
+        } else if (anyGroupChecked) {
+            document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+                cb.disabled = false;
+            });
+            document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']").forEach(cb => {
+                cb.disabled = true;
+            });
+        } else if (anyIndividualChecked) {
+            document.querySelectorAll(".recipient-checkbox[data-type=\'individual\']").forEach(cb => {
+                cb.disabled = false;
+            });
+            document.querySelectorAll(".recipient-checkbox[data-type=\'group\']").forEach(cb => {
+                cb.disabled = true;
+            });
+        }
+    }
+
+    function confirmRecipients() {
+        selectedRecipients = [];
+        const checkedBoxes = document.querySelectorAll(".recipient-checkbox:checked");
+
+        checkedBoxes.forEach(checkbox => {
+            selectedRecipients.push({
+                value: checkbox.getAttribute("data-value"),
+                label: checkbox.getAttribute("data-label"),
+                type: checkbox.getAttribute("data-type"),
+                group_name: checkbox.getAttribute("data-group-name") || null
+            });
+        });
+
+        updateRecipientDisplay();
+        document.getElementById("selectedRecipients").value = JSON.stringify(selectedRecipients);
+        
+        const recipientEmails = selectedRecipients.map(r => r.value).join(",");
+        if (document.getElementById("txtToUser")) {
+            document.getElementById("txtToUser").value = recipientEmails;
+        }
+        
+        if (selectedRecipients.length > 0 && selectedRecipients[0].type === \'group\') {
+            document.getElementById("selectedGroupName").value = selectedRecipients[0].label;
+        } else {
+            document.getElementById("selectedGroupName").value = \'\';
+        }
+        
+        closeRecipientPopup();
+        return false;
+    }
+
+    function updateRecipientDisplay() {
+        const displayDiv = document.getElementById("selectedRecipientsDisplay");
+        if (selectedRecipients.length === 0) {
+            displayDiv.innerHTML = \'<span class="text-muted">Aucun destinataire sélectionné</span>\';
+        } else {
+            let html = \'<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">\';
+            selectedRecipients.forEach((recipient, index) => {
+                const bgColor = recipient.type === "group" ? "#007bff" : "#28a745";
+                html += \'<span style="background: \' + bgColor + \'; color: white; padding: 2px 6px; border-radius: 12px; font-size: 10px; display: inline-flex; align-items: center; white-space: nowrap;">\' +
+                    recipient.label +
+                    \'<button type="button" onclick="removeRecipient(\' + index + \'); return false;" style="background: none; border: none; color: white; cursor: pointer; margin-left: 4px; font-size: 14px; padding: 0; line-height: 1;">×</button>\' +
+                    \'</span>\';
+            });
+            html += \'</div>\';
+            displayDiv.innerHTML = html;
+        }
+        const recipientEmails = selectedRecipients.map(r => r.value).join(",");
+        if (document.getElementById("txtToUser")) {
+            document.getElementById("txtToUser").value = recipientEmails;
+        }
+    }
+
+    function removeRecipient(index) {
+        selectedRecipients.splice(index, 1);
+        updateRecipientDisplay();
+        document.getElementById("selectedRecipients").value = JSON.stringify(selectedRecipients);
+        return false;
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById("recipientPopup");
+        if (event.target === modal) {
+            closeRecipientPopup();
+        }
+    }
+    </script>';
+    
+    echo '<style>
+    #recipientPopup {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    #recipientPopup .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .recipient-checkbox:disabled {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+    }
+
+    .recipient-item {
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+    }
+
+    .recipient-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .recipient-item.recipient-group:hover {
+        background-color: #d1e7fd;
+    }
+
+    .recipient-item label {
+        user-select: none;
+    }
+
+    #recipientCheckboxList {
+        scrollbar-width: thin;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+    #recipientCheckboxList::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    #selectedRecipientsDisplay {
+        display: block !important;
+    }
+
+    #selectedRecipientsDisplay > div {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+    }
+    </style>';
+    
+    echo '<span class="input-group-btn">';
+}
+
+if (User('PROFILE') == 'parent'){
         $student_id=$_SESSION['student_id'];
         $grade_level= DBGet(DBQuery('select grade_id from student_enrollment where syear=' . UserSyear() . ' and student_id=' . $student_id. ''));
         $grade_level = $grade_level[1]['GRADE_ID'];
@@ -403,8 +1009,6 @@ function convertUTCtoEST($utc_datetime) {
     $date->setTimezone(new DateTimeZone('America/New_York'));
     return $date->format('d M - H:i:s');
 }
-
-
 function wysisyg_editor(){
     echo '<head>';
     style();
@@ -412,7 +1016,6 @@ function wysisyg_editor(){
     scripts();
     echo '</head>';
 }
-
 function style(){
     echo '    <style>
         .editor-container {
@@ -1105,7 +1708,7 @@ function scripts(){
             updateToolbarState();
         }
 
-// URL Auto-linking functionality with proper cursor preservation
+        // URL Auto-linking functionality with proper cursor preservation
         function autoLinkUrls() {
             const editor = document.getElementById("editor");
             const selection = window.getSelection();
@@ -2018,7 +2621,7 @@ function scripts(){
         });
         initializeColorPickers();
         //alert("allo")
-</script>';
+    </script>';
 }
 function body(){
     echo '<body>
@@ -2253,6 +2856,6 @@ function body(){
             </div>
         </div>
     </div>
-</body>';
+    </body>';
 }
 ?>

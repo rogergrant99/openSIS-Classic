@@ -1000,7 +1000,12 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
     $subject = singleQuoteReplace('', '', $subject);
     $grpName = str_replace("'", "\'", $grpName);
     $attachment = str_replace("'", "\'", $attachment);
-
+    if ($_REQUEST['selectedGroupName'] != '') {
+        $grpName = $_REQUEST['selectedGroupName'];
+        // Use this group name when calling CheckAuthenticMail
+    } else {
+        $grpName = 'false';
+    }
     if ($mailBody == "") {
         $_SESSION['BODY_EMPTY'] = '1';
         echo '<script>window.location="Modules.php?modname=messaging/Compose.php"
