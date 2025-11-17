@@ -26,6 +26,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #***************************************************************************************
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ERROR | E_PARSE);
 include('../../RedirectModulesInc.php');
 include 'modules/grades/ConfigInc.php';
 include '_makeLetterGrade.fnc.php';
@@ -419,9 +422,11 @@ function CadoStudentGrades($courses,$student_id,$grade_id,$mp) {
                         $assignment=1;
                         $percent=$final_admim_grade/$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['FINAL'];
                         foreach ($assign_ids as $key => $val) {
-                            $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']=$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']*$percent;
-                            if($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE'] > 100)
-                                $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']=100;
+                            if($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE'] !='N/A'){
+                                $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']=$data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']*$percent;
+                                if($data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE'] > 100)
+                                    $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['ASSIGNMENT'][$assignment]['YEAR'][$year_loop]['GRADE']=100;
+                            }
                             $assignment++;
                         }
                         $data['RESULTS']['COURSE'][$course_count]['QUART'][$quart_loop]['YEAR'][$year_loop]['DIFF']=$diff;
