@@ -379,7 +379,7 @@ switch (User('PROFILE')) {
             echo '</div>';
         }
 
-        // do_cado_bulletins();
+         do_cado_bulletins();
         // do_cado_courses_files();
         break;
 }
