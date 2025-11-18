@@ -1815,6 +1815,9 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
 
 // START ID 13 Note évolutive
 if ($_REQUEST['category_id'] == 13) {
+    // Set timezone to Eastern Time (handles DST automatically)
+    date_default_timezone_set('America/New_York');
+    
     // Handle delete action
     if (isset($_GET['delete_note']) && $_GET['delete_note'] != '') {
         $note_id = intval($_GET['delete_note']);
@@ -1827,31 +1830,33 @@ if ($_REQUEST['category_id'] == 13) {
         $student_id = UserStudentID();
         $syear = UserSyear();
         $school_id = UserSchool();
-        $note_date = $_POST['note_date'];
         $note_text = str_replace("'", "''", $_POST['note_text']);
+        $current_user_id = User('STAFF_ID');
         
         if (isset($_POST['note_id']) && $_POST['note_id'] != '') {
             // Update existing note
             $note_id = intval($_POST['note_id']);
             $sql = "UPDATE note_evolutive SET 
-                    NOTE_DATE = '" . $note_date . "',
-                    NOTE_TEXT = '" . $note_text . "'
+                    NOTE_TEXT = '" . $note_text . "',
+                    MODIFIED_BY = '" . $current_user_id . "',
+                    MODIFIED_AT = NOW()
                     WHERE ID = " . $note_id . " 
                     AND STUDENT_ID = '" . $student_id . "'";
             
             DBQuery($sql);
             echo '<div class="alert alert-success">Note mise à jour avec succès!</div>';
         } else {
-            // Insert new note
+            // Insert new note - NOTE_DATE will automatically be set to current date
             $sql = "INSERT INTO note_evolutive (
-                    STUDENT_ID, SYEAR, SCHOOL_ID, NOTE_DATE, NOTE_TEXT, CREATED_BY
+                    STUDENT_ID, SYEAR, SCHOOL_ID, NOTE_DATE, NOTE_TEXT, CREATED_BY, CREATED_AT
                 ) VALUES (
                     '" . $student_id . "',
                     '" . $syear . "',
                     '" . $school_id . "',
-                    '" . $note_date . "',
+                    CURDATE(),
                     '" . $note_text . "',
-                    '" . User('STAFF_ID') . "'
+                    '" . $current_user_id . "',
+                    NOW()
                 )";
             
             DBQuery($sql);
@@ -1859,10 +1864,13 @@ if ($_REQUEST['category_id'] == 13) {
         }
     }
     
-    // Fetch all notes for this student
-    $notes_data = DBGet(DBQuery("SELECT ne.*, CONCAT(s.FIRST_NAME, ' ', s.LAST_NAME) as CREATED_BY_NAME 
+    // Fetch all notes for this student with creator and modifier info
+    $notes_data = DBGet(DBQuery("SELECT ne.*, 
+                                CONCAT(s.FIRST_NAME, ' ', s.LAST_NAME) as CREATED_BY_NAME,
+                                CONCAT(sm.FIRST_NAME, ' ', sm.LAST_NAME) as MODIFIED_BY_NAME
                                 FROM note_evolutive ne
                                 LEFT JOIN staff s ON ne.CREATED_BY = s.STAFF_ID
+                                LEFT JOIN staff sm ON ne.MODIFIED_BY = sm.STAFF_ID
                                 WHERE ne.STUDENT_ID = '" . UserStudentID() . "' 
                                 AND ne.SYEAR = '" . UserSyear() . "' 
                                 AND ne.SCHOOL_ID = '" . UserSchool() . "'
@@ -1957,14 +1965,6 @@ if ($_REQUEST['category_id'] == 13) {
                 margin-bottom: 8px;
                 font-weight: 600;
                 color: #555;
-                font-size: 14px;
-            }
-            
-            input[type="date"] {
-                width: 250px;
-                padding: 10px 12px;
-                border: 1px solid #605d5dff;
-                border-radius: 4px;
                 font-size: 14px;
             }
             
@@ -2065,6 +2065,13 @@ if ($_REQUEST['category_id'] == 13) {
                 font-size: 12px;
                 color: #666;
                 font-style: italic;
+            }
+            
+            .note-modified {
+                font-size: 11px;
+                color: #888;
+                font-style: italic;
+                margin-top: 5px;
             }
             
             .note-content {
@@ -2177,7 +2184,6 @@ if ($_REQUEST['category_id'] == 13) {
                     box-shadow: none !important;
                 }
                 
-                input[type="date"],
                 textarea {
                     border: none;
                     border-bottom: 1px solid #000;
@@ -2206,11 +2212,6 @@ if ($_REQUEST['category_id'] == 13) {
                     ' . ($editing_note ? '<input type="hidden" name="note_id" value="' . $editing_note['ID'] . '">' : '') . '
                     
                     <div class="form-group">
-                        <label>Date de la note: <span style="color: red;">*</span></label>
-                        <input type="date" name="note_date" value="' . ($editing_note ? $editing_note['NOTE_DATE'] : date('Y-m-d')) . '" required>
-                    </div>
-                    
-                    <div class="form-group">
                         <label>Contenu de la note: <span style="color: red;">*</span></label>
                         <textarea name="note_text" required placeholder="Entrez votre note ici...">' . ($editing_note ? htmlspecialchars($editing_note['NOTE_TEXT']) : '') . '</textarea>
                     </div>
@@ -2229,7 +2230,21 @@ if ($_REQUEST['category_id'] == 13) {
     if (count($notes_data) > 0) {
         foreach ($notes_data as $note) {
             $note_date_formatted = date('d/m/Y', strtotime($note['NOTE_DATE']));
-            $created_at_formatted = date('d/m/Y à H:i', strtotime($note['CREATED_AT']));
+            
+            // Convert UTC timestamps to Eastern Time (automatically handles EST/EDT)
+            $created_timestamp = new DateTime($note['CREATED_AT'], new DateTimeZone('UTC'));
+            $created_timestamp->setTimezone(new DateTimeZone('America/New_York'));
+            $created_at_formatted = $created_timestamp->format('d/m/Y à H:i');
+            
+            // Display modification info if the note has been modified
+            $modified_info = '';
+            if ($note['MODIFIED_AT'] && $note['MODIFIED_AT'] != '0000-00-00 00:00:00') {
+                $modified_timestamp = new DateTime($note['MODIFIED_AT'], new DateTimeZone('UTC'));
+                $modified_timestamp->setTimezone(new DateTimeZone('America/New_York'));
+                $modified_at_formatted = $modified_timestamp->format('d/m/Y à H:i');
+                $modified_info = '<div class="note-modified">Modifiée le ' . $modified_at_formatted . 
+                               ($note['MODIFIED_BY_NAME'] ? ' par ' . htmlspecialchars($note['MODIFIED_BY_NAME']) : '') . '</div>';
+            }
             
             echo '
                 <div class="note-item" id="note-' . $note['ID'] . '">
@@ -2237,6 +2252,7 @@ if ($_REQUEST['category_id'] == 13) {
                         <div>
                             <div class="note-date">Date: ' . $note_date_formatted . '</div>
                             <div class="note-meta">Créée le ' . $created_at_formatted . ($note['CREATED_BY_NAME'] ? ' par ' . htmlspecialchars($note['CREATED_BY_NAME']) : '') . '</div>
+                            ' . $modified_info . '
                         </div>
                     </div>
                     <div class="note-content">' . nl2br(htmlspecialchars($note['NOTE_TEXT'])) . '</div>
@@ -2259,10 +2275,12 @@ if ($_REQUEST['category_id'] == 13) {
         function printForm() {
             var printWindow = window.open(\'\', \'_blank\');
             var studentInfo = "' . addslashes($student_name) . '";
-            var noteDate = document.querySelector(\'input[name="note_date"]\').value;
             var noteText = document.querySelector(\'textarea[name="note_text"]\').value;
             
-            var formattedDate = new Date(noteDate).toLocaleDateString(\'fr-FR\');
+            // Get current date/time in Eastern Time
+            var now = new Date();
+            var formattedDate = now.toLocaleDateString(\'fr-FR\');
+            var formattedTime = now.toLocaleTimeString(\'fr-FR\', {hour: \'2-digit\', minute: \'2-digit\'});
             
             var printHTML = `
                 <!DOCTYPE html>
@@ -2328,7 +2346,7 @@ if ($_REQUEST['category_id'] == 13) {
                         <strong>Élève:</strong> ${studentInfo}
                     </div>
                     <div class="note-date">
-                        Date: ${formattedDate}
+                        Date: ${formattedDate} à ${formattedTime}
                     </div>
                     <div class="note-content">
                         ${noteText.replace(/\n/g, \'<br>\')}
@@ -2355,6 +2373,9 @@ if ($_REQUEST['category_id'] == 13) {
             var noteDateElement = noteElement.querySelector(\'.note-date\');
             var noteContentElement = noteElement.querySelector(\'.note-content\');
             var noteMetaElement = noteElement.querySelector(\'.note-meta\');
+            var noteModifiedElement = noteElement.querySelector(\'.note-modified\');
+            
+            var modifiedInfo = noteModifiedElement ? noteModifiedElement.textContent : \'\';
             
             var printWindow = window.open(\'\', \'_blank\');
             
@@ -2405,6 +2426,13 @@ if ($_REQUEST['category_id'] == 13) {
                             font-size: 12px;
                             color: #666;
                             font-style: italic;
+                            margin-bottom: 5px;
+                        }
+                        
+                        .note-modified {
+                            font-size: 11px;
+                            color: #888;
+                            font-style: italic;
                             margin-bottom: 15px;
                         }
                         
@@ -2434,6 +2462,7 @@ if ($_REQUEST['category_id'] == 13) {
                     <div class="note-meta">
                         ${noteMetaElement.textContent}
                     </div>
+                    ${modifiedInfo ? \'<div class="note-modified">\' + modifiedInfo + \'</div>\' : \'\'}
                     <div class="note-content">
                         ${noteContentElement.innerHTML}
                     </div>
