@@ -394,7 +394,7 @@ function makeDescription($value, $column) {
 
 function do_cado_teacher_courses_files(){
     //$courses_RET = DBGet(DBQuery('SELECT DISTINCT c.TITLE ,cp.SHORT_NAME,cp.COURSE_PERIOD_ID,cp.COURSE_ID,cp.TEACHER_ID AS STAFF_ID,cpv.PERIOD_ID AS PERIOD_ID FROM schedule s,course_periods cp,course_period_var cpv,courses c,attendance_calendar acc WHERE s.SYEAR=\'' . UserSyear() . '\' AND cp.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID  AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID  AND (s.MARKING_PERIOD_ID IN (SELECT MARKING_PERIOD_ID FROM school_years WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_semesters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_quarters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE )or s.MARKING_PERIOD_ID  is NULL) AND cp.GRADE_SCALE_ID IS NOT NULL' . (User('PROFILE') == 'teacher' ? ' AND cp.TEACHER_ID=\'' . User('STAFF_ID') . '\'' : '') . ' AND c.COURSE_ID=cp.COURSE_ID ORDER BY SHORT_NAME'));
-    $courses_RET = DBGet(DBQuery('SELECT COURSE_NAME AS TITLE, SHORT_NAME, COURSE_PERIOD_ID, COURSE_ID , teacher_id AS STAFF_ID, COURSE_PERIOD_ID as PERIOD_ID , DOES_NO_PLANNING FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND teacher_id=\'' . User('STAFF_ID') . '\' ORDER BY SHORT_NAME'));
+    $courses_RET = DBGet(DBQuery('SELECT COURSE_NAME AS TITLE, SHORT_NAME, GRADE_SCALE_ID, COURSE_PERIOD_ID, COURSE_ID , teacher_id AS STAFF_ID, COURSE_PERIOD_ID as PERIOD_ID , DOES_NO_PLANNING FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND teacher_id=\'' . User('STAFF_ID') . '\' ORDER BY SHORT_NAME'));
     // echo '<pre>'; print_r($courses_RET); echo '</pre>';
 
     echo '<div class="H2"> Liste de vos cours.';
@@ -426,23 +426,25 @@ function do_cado_teacher_courses_files(){
                 else 
                     $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Planification la semaine prochaine';
             }
-            if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],UserMP(),UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],UserMP(),UserSyear(),$course['SHORT_NAME'])) != 'NAN')
-                $bad_final = 0;
-            else 
-                $bad_final = 1;
-            if($bad_config)
-                $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Configuration';
-            else 
-                $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Configuration';
-            if($bad_weght) 
-                $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Pondération';
-            else 
-                $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Pondération';
-            if($bad_final)
-                $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Note Final';
-            else 
-                $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Note finale';
-                $list_RET .= '<br>';
+            if($course['GRADE_SCALE_ID']){
+                    if(round(GetGroupAverage($course['COURSE_PERIOD_ID'],UserMP(),UserSyear(),$course['SHORT_NAME'])) > 0 && round(GetGroupAverage($course['COURSE_PERIOD_ID'],UserMP(),UserSyear(),$course['SHORT_NAME'])) != 'NAN')
+                    $bad_final = 0;
+                else 
+                    $bad_final = 1;
+                if($bad_config)
+                    $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Configuration';
+                else 
+                    $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Configuration';
+                if($bad_weght) 
+                    $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Pondération';
+                else 
+                    $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Pondération';
+                if($bad_final)
+                    $list_RET .= '<b style="color:red;"></b><i class="fa fa-times fa-lg text-danger"></i>Note Final';
+                else 
+                    $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>Note finale';
+                    $list_RET .= '<br>';
+            }
             // if(! $bad_final && ! $bad_config && ! $bad_weght)
             // $list_RET .= '<i class="fa fa-check fa-lg text-success"></i>';
             // $fileIcon = '<i class="fa fa-file-word-o"></i>';

@@ -39,11 +39,14 @@ function GetStaffList(&$extra)
                         WHERE
                         st.STUDENT_ID=ssm.STUDENT_ID AND ssm.SYEAR=' . UserSyear() . '  AND s.PROFILE IS NOT NULL AND s.PROFILE_ID in (SELECT ID FROM user_profiles WHERE PROFILE=\'parent\') AND s.STAFF_ID=la.USER_ID AND la.PROFILE_ID in (SELECT ID FROM user_profiles WHERE PROFILE=\'parent\')';
 			if ($_REQUEST['_search_all_schools'] != 'Y')
-				$sql .= ' AND ssm.SCHOOL_ID=' . UserSchool() . ' AND s.STAFF_ID IN (SELECT PERSON_ID FROM students_join_people sjp WHERE ssm.STUDENT_ID = sjp.STUDENT_ID
-AND ssm.SCHOOL_ID=' . UserSchool() . ' AND ssm.SYEAR=' . UserSyear() . ' AND (ssm.end_date is NULL or ssm.end_date>="' . DBDate('mysql') . '")) ';
+// 				$sql .= ' AND ssm.SCHOOL_ID=' . UserSchool() . ' AND s.STAFF_ID IN (SELECT PERSON_ID FROM students_join_people sjp WHERE ssm.STUDENT_ID = sjp.STUDENT_ID
+// AND ssm.SCHOOL_ID=' . UserSchool() . ' AND ssm.SYEAR=' . UserSyear() . ' AND (ssm.end_date is NULL or ssm.end_date>="' . DBDate('mysql') . '")) ';
+// 			else
+// 				$sql .= ' AND ssm.SCHOOL_ID IN(' .  GetUserSchools(UserID(), true) . ')  AND s.STAFF_ID IN (SELECT PERSON_ID FROM students_join_people sjp WHERE ssm.STUDENT_ID = sjp.STUDENT_ID
+// AND ssm.SCHOOL_ID IN (' .  GetUserSchools(UserID(), true) . ') AND ssm.SYEAR=' . UserSyear() . ' AND (ssm.end_date is NULL or ssm.end_date>="' . DBDate('mysql') . '"))';
+				$sql .= ' AND ssm.SCHOOL_ID=' . UserSchool() . ' AND s.STAFF_ID  ';
 			else
-				$sql .= ' AND ssm.SCHOOL_ID IN(' .  GetUserSchools(UserID(), true) . ')  AND s.STAFF_ID IN (SELECT PERSON_ID FROM students_join_people sjp WHERE ssm.STUDENT_ID = sjp.STUDENT_ID
-AND ssm.SCHOOL_ID IN (' .  GetUserSchools(UserID(), true) . ') AND ssm.SYEAR=' . UserSyear() . ' AND (ssm.end_date is NULL or ssm.end_date>="' . DBDate('mysql') . '"))';
+				$sql .= ' AND ssm.SCHOOL_ID IN(' .  GetUserSchools(UserID(), true) . ')  AND s.STAFF_ID ';
 			if ($_REQUEST['_dis_user'] != 'Y')
 				$sql .= ' AND (s.IS_DISABLE<>\'Y\' OR  s.IS_DISABLE IS NULL)';
 			if ($_REQUEST['username'])
