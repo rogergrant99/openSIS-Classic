@@ -216,59 +216,107 @@ function GetGroupAverage($course_period_id,$mp,$year,$title){
 }
 
 
-function check_weight($course_period_id,$staff_id,$mp,$course_id)
+/**
+ * Returns true (1) if there is no ASSIGNMENT_WEIGHT or if the total is not 100%
+ * Returns false (0) if weights are properly configured
+ */
+function check_weight($course_period_id, $staff_id, $mp, $course_id)
 {
-    $markingPeriod = DBGet(DBQuery('SELECT * FROM school_quarters WHERE SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND SORT_ORDER=255 '));   
-    if($markingPeriod[1][MARKING_PERIOD_ID] != $mp) 
-    { 
-        $assignment_type_list_sql = 'SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
-                FROM (
-                ( SELECT gat.ASSIGNMENT_TYPE_ID, gat.TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat WHERE gat.COURSE_PERIOD_ID=\'' . $course_period_id . '\' )
-                UNION  
-                (SELECT gat.ASSIGNMENT_TYPE_ID as ASSIGNMENT_TYPE_ID,concat(gat.TITLE,\' (\',TRIM(cp.title),\')\') as TITLE, gat.FINAL_GRADE_PERCENT FROM gradebook_assignment_types gat, gradebook_assignments ga, course_periods cp
-                WHERE cp.course_period_id = gat.course_period_id AND gat.ASSIGNMENT_TYPE_ID = ga.ASSIGNMENT_TYPE_ID AND ga.COURSE_ID IS NOT NULL AND ga.COURSE_ID = \'' . $course_id . '\' AND ga.STAFF_ID = \'' . $staff_id . '\' ) 
-                ) AS T
-                GROUP BY ASSIGNMENT_TYPE_ID';
-        $list_assignment_types = DBGet(DBQuery($assignment_type_list_sql));
-        if (count($list_assignment_types) ==1 ) return 0;
-        foreach ($list_assignment_types as $key => $type)
-        {
-            if($markingPeriod[1][MARKING_PERIOD_ID] == $mp) 
-                break;
-            if($type[TITLE] != $markingPeriod[1][TITLE])
-            {
-            $assignment_weight=DBGet(DBQuery('SELECT    ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.  $mp . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
-            foreach ($assignment_weight as $key => $weight) 
-            {
-                if($weight['ASSIGNMENT_WEIGHT']=='' || $weight['ASSIGNMENT_WEIGHT'] == '0')
-                    return 1;
-                $total+=$weight['ASSIGNMENT_WEIGHT'];
-            }
-            if ($total != 100)
+    // Get the final marking period (SORT_ORDER=255)
+    $markingPeriod = DBGet(DBQuery(
+        "SELECT * FROM school_quarters 
+         WHERE SYEAR='" . UserSyear() . "' 
+         AND SCHOOL_ID='" . UserSchool() . "' 
+         AND SORT_ORDER=255"
+    ));
+    
+    // If we're checking the final marking period itself, no validation needed
+    if ($markingPeriod[1]['MARKING_PERIOD_ID'] == $mp) {
+        return 0;
+    }
+    
+    // Get all assignment types for this course period
+    $assignment_type_list_sql = "SELECT ASSIGNMENT_TYPE_ID, TITLE, FINAL_GRADE_PERCENT 
+        FROM (
+            (SELECT gat.ASSIGNMENT_TYPE_ID, gat.TITLE, gat.FINAL_GRADE_PERCENT 
+             FROM gradebook_assignment_types gat 
+             WHERE gat.COURSE_PERIOD_ID='" . $course_period_id . "')
+            UNION  
+            (SELECT gat.ASSIGNMENT_TYPE_ID, 
+                    CONCAT(gat.TITLE, ' (', TRIM(cp.title), ')') as TITLE, 
+                    gat.FINAL_GRADE_PERCENT 
+             FROM gradebook_assignment_types gat, 
+                  gradebook_assignments ga, 
+                  course_periods cp
+             WHERE cp.course_period_id = gat.course_period_id 
+             AND gat.ASSIGNMENT_TYPE_ID = ga.ASSIGNMENT_TYPE_ID 
+             AND ga.COURSE_ID IS NOT NULL 
+             AND ga.COURSE_ID = '" . $course_id . "' 
+             AND ga.STAFF_ID = '" . $staff_id . "')
+        ) AS T
+        GROUP BY ASSIGNMENT_TYPE_ID";
+    
+    $list_assignment_types = DBGet(DBQuery($assignment_type_list_sql));
+    
+    // If no assignment types found, return error
+    if (empty($list_assignment_types)) {
+        return 1;
+    }
+    
+    // Check 1: Validate assignment weights within each type sum to 100%
+    foreach ($list_assignment_types as $type) {
+        // Skip if this is the final marking period
+        if ($type['TITLE'] == $markingPeriod[1]['TITLE']) {
+            continue;
+        }
+        
+        // Get all assignments for this type in this marking period
+        $assignment_weight = DBGet(DBQuery(
+            "SELECT ASSIGNMENT_WEIGHT 
+             FROM gradebook_assignments 
+             WHERE MARKING_PERIOD_ID='" . $mp . "' 
+             AND assignment_type_id='" . $type['ASSIGNMENT_TYPE_ID'] . "'"
+        ));
+        
+        // If there are no assignments for this type, return error
+        if (empty($assignment_weight)) {
+            return 1;
+        }
+        
+        $total = 0;
+        foreach ($assignment_weight as $weight) {
+            // If any weight is missing or zero, return error
+            if ($weight['ASSIGNMENT_WEIGHT'] == '' || $weight['ASSIGNMENT_WEIGHT'] == '0') {
                 return 1;
-                //echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
             }
-            $total=0;
-
-        $total_assignment_type_weightage = 0;
-        $total_assignment_type_weightage_arr = array();
-
-        if (!empty($list_assignment_types)) {
-            foreach ($list_assignment_types as $at_key => $at_val) {
-                if ($at_val['FINAL_GRADE_PERCENT'] != '' && number_format($at_val['FINAL_GRADE_PERCENT'],2) != 0)
-                    array_push($total_assignment_type_weightage_arr, $at_val['FINAL_GRADE_PERCENT']);
-            }
-
-            $total_assignment_type_weightage = array_sum($total_assignment_type_weightage_arr);
-
-            if ($total_assignment_type_weightage != 1)
-            {
-                return 1;
-                //echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . '</div>';
-            }
-        }else echo 'empty';
+            $total += $weight['ASSIGNMENT_WEIGHT'];
+        }
+        
+        // If weights don't sum to 100%, return error
+        if ($total != 0 && $total != 100) {
+            return 1;
         }
     }
+    
+    // Check 2: Validate assignment type percentages sum to 100% (represented as 1.0)
+    $total_assignment_type_weightage_arr = array();
+    foreach ($list_assignment_types as $at_val) {
+        if ($at_val['FINAL_GRADE_PERCENT'] != '' && 
+            number_format($at_val['FINAL_GRADE_PERCENT'], 2) != 0) {
+            array_push($total_assignment_type_weightage_arr, $at_val['FINAL_GRADE_PERCENT']);
+        }
+    }
+    
+    $total_assignment_type_weightage = array_sum($total_assignment_type_weightage_arr);
+    
+    // If there are any weights set, they must sum to exactly 1.0 (100%)
+    // Use number_format to handle floating point comparison
+    if (count($total_assignment_type_weightage_arr) > 0 && 
+        number_format($total_assignment_type_weightage, 2) != '1.00') {
+        return 1;
+    }
+    
+    // All validations passed
     return 0;
 }
 
