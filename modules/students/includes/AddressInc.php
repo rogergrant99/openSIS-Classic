@@ -1138,12 +1138,10 @@ if (!isset($_REQUEST['modfunc'])) {
 
         $sec_par_id = DBGet(DBQuery('SELECT * FROM students_join_people WHERE STUDENT_ID=' . UserStudentID() . ' AND EMERGENCY_TYPE=\'Secondary\''));
 // ROGER
-$h_addr[1]['ADDRESS_ID']=stripslashes($h_addr[1]['ADDRESS_ID']);
 $h_addr[1]['ADDRESS']=stripslashes($h_addr[1]['ADDRESS']);
 $h_addr[1]['CITY']=stripslashes($h_addr[1]['CITY']);
 $h_addr[1]['STREET']=stripslashes($h_addr[1]['STREET']);
 $h_addr[1]['STATE']=stripslashes($h_addr[1]['STATE']);
-$p_addr[1]['ADDRESS_ID']=stripslashes($p_addr[1]['ADDRESS_ID']);
 $p_addr[1]['ADDRESS']=stripslashes($p_addr[1]['ADDRESS']);
 $p_addr[1]['CITY']=stripslashes($p_addr[1]['CITY']);
 $p_addr[1]['STREET']=stripslashes($p_addr[1]['STREET']);
@@ -1156,9 +1154,9 @@ $p_addr[1]['STATE']=stripslashes($p_addr[1]['STATE']);
 
             $s_addr[1]['RELATIONSHIP'] = $sec_par_id[1]['RELATIONSHIP'];
 
-$s_addr[1]['ADDRESS']=stripslashes($s_addr[1]['ADDRESS']);
-$s_addr[1]['ADDRESS_ID']=stripslashes($s_addr[1]['ADDRESS_ID']);
-$s_addr[1]['STREET']=stripslashes($s_addr[1]['STREET']);
+
+
+
             $s_user_profs_ids_arr = array();
             $s_user_profs_ids = DBGet(DBQuery('SELECT id FROM user_profiles WHERE profile = \'' . 'parent' . '\''));
 
