@@ -1156,6 +1156,9 @@ $p_addr[1]['STATE']=stripslashes($p_addr[1]['STATE']);
 
 
 
+$s_addr[1]['ADDRESS']=stripslashes($s_addr[1]['ADDRESS']);
+$s_addr[1]['ADDRESS_ID']=stripslashes($s_addr[1]['ADDRESS_ID']);
+$s_addr[1]['STREET']=stripslashes($s_addr[1]['STREET']);
 
             $s_user_profs_ids_arr = array();
             $s_user_profs_ids = DBGet(DBQuery('SELECT id FROM user_profiles WHERE profile = \'' . 'parent' . '\''));
