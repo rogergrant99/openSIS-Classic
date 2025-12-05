@@ -26,6 +26,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #***************************************************************************************
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ERROR | E_PARSE);
 
 include('../../RedirectModulesInc.php');
 include("UploadClassFnc.php");
@@ -2488,87 +2491,99 @@ if ($_REQUEST['category_id'] == 13) {
 }
 // END ID 13 Note évolutive
 
-// START ID 14 Plan d'intervention
+// START ID 14 plan d'intervention
 if ($_REQUEST['category_id'] == 14) {
     // Handle form submission
     if (isset($_POST['save_plan_intervention'])) {
         $student_id = UserStudentID();
-        $syear = UserSyear();
         $school_id = UserSchool();
+        
+        // Build diagnostics array
+        $diagnostics = [];
+        if (isset($_POST['diag_dysphasie'])) $diagnostics[] = 'Dysphasie';
+        if (isset($_POST['diag_tda'])) $diagnostics[] = 'TDA';
+        if (isset($_POST['diag_dyspraxie'])) $diagnostics[] = 'Dyspraxie';
+        if (isset($_POST['diag_tdah'])) $diagnostics[] = 'TDAH';
+        if (isset($_POST['diag_dyslexie'])) $diagnostics[] = 'Dyslexie';
+        if (isset($_POST['diag_ted'])) $diagnostics[] = 'TED';
+        if (isset($_POST['diag_dysorthographie'])) $diagnostics[] = 'Dysorthographie';
+        if (isset($_POST['diag_anxiete'])) $diagnostics[] = 'Anxiété';
+        if (isset($_POST['diag_dyscalculie'])) $diagnostics[] = 'Dyscalculie';
+        if (isset($_POST['diag_gilles'])) $diagnostics[] = 'Gilles de la Tourette';
+        
+        // Build spheres array
+        $spheres = [];
+        if (isset($_POST['sphere_comportementale'])) $spheres[] = 'Comportementale';
+        if (isset($_POST['sphere_apprentissage'])) $spheres[] = 'Apprentissage';
+        
+        // Build mesures array with types
+        $mesures = [];
+        $measure_fields = [
+            'temps_supp' => '1/3 de temps supplémentaire',
+            'dictionnaire' => 'Utilisation du dictionnaire électronique',
+            'calculatrice' => 'Utilisation de la calculatrice',
+            'place_pref' => 'Place préférentielle',
+            'reponses_orales' => 'Accepter les réponses orales ou Surligner les réponses dans le texte',
+            'verifier_comp' => 'Vérifier la compréhension des questions',
+            'ordinateur' => 'Permettre l\'utilisation de l\'ordinateur',
+            'materiel_manip' => 'Matériel de manipulation',
+            'logiciel_correction' => 'Utilisation d\'un logiciel de correction (ex. Antidote)',
+            'coquilles' => 'Coquilles insonorisantes',
+            'word' => 'Utilisation du logiciel de traitement de texte Word',
+            'fragmenter' => 'Fragmenter la tâche',
+            'synthetiseur' => 'Utilisation d\'un synthétiseur vocal',
+            'diminuer' => 'Diminuer les exigences'
+        ];
+        
+        foreach ($measure_fields as $key => $label) {
+            if (isset($_POST['mes_' . $key])) {
+                $mesures[] = [
+                    'label' => $label,
+                    'type' => $_POST['mes_' . $key . '_type'] ?? ''
+                ];
+            }
+        }
+        
+        // Build complete plan data as associative array (WITHOUT student info and signatures)
+        $plan_data = [
+            'informations' => [
+                'reprise' => $_POST['reprise'] ?? ''
+            ],
+            'diagnostic' => [
+                'diagnostics' => $diagnostics,
+                'autres_diagnostic' => $_POST['autres_diagnostic'] ?? '',
+                'date_evaluation' => $_POST['date_evaluation'] ?? '',
+                'precisions' => $_POST['precisions'] ?? '',
+                'hypothese' => $_POST['hypothese'] ?? '',
+                'medication' => $_POST['medication'] ?? ''
+            ],
+            'spheres' => [
+                'spheres_problematiques' => $spheres,
+                'manifestations_comportementale' => $_POST['manifestations_comportementale'] ?? '',
+                'manifestations_apprentissage' => $_POST['manifestations_apprentissage'] ?? ''
+            ],
+            'besoins_objectifs' => $_POST['besoins_objectifs'] ?? '',
+            'mesures_appui' => [
+                'mesures' => $mesures,
+                'autres_mesures' => $_POST['autres_mesures'] ?? ''
+            ],
+            'recommandations' => $_POST['recommandations'] ?? ''
+        ];
+        
+        // Convert to JSON
+        $plan_json = json_encode($plan_data, JSON_UNESCAPED_UNICODE);
         
         // Check if a plan already exists for this student
         $existing_plan = DBGet(DBQuery("SELECT ID FROM plan_intervention 
                                         WHERE STUDENT_ID = '" . $student_id . "' 
-                                        AND SYEAR = '" . $syear . "' 
                                         AND SCHOOL_ID = '" . $school_id . "'"));
-        
-        // Process checkbox values
-        $diagnostics = array();
-        if (isset($_POST['diag_dysphasie'])) $diagnostics[] = 'Dysphasie';
-        if (isset($_POST['diag_dyspraxie'])) $diagnostics[] = 'Dyspraxie';
-        if (isset($_POST['diag_dyslexie'])) $diagnostics[] = 'Dyslexie';
-        if (isset($_POST['diag_dysorthographie'])) $diagnostics[] = 'Dysorthographie';
-        if (isset($_POST['diag_dyscalculie'])) $diagnostics[] = 'Dyscalculie';
-        if (isset($_POST['diag_tda'])) $diagnostics[] = 'TDA';
-        if (isset($_POST['diag_tdah'])) $diagnostics[] = 'TDAH';
-        if (isset($_POST['diag_ted'])) $diagnostics[] = 'TED';
-        if (isset($_POST['diag_anxiete'])) $diagnostics[] = 'Anxiété';
-        if (isset($_POST['diag_gilles'])) $diagnostics[] = 'Gilles de la Tourette';
-        $diagnostics_str = implode(',', $diagnostics);
-        
-        $spheres = array();
-        if (isset($_POST['sphere_comportementale'])) $spheres[] = 'Comportementale';
-        if (isset($_POST['sphere_apprentissage'])) $spheres[] = 'Apprentissage';
-        $spheres_str = implode(',', $spheres);
-        
-        $mesures = array();
-        if (isset($_POST['mes_temps_supp'])) $mesures[] = 'Temps supplémentaire';
-        if (isset($_POST['mes_calculatrice'])) $mesures[] = 'Calculatrice';
-        if (isset($_POST['mes_reponses_orales'])) $mesures[] = 'Réponses orales';
-        if (isset($_POST['mes_ordinateur'])) $mesures[] = 'Ordinateur';
-        if (isset($_POST['mes_logiciel_correction'])) $mesures[] = 'Logiciel correction';
-        if (isset($_POST['mes_word'])) $mesures[] = 'Word';
-        if (isset($_POST['mes_synthetiseur'])) $mesures[] = 'Synthétiseur vocal';
-        if (isset($_POST['mes_dictionnaire'])) $mesures[] = 'Dictionnaire électronique';
-        if (isset($_POST['mes_place_pref'])) $mesures[] = 'Place préférentielle';
-        if (isset($_POST['mes_verifier_comp'])) $mesures[] = 'Vérifier compréhension';
-        if (isset($_POST['mes_materiel_manip'])) $mesures[] = 'Matériel manipulation';
-        if (isset($_POST['mes_coquilles'])) $mesures[] = 'Coquilles insonorisantes';
-        if (isset($_POST['mes_fragmenter'])) $mesures[] = 'Fragmenter tâche';
-        if (isset($_POST['mes_diminuer'])) $mesures[] = 'Diminuer exigences';
-        $mesures_str = implode(',', $mesures);
         
         if (count($existing_plan) > 0) {
             // Update existing plan
             $sql = "UPDATE plan_intervention SET 
-                    ANNEE_SCOLAIRE = '" . str_replace("'", "''", $_POST['annee_scolaire']) . "',
-                    CODE_PERMANENT = '" . str_replace("'", "''", $_POST['code_permanent']) . "',
-                    DATE_NAISSANCE = " . ($_POST['date_naissance'] ? "'" . $_POST['date_naissance'] . "'" : "NULL") . ",
-                    NIVEAU_SCOLAIRE = '" . str_replace("'", "''", $_POST['niveau_scolaire']) . "',
-                    REPRISE = '" . str_replace("'", "''", $_POST['reprise']) . "',
-                    DIAGNOSTIC = '" . str_replace("'", "''", $diagnostics_str) . "',
-                    AUTRES_DIAGNOSTIC = '" . str_replace("'", "''", $_POST['autres_diagnostic']) . "',
-                    DATE_EVALUATION = '" . str_replace("'", "''", $_POST['date_evaluation']) . "',
-                    PRECISIONS = '" . str_replace("'", "''", $_POST['precisions']) . "',
-                    HYPOTHESE = '" . str_replace("'", "''", $_POST['hypothese']) . "',
-                    MEDICATION = '" . str_replace("'", "''", $_POST['medication']) . "',
-                    SPHERES_PROBLEMATIQUES = '" . str_replace("'", "''", $spheres_str) . "',
-                    MANIFESTATIONS_COMPORTEMENTALE = '" . str_replace("'", "''", $_POST['manifestations_comportementale']) . "',
-                    MANIFESTATIONS_APPRENTISSAGE = '" . str_replace("'", "''", $_POST['manifestations_apprentissage']) . "',
-                    BESOINS_OBJECTIFS = '" . str_replace("'", "''", $_POST['besoins_objectifs']) . "',
-                    MESURES_APPUI = '" . str_replace("'", "''", $mesures_str) . "',
-                    AUTRES_MESURES = '" . str_replace("'", "''", $_POST['autres_mesures']) . "',
-                    RECOMMANDATIONS = '" . str_replace("'", "''", $_POST['recommandations']) . "',
-                    AUTORITE_PARENTALE_1 = '" . str_replace("'", "''", $_POST['autorite_parentale_1']) . "',
-                    DATE_SIGNATURE_PARENT_1 = " . ($_POST['date_signature_parent_1'] ? "'" . $_POST['date_signature_parent_1'] . "'" : "NULL") . ",
-                    AUTORITE_PARENTALE_2 = '" . str_replace("'", "''", $_POST['autorite_parentale_2']) . "',
-                    DATE_SIGNATURE_PARENT_2 = " . ($_POST['date_signature_parent_2'] ? "'" . $_POST['date_signature_parent_2'] . "'" : "NULL") . ",
-                    ELEVE_SIGNATURE = '" . str_replace("'", "''", $_POST['eleve_signature']) . "',
-                    DATE_SIGNATURE_ELEVE = " . ($_POST['date_signature_eleve'] ? "'" . $_POST['date_signature_eleve'] . "'" : "NULL") . ",
-                    DIRECTION_SIGNATURE = '" . str_replace("'", "''", $_POST['direction_signature']) . "',
-                    DATE_SIGNATURE_DIRECTION = " . ($_POST['date_signature_direction'] ? "'" . $_POST['date_signature_direction'] . "'" : "NULL") . "
+                    PLAN_DATA = '" . addslashes($plan_json) . "',
+                    LAST_UPDATED = NOW()
                     WHERE STUDENT_ID = '" . $student_id . "' 
-                    AND SYEAR = '" . $syear . "' 
                     AND SCHOOL_ID = '" . $school_id . "'";
             
             DBQuery($sql);
@@ -2576,46 +2591,13 @@ if ($_REQUEST['category_id'] == 14) {
         } else {
             // Insert new plan
             $sql = "INSERT INTO plan_intervention (
-                    STUDENT_ID, SYEAR, SCHOOL_ID, NOM_ELEVE, ANNEE_SCOLAIRE, CODE_PERMANENT,
-                    DATE_NAISSANCE, NIVEAU_SCOLAIRE, REPRISE, DIAGNOSTIC, AUTRES_DIAGNOSTIC,
-                    DATE_EVALUATION, PRECISIONS, HYPOTHESE, MEDICATION, SPHERES_PROBLEMATIQUES,
-                    MANIFESTATIONS_COMPORTEMENTALE, MANIFESTATIONS_APPRENTISSAGE, BESOINS_OBJECTIFS,
-                    MESURES_APPUI, AUTRES_MESURES, RECOMMANDATIONS,
-                    AUTORITE_PARENTALE_1, DATE_SIGNATURE_PARENT_1,
-                    AUTORITE_PARENTALE_2, DATE_SIGNATURE_PARENT_2,
-                    ELEVE_SIGNATURE, DATE_SIGNATURE_ELEVE,
-                    DIRECTION_SIGNATURE, DATE_SIGNATURE_DIRECTION
+                    STUDENT_ID, SCHOOL_ID, PLAN_DATA, CREATED_DATE, LAST_UPDATED
                 ) VALUES (
                     '" . $student_id . "',
-                    '" . $syear . "',
                     '" . $school_id . "',
-                    '" . str_replace("'", "''", $_POST['nom_eleve']) . "',
-                    '" . str_replace("'", "''", $_POST['annee_scolaire']) . "',
-                    '" . str_replace("'", "''", $_POST['code_permanent']) . "',
-                    " . ($_POST['date_naissance'] ? "'" . $_POST['date_naissance'] . "'" : "NULL") . ",
-                    '" . str_replace("'", "''", $_POST['niveau_scolaire']) . "',
-                    '" . str_replace("'", "''", $_POST['reprise']) . "',
-                    '" . str_replace("'", "''", $diagnostics_str) . "',
-                    '" . str_replace("'", "''", $_POST['autres_diagnostic']) . "',
-                    '" . str_replace("'", "''", $_POST['date_evaluation']) . "',
-                    '" . str_replace("'", "''", $_POST['precisions']) . "',
-                    '" . str_replace("'", "''", $_POST['hypothese']) . "',
-                    '" . str_replace("'", "''", $_POST['medication']) . "',
-                    '" . str_replace("'", "''", $spheres_str) . "',
-                    '" . str_replace("'", "''", $_POST['manifestations_comportementale']) . "',
-                    '" . str_replace("'", "''", $_POST['manifestations_apprentissage']) . "',
-                    '" . str_replace("'", "''", $_POST['besoins_objectifs']) . "',
-                    '" . str_replace("'", "''", $mesures_str) . "',
-                    '" . str_replace("'", "''", $_POST['autres_mesures']) . "',
-                    '" . str_replace("'", "''", $_POST['recommandations']) . "',
-                    '" . str_replace("'", "''", $_POST['autorite_parentale_1']) . "',
-                    " . ($_POST['date_signature_parent_1'] ? "'" . $_POST['date_signature_parent_1'] . "'" : "NULL") . ",
-                    '" . str_replace("'", "''", $_POST['autorite_parentale_2']) . "',
-                    " . ($_POST['date_signature_parent_2'] ? "'" . $_POST['date_signature_parent_2'] . "'" : "NULL") . ",
-                    '" . str_replace("'", "''", $_POST['eleve_signature']) . "',
-                    " . ($_POST['date_signature_eleve'] ? "'" . $_POST['date_signature_eleve'] . "'" : "NULL") . ",
-                    '" . str_replace("'", "''", $_POST['direction_signature']) . "',
-                    " . ($_POST['date_signature_direction'] ? "'" . $_POST['date_signature_direction'] . "'" : "NULL") . "
+                    '" . addslashes($plan_json) . "',
+                    NOW(),
+                    NOW()
                 )";
             
             DBQuery($sql);
@@ -2623,26 +2605,7 @@ if ($_REQUEST['category_id'] == 14) {
         }
     }
     
-    // Fetch existing plan data
-    $plan_data = DBGet(DBQuery("SELECT * FROM plan_intervention 
-                                WHERE STUDENT_ID = '" . UserStudentID() . "' 
-                                AND SYEAR = '" . UserSyear() . "' 
-                                AND SCHOOL_ID = '" . UserSchool() . "'"));
-    
-    if (count($plan_data) > 0) {
-        $plan = $plan_data[1];
-        // Parse comma-separated values
-        $diagnostics_array = explode(',', $plan['DIAGNOSTIC']);
-        $spheres_array = explode(',', $plan['SPHERES_PROBLEMATIQUES']);
-        $mesures_array = explode(',', $plan['MESURES_APPUI']);
-    } else {
-        $plan = array();
-        $diagnostics_array = array();
-        $spheres_array = array();
-        $mesures_array = array();
-    }
-    
-    // Fetch student's information
+    // Fetch student's information from database
     $student_info = DBGet(DBQuery("SELECT s.FIRST_NAME, s.LAST_NAME, s.BIRTHDATE, s.ALT_ID, sg.TITLE as GRADE_LEVEL 
                                    FROM students s
                                    JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID
@@ -2653,19 +2616,54 @@ if ($_REQUEST['category_id'] == 14) {
                                    ORDER BY se.START_DATE DESC 
                                    LIMIT 1"));
     
-    // Set default values
-    if (!isset($plan['NOM_ELEVE']) && isset($student_info[1])) {
-        $plan['NOM_ELEVE'] = $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'];
+    // Fetch existing plan data
+    $plan_result = DBGet(DBQuery("SELECT PLAN_DATA FROM plan_intervention 
+                                  WHERE STUDENT_ID = '" . UserStudentID() . "' 
+                                  AND SCHOOL_ID = '" . UserSchool() . "'"));
+    
+    // Parse JSON data
+    if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
+        $plan = json_decode(stripslashes($plan_result[1]['PLAN_DATA']), true) ?? [];
+    } else {
+        $plan = [
+            'informations' => [],
+            'diagnostic' => ['diagnostics' => []],
+            'spheres' => ['spheres_problematiques' => []],
+            'mesures_appui' => ['mesures' => []]
+        ];
     }
-    if (!isset($plan['DATE_NAISSANCE']) && isset($student_info[1]['BIRTHDATE'])) {
-        $plan['DATE_NAISSANCE'] = $student_info[1]['BIRTHDATE'];
+    
+    // Prepare student info for display
+    $nom_eleve = isset($student_info[1]) ? $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'] : '';
+    $date_naissance = isset($student_info[1]['BIRTHDATE']) ? $student_info[1]['BIRTHDATE'] : '';
+    $niveau_scolaire = isset($student_info[1]['GRADE_LEVEL']) ? $student_info[1]['GRADE_LEVEL'] : '';
+    $code_permanent = isset($student_info[1]['ALT_ID']) ? $student_info[1]['ALT_ID'] : '';
+    $annee_scolaire = UserSyear() . '-' . (UserSyear() + 1);
+    
+    // Helper function to check if diagnostic is selected
+    function isDiagnosticChecked($plan, $diagnostic) {
+        return in_array($diagnostic, $plan['diagnostic']['diagnostics'] ?? []);
     }
-    if (!isset($plan['NIVEAU_SCOLAIRE']) && isset($student_info[1]['GRADE_LEVEL'])) {
-        $plan['NIVEAU_SCOLAIRE'] = $student_info[1]['GRADE_LEVEL'];
+    
+    // Helper function to check if sphere is selected
+    function isSphereChecked($plan, $sphere) {
+        return in_array($sphere, $plan['spheres']['spheres_problematiques'] ?? []);
     }
-    if (!isset($plan['CODE_PERMANENT']) && isset($student_info[1]['ALT_ID'])) {
-        $plan['CODE_PERMANENT'] = $student_info[1]['ALT_ID'];
+    
+    // Helper function to check if measure is selected and get its type
+    function getMesureStatus($plan, $label) {
+        $mesures = $plan['mesures_appui']['mesures'] ?? [];
+        foreach ($mesures as $mesure) {
+            if ($mesure['label'] === $label) {
+                return ['checked' => true, 'type' => $mesure['type'] ?? ''];
+            }
+        }
+        return ['checked' => false, 'type' => ''];
     }
+    
+    // Get helper values for form
+    $diagnostics_array = $plan['diagnostic']['diagnostics'] ?? [];
+    $spheres_array = $plan['spheres']['spheres_problematiques'] ?? [];
     
     echo '
     <!DOCTYPE html>
@@ -2743,34 +2741,66 @@ if ($_REQUEST['category_id'] == 14) {
                 font-size: 14px;
             }
             
-            textarea {
-                min-height: 80px;
-                resize: vertical;
-            }
+    textarea {
+        min-height: 80px;
+        resize: vertical;
+        overflow-y: hidden;
+        box-sizing: border-box;
+    }
+
             
+            .diagnostic-select {
+                display: flex;
+                gap: 8px;
+                text-align: left;
+                align-items: center;
+            }
+            .diagnostic-select input[type="checkbox"] {
+                margin: 0;
+                margin-top: -4px;
+                flex-shrink: 0;
+            }
+            .mesure-type-select {
+                text-align: right;
+            }
+            .mesure-type-select input[type="checkbox"] {
+                margin: 0;
+                margin-top: -4px;
+                flex-shrink: 0;
+            }
+
             .checkbox-group {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin-top: 10px;
             }
-            
+            .diagnostic-group{
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+            }
             .checkbox-item {
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                justify-content: space-between;
             }
-            
             .checkbox-item input[type="checkbox"] {
-                width: auto;
                 margin: 0;
+                flex-shrink: 0;
             }
-            
+            .checkbox-item .mesure-type-select {
+                margin-left: auto;
+            }
+
+            .checkbox-item .diagnostic-select {
+                margin-left: auto;
+            }            
             .checkbox-item label {
                 margin: 0;
-                font-weight: normal;
+                font-weight: bold;
             }
-            
+           
             table {
                 width: 100%;
                 border-collapse: collapse;
@@ -2798,7 +2828,31 @@ if ($_REQUEST['category_id'] == 14) {
             .signature-box {
                 border: 1px solid #ddd;
                 padding: 15px;
-                min-height: 100px;
+                min-height: 120px;
+            }
+            
+            .signature-line {
+                border-bottom: 1px solid #000;
+                min-height: 40px;
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            
+            .date-line {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            
+            .date-line span {
+                font-weight: 600;
+            }
+            
+            .date-underline {
+                border-bottom: 1px solid #000;
+                flex: 1;
+                min-height: 25px;
             }
             
             .btn-save {
@@ -2838,16 +2892,7 @@ if ($_REQUEST['category_id'] == 14) {
                 gap: 10px;
                 margin-top: 20px;
             }
-            .signature-ts{
-                text-align: left;
-                font-family: "Lucida Handwriting Std",  sans-serif;
-                font-size:12px; 
-                padding 10px;
-                border: none;
-                alignv: bottom;
-                padding-top:20px;
-                width: 50%;
-            }            
+            
             @media print {
                 .btn-save,
                 .btn-print,
@@ -2884,6 +2929,17 @@ if ($_REQUEST['category_id'] == 14) {
                     background: transparent;
                 }
                 
+                .mesure-type-select {
+                    text-align: right;
+                    direction: rtl;
+                    padding: 4px 8px;
+                    transform: translateY(-1px);
+                }
+
+                .mesure-type-select option {
+                    direction: ltr;
+                }                
+                
                 @page {
                     margin: 1cm;
                 }
@@ -2902,210 +2958,195 @@ if ($_REQUEST['category_id'] == 14) {
                     <div class="form-row">
                         <div class="form-group">
                             <label>Nom de l\'élève:</label>
-                            <input type="text" name="nom_eleve" value="' . htmlspecialchars($plan['NOM_ELEVE']) . '" required readonly>
+                            <input type="text" value="' . htmlspecialchars($nom_eleve) . '" required readonly>
                         </div>
                         <div class="form-group">
                             <label>Année scolaire:</label>
-                            <input type="text" name="annee_scolaire" value="' . (isset($plan['ANNEE_SCOLAIRE']) ? htmlspecialchars($plan['ANNEE_SCOLAIRE']) : UserSyear() . '-' . (UserSyear() + 1)) . '"readonly>
+                            <input type="text" value="' . htmlspecialchars($annee_scolaire) . '" readonly>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label>Code permanent:</label>
-                            <input type="text" name="code_permanent" value="' . (isset($plan['CODE_PERMANENT']) ? htmlspecialchars($plan['CODE_PERMANENT']) : '') . '"readonly>
+                            <input type="text" value="' . htmlspecialchars($code_permanent) . '" readonly>
                         </div>
                         <div class="form-group">
                             <label>Date de naissance:</label>
-                            <input type="date" name="date_naissance" value="' . (isset($plan['DATE_NAISSANCE']) ? $plan['DATE_NAISSANCE'] : '') . '"readonly>
+                            <input type="date" value="' . $date_naissance . '" readonly>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
                             <label>Niveau scolaire:</label>
-                            <input type="text" name="niveau_scolaire" value="' . (isset($plan['NIVEAU_SCOLAIRE']) ? htmlspecialchars($plan['NIVEAU_SCOLAIRE']) : '') . '"readonly>
+                            <input type="text" value="' . htmlspecialchars($niveau_scolaire) . '" readonly>
                         </div>
                         <div class="form-group">
                             <label>Reprise:</label>
-                            <input type="text" name="reprise" value="' . (isset($plan['REPRISE']) ? htmlspecialchars($plan['REPRISE']) : '') . '">
+                            <input type="text" name="reprise" value="' . htmlspecialchars($plan['informations']['reprise'] ?? '') . '">
                         </div>
                     </div>
                 </div>
                 
                 <div class="section">
                     <div class="section-title">DIAGNOSTIC</div>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_dysphasie" name="diag_dysphasie" ' . (in_array('Dysphasie', $diagnostics_array) ? 'checked' : '') . '>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_dysphasie" name="diag_dysphasie" ' . (isDiagnosticChecked($plan, 'Dysphasie') ? 'checked' : '') . '>
                             <label for="diag_dysphasie">Dysphasie</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_tda" name="diag_tda" ' . (in_array('TDA', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_tda" name="diag_tda" ' . (isDiagnosticChecked($plan, 'TDA') ? 'checked' : '') . '>
                             <label for="diag_tda">TDA</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_dyspraxie" name="diag_dyspraxie" ' . (in_array('Dyspraxie', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_dyspraxie" name="diag_dyspraxie" ' . (isDiagnosticChecked($plan, 'Dyspraxie') ? 'checked' : '') . '>
                             <label for="diag_dyspraxie">Dyspraxie</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_tdah" name="diag_tdah" ' . (in_array('TDAH', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_tdah" name="diag_tdah" ' . (isDiagnosticChecked($plan, 'TDAH') ? 'checked' : '') . '>
                             <label for="diag_tdah">TDAH</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_dyslexie" name="diag_dyslexie" ' . (in_array('Dyslexie', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_dyslexie" name="diag_dyslexie" ' . (isDiagnosticChecked($plan, 'Dyslexie') ? 'checked' : '') . '>
                             <label for="diag_dyslexie">Dyslexie</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_ted" name="diag_ted" ' . (in_array('TED', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_ted" name="diag_ted" ' . (isDiagnosticChecked($plan, 'TED') ? 'checked' : '') . '>
                             <label for="diag_ted">TED</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_dysorthographie" name="diag_dysorthographie" ' . (in_array('Dysorthographie', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_dysorthographie" name="diag_dysorthographie" ' . (isDiagnosticChecked($plan, 'Dysorthographie') ? 'checked' : '') . '>
                             <label for="diag_dysorthographie">Dysorthographie</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_anxiete" name="diag_anxiete" ' . (in_array('Anxiété', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_anxiete" name="diag_anxiete" ' . (isDiagnosticChecked($plan, 'Anxiété') ? 'checked' : '') . '>
                             <label for="diag_anxiete">Anxiété</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_dyscalculie" name="diag_dyscalculie" ' . (in_array('Dyscalculie', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_dyscalculie" name="diag_dyscalculie" ' . (isDiagnosticChecked($plan, 'Dyscalculie') ? 'checked' : '') . '>
                             <label for="diag_dyscalculie">Dyscalculie</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="diag_gilles" name="diag_gilles" ' . (in_array('Gilles de la Tourette', $diagnostics_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="diag_gilles" name="diag_gilles" ' . (isDiagnosticChecked($plan, 'Gilles de la Tourette') ? 'checked' : '') . '>
                             <label for="diag_gilles">Gilles de la Tourette</label>
                         </div>
                     </div>
                     
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Autres:</label>
-                        <input type="text" name="autres_diagnostic" value="' . (isset($plan['AUTRES_DIAGNOSTIC']) ? htmlspecialchars($plan['AUTRES_DIAGNOSTIC']) : '') . '">
+                        <textarea name="autres_diagnostic">' . htmlspecialchars($plan['diagnostic']['autres_diagnostic'] ?? '') . '</textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>Date(s) de l\'évaluation(s):</label>
-                        <input type="text" name="date_evaluation" value="' . (isset($plan['DATE_EVALUATION']) ? htmlspecialchars($plan['DATE_EVALUATION']) : '') . '">
+                        <textarea name="date_evaluation">' . htmlspecialchars($plan['diagnostic']['date_evaluation'] ?? '') . '</textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>Précisions:</label>
-                        <textarea name="precisions">' . (isset($plan['PRECISIONS']) ? htmlspecialchars($plan['PRECISIONS']) : '') . '</textarea>
+                        <textarea name="precisions">' . htmlspecialchars($plan['diagnostic']['precisions'] ?? '') . '</textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>Hypothèse:</label>
-                        <textarea name="hypothese">' . (isset($plan['HYPOTHESE']) ? htmlspecialchars($plan['HYPOTHESE']) : '') . '</textarea>
+                        <textarea name="hypothese">' . htmlspecialchars($plan['diagnostic']['hypothese'] ?? '') . '</textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>Médication:</label>
-                        <input type="text" name="medication" value="' . (isset($plan['MEDICATION']) ? htmlspecialchars($plan['MEDICATION']) : '') . '">
+                        <input type="text" name="medication" value="' . htmlspecialchars($plan['diagnostic']['medication'] ?? '') . '">
                     </div>
                 </div>
                 
                 <div class="section">
                     <div class="section-title">SPHÈRE(S) PROBLÉMATIQUE(S)</div>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="sphere_comportementale" name="sphere_comportementale" ' . (in_array('Comportementale', $spheres_array) ? 'checked' : '') . '>
+                    <div class="diagnostic-group">
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="sphere_comportementale" name="sphere_comportementale" ' . (isSphereChecked($plan, 'Comportementale') ? 'checked' : '') . '>
                             <label for="sphere_comportementale">Comportementale</label>
                         </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="sphere_apprentissage" name="sphere_apprentissage" ' . (in_array('Apprentissage', $spheres_array) ? 'checked' : '') . '>
+                        <div class="diagnostic-select">
+                            <input type="checkbox" id="sphere_apprentissage" name="sphere_apprentissage" ' . (isSphereChecked($plan, 'Apprentissage') ? 'checked' : '') . '>
                             <label for="sphere_apprentissage">Apprentissage</label>
                         </div>
                     </div>
                     
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Précisions (Manifestations observées) - Comportementale:</label>
-                        <textarea name="manifestations_comportementale">' . (isset($plan['MANIFESTATIONS_COMPORTEMENTALE']) ? htmlspecialchars($plan['MANIFESTATIONS_COMPORTEMENTALE']) : '') . '</textarea>
+                        <textarea name="manifestations_comportementale">' . htmlspecialchars($plan['spheres']['manifestations_comportementale'] ?? '') . '</textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>Précisions (Manifestations observées) - Apprentissage:</label>
-                        <textarea name="manifestations_apprentissage">' . (isset($plan['MANIFESTATIONS_APPRENTISSAGE']) ? htmlspecialchars($plan['MANIFESTATIONS_APPRENTISSAGE']) : '') . '</textarea>
+                        <textarea name="manifestations_apprentissage">' . htmlspecialchars($plan['spheres']['manifestations_apprentissage'] ?? '') . '</textarea>
                     </div>
                 </div>
                 
                 <div class="section">
                     <div class="section-title">BESOINS ET OBJECTIFS</div>
                     <div class="form-group">
-                        <textarea name="besoins_objectifs" rows="5">' . (isset($plan['BESOINS_OBJECTIFS']) ? htmlspecialchars($plan['BESOINS_OBJECTIFS']) : '') . '</textarea>
+                        <textarea name="besoins_objectifs" rows="5">' . htmlspecialchars($plan['besoins_objectifs'] ?? '') . '</textarea>
                     </div>
                 </div>
                 
                 <div class="section">
                     <div class="section-title">MESURES D\'APPUI</div>
-                    <div class="checkbox-group">
+                    <div class="checkbox-group">';
+    
+    // Define all measures
+    $all_measures = [
+            'temps_supp' => '1/3 de temps supplémentaire',
+            'dictionnaire' => 'Utilisation du dictionnaire électronique',
+            'calculatrice' => 'Utilisation de la calculatrice',
+            'place_pref' => 'Place préférentielle',
+            'reponses_orales' => 'Accepter les réponses orales ou Surligner les réponses dans le texte',
+            'verifier_comp' => 'Vérifier la compréhension des questions',
+            'ordinateur' => 'Permettre l\'utilisation de l\'ordinateur',
+            'materiel_manip' => 'Matériel de manipulation',
+            'logiciel_correction' => 'Utilisation d\'un logiciel de correction (ex. Antidote)',
+            'coquilles' => 'Coquilles insonorisantes',
+            'word' => 'Utilisation du logiciel de traitement de texte Word',
+            'fragmenter' => 'Fragmenter la tâche',
+            'synthetiseur' => 'Utilisation d\'un synthétiseur vocal',
+            'diminuer' => 'Diminuer les exigences'
+    ];
+    
+    foreach ($all_measures as $key => $label) {
+        $status = getMesureStatus($plan, $label);
+        $checked = $status['checked'] ? 'checked' : '';
+        $disabled = !$status['checked'] ? 'disabled' : '';
+        $selected_type = $status['type'];
+        
+        echo '
                         <div class="checkbox-item">
-                            <input type="checkbox" id="mes_temps_supp" name="mes_temps_supp" ' . (in_array('Temps supplémentaire', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_temps_supp">1/3 de temps supplémentaire</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_dictionnaire" name="mes_dictionnaire" ' . (in_array('Dictionnaire électronique', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_dictionnaire">Utilisation du dictionnaire électronique</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_calculatrice" name="mes_calculatrice" ' . (in_array('Calculatrice', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_calculatrice">Utilisation de la calculatrice</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_place_pref" name="mes_place_pref" ' . (in_array('Place préférentielle', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_place_pref">Place préférentielle</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_reponses_orales" name="mes_reponses_orales" ' . (in_array('Réponses orales', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_reponses_orales">Accepter les réponses orales</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_verifier_comp" name="mes_verifier_comp" ' . (in_array('Vérifier compréhension', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_verifier_comp">Vérifier la compréhension</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_ordinateur" name="mes_ordinateur" ' . (in_array('Ordinateur', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_ordinateur">Permettre l\'utilisation de l\'ordinateur</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_materiel_manip" name="mes_materiel_manip" ' . (in_array('Matériel manipulation', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_materiel_manip">Matériel de manipulation</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_logiciel_correction" name="mes_logiciel_correction" ' . (in_array('Logiciel correction', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_logiciel_correction">Utilisation d\'un logiciel de correction</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_coquilles" name="mes_coquilles" ' . (in_array('Coquilles insonorisantes', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_coquilles">Coquilles insonorisantes</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_word" name="mes_word" ' . (in_array('Word', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_word">Utilisation du logiciel Word</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_fragmenter" name="mes_fragmenter" ' . (in_array('Fragmenter tâche', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_fragmenter">Fragmenter la tâche</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_synthetiseur" name="mes_synthetiseur" ' . (in_array('Synthétiseur vocal', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_synthetiseur">Utilisation d\'un synthétiseur vocal</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="mes_diminuer" name="mes_diminuer" ' . (in_array('Diminuer exigences', $mesures_array) ? 'checked' : '') . '>
-                            <label for="mes_diminuer">Diminuer les exigences</label>
-                        </div>
+                            <input type="checkbox" id="mes_' . $key . '" name="mes_' . $key . '" ' . $checked . ' onchange="toggleMesureType(\'' . $key . '\')">
+                            <label for="mes_' . $key . '">' . $label . '</label>
+                            <select class="mesure-type-select" id="mes_' . $key . '_type" name="mes_' . $key . '_type" ' . $disabled . '>
+                                <option value=""></option>
+                                <option value="M" ' . ($selected_type == 'M' ? 'selected' : '') . '>M</option>
+                                <option value="MA" ' . ($selected_type == 'MA' ? 'selected' : '') . '>MA</option>
+                                <option value="MM" ' . ($selected_type == 'MM' ? 'selected' : '') . '>MM</option>
+                            </select>
+                        </div>';
+    }
+    
+    echo '
                     </div>
+                    <br>
+                        <strong>Légende des types:</strong> M (Moyen), MA (Moyen d\'adaptation), MM (Moyen de modification)
                     
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Autres/Précisions (ex: récupérations):</label>
-                        <textarea name="autres_mesures">' . (isset($plan['AUTRES_MESURES']) ? htmlspecialchars($plan['AUTRES_MESURES']) : '') . '</textarea>
+                        <textarea name="autres_mesures">' . htmlspecialchars($plan['mesures_appui']['autres_mesures'] ?? '') . '</textarea>
                     </div>
                 </div>
                 
                 <div class="section">
                     <div class="section-title">RECOMMANDATIONS ET COMMENTAIRES</div>
                     <div class="form-group">
-                        <textarea name="recommandations" rows="5">' . (isset($plan['RECOMMANDATIONS']) ? htmlspecialchars($plan['RECOMMANDATIONS']) : '') . '</textarea>
+                        <textarea name="recommandations" rows="5">' . htmlspecialchars($plan['recommandations'] ?? '') . '</textarea>
                     </div>
                 </div>
                 
@@ -3116,32 +3157,40 @@ if ($_REQUEST['category_id'] == 14) {
                     <div class="signature-section">
                         <div class="signature-box">
                             <label>Autorité parentale:</label>
-                            <input type="text" class="signature-ts" name="autorite_parentale_1" placeholder="" value="' . (isset($plan['AUTORITE_PARENTALE_1']) ? htmlspecialchars($plan['AUTORITE_PARENTALE_1']) : '') . '" style="margin-top: 10px;">
-                            <label style="margin-top: 10px;">Date:</label>
-                            <input type="date" name="date_signature_parent_1" value="' . (isset($plan['DATE_SIGNATURE_PARENT_1']) ? $plan['DATE_SIGNATURE_PARENT_1'] :date('Y-m-d')) . '">
+                            <div class="signature-line"></div>
+                            <div class="date-line">
+                                <span>Date:</span>
+                                <div class="date-underline"></div>
+                            </div>
                         </div>
                         
                         <div class="signature-box">
                             <label>Autorité parentale:</label>
-                            <input type="text" class="signature-ts" name="autorite_parentale_2" placeholder="" value="' . (isset($plan['AUTORITE_PARENTALE_2']) ? htmlspecialchars($plan['AUTORITE_PARENTALE_2']) : '') . '" style="margin-top: 10px;">
-                            <label style="margin-top: 10px;">Date:</label>
-                            <input type="date" name="date_signature_parent_2" value="' . (isset($plan['DATE_SIGNATURE_PARENT_2']) ? $plan['DATE_SIGNATURE_PARENT_2'] : date('Y-m-d')) . '">
+                            <div class="signature-line"></div>
+                            <div class="date-line">
+                                <span>Date:</span>
+                                <div class="date-underline"></div>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="signature-section" style="margin-top: 20px;">
                         <div class="signature-box">
-                            <label>Élève:</label> 
-                            <input type="text" class="signature-ts" name="eleve_signature" placeholder="" value="' . (isset($plan['ELEVE_SIGNATURE']) ? htmlspecialchars($plan['ELEVE_SIGNATURE']) : '') . '" style="margin-top: 10px;">
-                            <label style="margin-top: 10px;">Date:</label>
-                            <input type="date" name="date_signature_eleve" value="' . (isset($plan['DATE_SIGNATURE_ELEVE']) ? $plan['DATE_SIGNATURE_ELEVE'] : date('Y-m-d')) . '">
+                            <label>Élève:</label>
+                            <div class="signature-line"></div>
+                            <div class="date-line">
+                                <span>Date:</span>
+                                <div class="date-underline"></div>
+                            </div>
                         </div>
                         
                         <div class="signature-box">
                             <label>Direction:</label>
-                            <input type="text" class="signature-ts" name="direction_signature" placeholder="" value="' . (isset($plan['DIRECTION_SIGNATURE']) ? htmlspecialchars($plan['DIRECTION_SIGNATURE']) : '') . '" style="margin-top: 10px;">
-                            <label style="margin-top: 10px;">Date:</label>
-                            <input type="date" name="date_signature_direction" value="' . (isset($plan['DATE_SIGNATURE_DIRECTION']) ? $plan['DATE_SIGNATURE_DIRECTION'] : date('Y-m-d')) . '">
+                            <div class="signature-line"></div>
+                            <div class="date-line">
+                                <span>Date:</span>
+                                <div class="date-underline"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3153,167 +3202,86 @@ if ($_REQUEST['category_id'] == 14) {
             </form>
         </div>
         
-        <script>
+    <script>
         function printPlan() {
-            var printWindow = window.open(\'\', \'_blank\');
-            var content = document.querySelector(\'.container\').cloneNode(true);
-            
-            var buttons = content.querySelectorAll(\'.btn-save, .btn-print, .button-container\');
-            buttons.forEach(function(btn) {
-                btn.style.display = \'none\';
-            });
-            
-            var printHTML = `
-                <!DOCTYPE html>
-                <html lang="fr">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Plan d\'intervention</title>
-                    <style>
-                        * {
-                            margin: 0;
-                            padding: 0;
-                            box-sizing: border-box;
-                        }
-                        
-                        body {
-                            font-family: Arial, sans-serif;
-                            background: white;
-                            margin: 0;
-                            padding: 20px;
-                        }
-                        
-                        .container {
-                            max-width: 900px;
-                            margin: 0 auto;
-                            background-color: white;
-                            padding: 40px;
-                        }
-                        
-                        .header {
-                            text-align: center;
-                            margin-bottom: 30px;
-                            border-bottom: 3px solid #333;
-                            padding-bottom: 20px;
-                        }
-                        
-                        h1 {
-                            font-size: 28px;
-                            color: #333;
-                            margin-bottom: 10px;
-                            font-weight: bold;
-                        }
-                        
-                        .section {
-                            margin-bottom: 25px;
-                            page-break-inside: avoid;
-                        }
-                        
-                        .section-title {
-                            background-color: #e8e8e8;
-                            padding: 10px;
-                            font-weight: bold;
-                            margin-bottom: 15px;
-                            border-left: 4px solid #4a90e2;
-                        }
-                        
-                        .form-group {
-                            margin-bottom: 15px;
-                        }
-                        
-                        label {
-                            display: block;
-                            margin-bottom: 5px;
-                            font-weight: 600;
-                            color: #555;
-                        }
-                        
-                        input[type="text"],
-                        input[type="date"],
-                        textarea {
-                            width: 100%;
-                            padding: 8px 12px;
-                            border: none;
-                            border-bottom: 1px solid #000;
-                            background: transparent;
-                            font-size: 14px;
-                        }
-                        
-                        textarea {
-                            min-height: 80px;
-                        }
-                        
-                        .checkbox-group {
-                            display: grid;
-                            grid-template-columns: repeat(2, 1fr);
-                            gap: 10px;
-                            margin-top: 10px;
-                        }
-                        
-                        .checkbox-item {
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                        }
-                        
-                        .signature-section {
-                            display: grid;
-                            grid-template-columns: repeat(2, 1fr);
-                            gap: 20px;
-                            margin-top: 30px;
-                            page-break-inside: avoid;
-                        }
-                        
-                        .signature-box {
-                            border: 1px solid #000;
-                            padding: 15px;
-                            min-height: 100px;
-                        }
-                        
-                        .form-row {
-                            display: flex;
-                            gap: 20px;
-                            margin-bottom: 15px;
-                        }
-                        
-                        .btn-save, .btn-print, .button-container {
-                            display: none !important;
-                        }
-                        
-                        @page {
-                            margin: 1cm;
-                            size: auto;
-                        }
-                        
-                        @media print {
-                            body {
-                                margin: 0;
-                                padding: 0;
-                            }
-                            
-                            @page {
-                                margin: 1cm;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${content.innerHTML}
-                </body>
-                </html>
-            `;
-            
-            printWindow.document.write(printHTML);
-            printWindow.document.close();
-            
-            printWindow.onload = function() {
-                printWindow.focus();
-                printWindow.print();
-                setTimeout(function() {
-                    printWindow.close();
-                }, 100);
-            };
+            window.print();
         }
+        
+        function toggleMesureType(measureName) {
+            const checkbox = document.getElementById("mes_" + measureName);
+            const select = document.getElementById("mes_" + measureName + "_type");
+            
+            if (checkbox.checked) {
+                select.disabled = false;
+            } else {
+                select.disabled = true;
+                select.value = "";
+            }
+        }
+        
+        // Auto-resize textarea function
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = (textarea.scrollHeight) + "px";
+        }
+        
+        // Initialize measures on load
+        function initMeasures() {
+            const measures = ["temps_supp", "calculatrice", "reponses_orales", "ordinateur", 
+                            "logiciel_correction", "word", "synthetiseur", "dictionnaire", 
+                            "place_pref", "verifier_comp", "materiel_manip", "coquilles", 
+                            "fragmenter", "diminuer"];
+            
+            measures.forEach(function(measure) {
+                const checkbox = document.getElementById("mes_" + measure);
+                if (checkbox) {
+                    toggleMesureType(measure);
+                }
+            });
+        }
+        
+        // Initialize textareas
+        function initTextareas() {
+            const textareas = document.querySelectorAll("textarea");
+            console.log("Found " + textareas.length + " textareas");
+            
+            if (textareas.length === 0) {
+                console.error("No textareas found!");
+                return;
+            }
+            
+            textareas.forEach(function(textarea) {
+                // Initial resize
+                setTimeout(function() {
+                    autoResizeTextarea(textarea);
+                }, 10);
+                
+                // Add event listeners
+                textarea.addEventListener("input", function() {
+                    autoResizeTextarea(this);
+                });
+                
+                textarea.addEventListener("change", function() {
+                    autoResizeTextarea(this);
+                });
+            });
+        }
+        
+        // Run initialization
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", function() {
+                initMeasures();
+                initTextareas();
+            });
+        } else {
+            initMeasures();
+            initTextareas();
+        }
+        
+        // Also try on full load as backup
+        window.addEventListener("load", function() {
+            initTextareas();
+        });
         </script>
     </body>
     </html>

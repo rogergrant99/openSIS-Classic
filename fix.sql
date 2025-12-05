@@ -274,3 +274,12 @@ ON DUPLICATE KEY UPDATE `TITLE` = "Plan d'intervention";
 INSERT INTO `student_field_categories` (`ID`, `TITLE`, `SORT_ORDER`, `INCLUDE`) 
 VALUES (15, 'Note évolutive', 15, 'ProfildeleveInc')
 ON DUPLICATE KEY UPDATE `TITLE` = "Profil d'élève";
+
+CREATE TABLE plan_intervention (
+    ID INT PRIMARY KEY AUTO_INCREMENT,
+    STUDENT_ID VARCHAR(50),
+    SCHOOL_ID INT,
+    PLAN_DATA JSON,  -- All plan data stored here as JSON
+    CREATED_DATE DATETIME,
+    LAST_UPDATED DATETIME
+);
