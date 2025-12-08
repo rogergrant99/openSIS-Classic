@@ -333,6 +333,7 @@ switch (User('PROFILE')) {
             echo '</div>';
         }
         do_cado_teacher_courses_files();
+        do_cado_events();
         break;
 
     case 'parent':
@@ -356,6 +357,7 @@ switch (User('PROFILE')) {
         DrawBC($welcome . ' | '._role.' : '._parent.'');
         do_cado_bulletins();
         // do_cado_courses_files();
+        do_cado_events();
         break;
 
     case 'student':
@@ -381,6 +383,7 @@ switch (User('PROFILE')) {
 
          do_cado_bulletins();
         // do_cado_courses_files();
+        do_cado_events();
         break;
 }
 
@@ -767,6 +770,35 @@ function do_cado_bulletins(){
     }
 }
 
+function do_cado_events(){
+            $events_RET = DBGet(DBQuery('SELECT ce.TITLE,ce.DESCRIPTION,ce.SCHOOL_DATE AS INDEX_DATE,ce.SCHOOL_DATE,s.TITLE AS SCHOOL 
+                FROM calendar_events ce,calendar_events_visibility cev,schools s
+                WHERE ce.SCHOOL_DATE BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL 30 DAY 
+                    AND ce.SYEAR=\'' . UserSyear() . '\'
+                    AND ce.SCHOOL_ID IN(' . UserSchool(). ')
+                    AND s.ID=ce.SCHOOL_ID AND (ce.CALENDAR_ID=cev.CALENDAR_ID)
+                    AND ' . (User('PROFILE_ID') == '' ? 'cev.PROFILE=\'admin\'' : 'cev.PROFILE_ID=\'' . User('PROFILE_ID')) . '\' 
+                    ORDER BY ce.SCHOOL_DATE,s.TITLE'), array('SCHOOL_DATE' => 'ProperDate', 'DESCRIPTION' => 'makeDescription'));
+
+        $events_RET1 = DBGet(DBQuery('SELECT ce.TITLE,ce.DESCRIPTION, ce.SCHOOL_DATE as index_date,ce.SCHOOL_DATE,s.TITLE AS SCHOOL 
+                FROM calendar_events ce,schools s
+                WHERE ce.SCHOOL_DATE BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL 30 DAY 
+                    AND ce.SYEAR=\'' . UserSyear() . '\'
+                    AND s.ID=ce.SCHOOL_ID AND ce.CALENDAR_ID=0 ORDER BY ce.SCHOOL_DATE,s.TITLE'), array('SCHOOL_DATE' => 'ProperDate', 'DESCRIPTION' => 'makeDescription'));
+        $event_count = count($events_RET) + 1;
+        foreach ($events_RET1 as $events_RET_key => $events_RET_value) {
+            $events_RET[$event_count] = $events_RET_value;
+            $event_count++;
+        }
+        if (count($events_RET)) {
+            echo '<div class="panel panel-default">';
+            ListOutput($events_RET, array('TITLE' => _event,
+             'SCHOOL_DATE' => _date,
+             'DESCRIPTION' => _description,
+            ), _upcomingEvent, _upcomingEvents, array(), array(), array('save' =>false, 'search' =>false));
+            echo '</div>';
+        }
+}
 function do_cado_teacher_comlpetion(){
     echo '<div class="panel panel-default">';
 $sem = GetParentMP('SEM', UserMP());
