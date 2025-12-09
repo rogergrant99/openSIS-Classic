@@ -9,11 +9,11 @@ global $course_period_id,$course_id;
 if(UserSyear() != date('Y'))
     return;
 $user_course = UserCourse();
-if( $_REQUEST['print_admin']){
-    $user_course = $_REQUEST['marking_period_id'];
+if( $_REQUEST['admin']){
+    $user_course = $_REQUEST['course_id'];
 }
 // Admin only sees completion statue
-if (User('PROFILE') == 'admin' && !$_REQUEST['print_admin']){
+if (User('PROFILE') == 'admin' && !$_REQUEST['admin']){
     check_all_planif();
     exit;
 }
@@ -25,7 +25,7 @@ if ($_REQUEST && isset($_REQUEST['week_range'])){
     $start = $_REQUEST['week_range'];
     $week1_date_start = dateFr('d-M',strtotime($_REQUEST['week_range']));
     $week1_sec = strtotime($_REQUEST['week_range']);
-    $temp_course_id =  $course_id  = $_REQUEST['marking_period_id'];
+    $temp_course_id =  $course_id  = $_REQUEST['course_id'];
     $primaire=0;
     if($course_id)
         update_days($course_id);
@@ -78,7 +78,7 @@ if(!$course_id && User('PROFILE') != 'teacher'){
 }
 
 // Set teacher course
-if (User('PROFILE') == 'teacher' ||  $_REQUEST['print_admin'] ){
+if (User('PROFILE') == 'teacher' ||  $_REQUEST['admin'] ){
     if(!$user_course) return;
     $course_RET = DBGet(DBQuery('SELECT does_no_planning , course_id,grade_level,teacher_id FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . $user_course . ''));
     if($course_RET[1]['DOES_NO_PLANNING'] == 'Y')
@@ -253,11 +253,11 @@ $today = strtotime($_REQUEST['week_range']);
 $week_start = dateFr('Y-m-d', $today);
 $week_end = dateFr('Y-m-d', $today + $one_day * 6);
 $next_week = strtotime($_REQUEST['next_week_range'] + $one_week);
-$week_range = _makeWeeks('', '', 'Modules.php?modname=' . $_REQUEST['modname'] . '&marking_period_id=' . $course_id . '&view_mode=' . $_REQUEST['view_mode'] . '&week_range=');
+$week_range = _makeWeeks('', '', 'Modules.php?modname=' . $_REQUEST['modname'] . '&course_period_id=' . $course_id . '&view_mode=' . $_REQUEST['view_mode'] . '&week_range=');
 
 // Add print button
 if(! $_REQUEST['_openSIS_PDF']){
-    DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><FORM name="exp" class="no-margin-bottom" id="exp" action="ForExport.php?modname=' . urlencode(strip_tags(trim($_REQUEST["modname"]))) . '&modfunc=print&marking_period_id=' . urlencode($course_id) . '&week_range=' . urlencode($start) . '&_openSIS_PDF=true&report=true" method="POST" target="_blank"><div class="text-right"><INPUT type="submit" class="btn btn-primary" value="' . htmlspecialchars(_print, ENT_QUOTES) . '"></div></form><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
+    DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><FORM name="exp" class="no-margin-bottom" id="exp" action="ForExport.php?modname=' . urlencode(strip_tags(trim($_REQUEST["modname"]))) . '&modfunc=print&course_period_id=' . urlencode($course_id) . '&week_range=' . urlencode($start) . '&_openSIS_PDF=true&report=true" method="POST" target="_blank"><div class="text-right"><INPUT type="submit" class="btn btn-primary" value="' . htmlspecialchars(_print, ENT_QUOTES) . '"></div></form><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
 }
 
 
@@ -751,7 +751,7 @@ function formatCourseDisplay($course) {
     
     $html = '<script>
     function handleCourseClick(courseId, coursePeriodId, teacherId, weekDate) {
-        window.open(\'ForExport.php?modname=scheduling/Planification.php&modfunc=print&marking_period_id=\' + courseId + \'&week_range=\' + weekDate + \'&print_admin=true&_openSIS_PDF=true&report=true\', \'_blank\');
+        window.open(\'ForExport.php?modname=scheduling/Planification.php&modfunc=print&course_period_id=\' + coursePeriodId + \'&course_id=\' + courseId + \'&week_range=\' + weekDate + \'&admin=true&_openSIS_PDF=true&report=true\', \'_blank\');
     }</script><div class="course-item text-center">';
     
     // Display course title (non-clickable)
@@ -784,7 +784,7 @@ function formatCourseDisplay($course) {
             }
         }
         
-        // Use the first course's ID for the link
+        // Use the first course's data for the link
         $displayCourseId = $course['ORIGINAL_COURSES'][0]['COURSE_ID'];
         $displayCoursePeriodId = $course['ORIGINAL_COURSES'][0]['COURSE_PERIOD_ID'];
         $displayStaffId = $course['ORIGINAL_COURSES'][0]['STAFF_ID'];
@@ -936,8 +936,9 @@ function checkPlanningExists($date, $gradeLevel, $courseId) {
 
 function do_cado_courses_files(){
     global $course_id,$default_course_id,$primaire,$primaire;
-    // if(!$course_id) $course_id=$default_course_id;
-    // if(!$course_id) return;
+
+    if(!$course_id && User('PROFILE') == 'admin') 
+            $course_id=$_REQUEST['course_id'];
     $course_period_id = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
     $search='%[';
     $search.=$course_period_id[1]['COURSE_PERIOD_ID'];
@@ -958,6 +959,8 @@ function do_cado_courses_files(){
         echo "<div id='upload-status' class='upload-box'>
         <span class='upload-text'>⏳ Téléchargement en cours... Veuillez patienter</span>
         </div>";
+        if(User('PROFILE') == 'admin')
+                echo '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">';
         echo '<div  class="dl-panel">';
         foreach ($fileid as $file){
             $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
@@ -974,15 +977,15 @@ function do_cado_courses_files(){
             } else {
                 $fileIcon = '<i class="fa fa-file-o"></i>';
             }
-            if($file['DOWNLOAD_ID'] && ! $_REQUEST['_openSIS_PDF']){
+            if($file['DOWNLOAD_ID'] && ! $_REQUEST['_openSIS_PDF'] || $_REQUEST['course_id']){
                 $show_filename=strstr($file['NAME'], ']');
                 $show_filename=trim($show_filename, "]");
                 echo "<div>";
                 if(User('PROFILE') == 'teacher')
                     echo '<button  class="minus-sign" onclick="deleteFile(`'.$file['NAME']  .'`);">X</button>';
                 echo '<a class="custom-file-download" href="DownloadWindow.php?down_id=' . $file['DOWNLOAD_ID'] . '&stafffile=Y"> ' . $fileIcon . ''. $show_filename . '</a>';
-                echo "</div>";
                 echo '&nbsp&nbsp&nbsp';
+                echo "</div>";
             }
         }
         if(User('PROFILE') == 'teacher'){
@@ -2290,7 +2293,9 @@ function updateToolbarButtons() {
 
 </script>
 <?php
-if(! $_REQUEST['_openSIS_PDF'])
+if(! $_REQUEST['_openSIS_PDF'] )
+    do_cado_courses_files();
+if($_REQUEST['admin'] && $_REQUEST['course_period_id'])
     do_cado_courses_files();
 if(! $_REQUEST['_openSIS_PDF']){
     echo '</div>';
