@@ -751,7 +751,7 @@ function formatCourseDisplay($course) {
     
     $html = '<script>
     function handleCourseClick(courseId, coursePeriodId, teacherId, weekDate) {
-        window.open(\'ForExport.php?modname=scheduling/Planification.php&modfunc=print&marking_period_id=\' + courseId + \'&week_range=\' + weekDate + \'&print_admin=true&_openSIS_PDF=true&report=true\', \'_blank\');
+        window.open(\'ForExport.php?modname=scheduling/Planification.php&modfunc=print&marking_period_id=\' + courseId + \'&c_period_id=\' + coursePeriodId + \'&week_range=\' + weekDate + \'&print_admin=true&_openSIS_PDF=true&report=true\', \'_blank\');
     }</script><div class="course-item text-center">';
     
     // Display course title (non-clickable)
@@ -937,8 +937,7 @@ function checkPlanningExists($date, $gradeLevel, $courseId) {
 function do_cado_courses_files(){
     global $course_id,$default_course_id,$primaire,$primaire;
     // if(!$course_id) $course_id=$default_course_id;
-    // if(!$course_id) return;
-
+    if(!$course_id) $course_id= $_REQUEST['c_period_id'];
     $course_period_id = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
     $search='%[';
     $search.=$course_period_id[1]['COURSE_PERIOD_ID'];
@@ -960,7 +959,8 @@ function do_cado_courses_files(){
         <span class='upload-text'>⏳ Téléchargement en cours... Veuillez patienter</span>
         </div>";
 
-
+        if(User('PROFILE') == 'admin')
+                echo '    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">';
         echo '<div  class="dl-panel">';
         foreach ($fileid as $file){
             $ext=substr($file['NAME'], strpos($file['NAME'], '.') + 1);
@@ -977,7 +977,7 @@ function do_cado_courses_files(){
             } else {
                 $fileIcon = '<i class="fa fa-file-o"></i>';
             }
-            if($file['DOWNLOAD_ID'] && ! $_REQUEST['_openSIS_PDF']){
+            if(($file['DOWNLOAD_ID'] && ! $_REQUEST['_openSIS_PDF']) || $_REQUEST['c_period_id']){
                 $show_filename=strstr($file['NAME'], ']');
                 $show_filename=trim($show_filename, "]");
                 echo "<div>";
@@ -2295,8 +2295,8 @@ function updateToolbarButtons() {
 </script>
 <?php
 if(! $_REQUEST['_openSIS_PDF'])
-
-
+    do_cado_courses_files();
+if (User('PROFILE') == 'admin' && $_REQUEST['print_admin'])
     do_cado_courses_files();
 if(! $_REQUEST['_openSIS_PDF']){
     echo '</div>';
