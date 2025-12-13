@@ -937,7 +937,7 @@ function checkPlanningExists($date, $gradeLevel, $courseId) {
 function do_cado_courses_files(){
     global $course_id,$default_course_id,$primaire,$primaire;
     // if(!$course_id) $course_id=$default_course_id;
-    if(!$course_id) $course_id= $_REQUEST['c_period_id'];
+    if(!$course_id && $_REQUEST['c_period_id']) $course_id= $_REQUEST['c_period_id'];
     $course_period_id = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id .' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
     $search='%[';
     $search.=$course_period_id[1]['COURSE_PERIOD_ID'];
