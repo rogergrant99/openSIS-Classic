@@ -123,17 +123,17 @@ if(User('PROFILE') == 'teacher' && isset($_POST['save_habillement']) && $_POST['
                 $message .= ' (' . $deleted_count . ' marqué(s) comme conforme)';
             }
             echo '<div class="alert alert-success alert-styled-left alert-dismissible">';
-            echo '<button type="button" class="close" data-dismiss="alert"><span>×</span></button>';
+            echo '<button type="button" class="close" data-dismiss="alert"><span>×&nbsp&nbsp&nbsp</span></button>';
             echo '<i class="icon-checkmark-circle"></i> ' . $message;
             echo '</div>';
         } elseif($error_count > 0){
             echo '<div class="alert alert-warning alert-styled-left alert-dismissible">';
-            echo '<button type="button" class="close" data-dismiss="alert"><span>×</span></button>';
+            echo '<button type="button" class="close" data-dismiss="alert"><span>×&nbsp&nbsp&nbsp</span></button>';
             echo '<i class="icon-warning"></i> ' . $success_count . ' succès, ' . $error_count . ' erreur(s)';
             echo '</div>';
         } elseif($success_count == 0 && $error_count == 0){
             echo '<div class="alert alert-info alert-styled-left alert-dismissible">';
-            echo '<button type="button" class="close" data-dismiss="alert"><span>×</span></button>';
+            echo '<button type="button" class="close" data-dismiss="alert"><span>×&nbsp&nbsp&nbsp</span></button>';
             echo '<i class="icon-info"></i> Aucune modification détectée.';
             echo '</div>';
         }
