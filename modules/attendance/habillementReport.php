@@ -4,15 +4,146 @@
 #  openSIS is a free student information system for public and non-public 
 #  schools from Open Solutions for Education, Inc. web: www.os4ed.com
 #
-#  Report: Students Compliant with Dress Code (Habillement)
-#  Lists students by grade level who are compliant with dress code
-#  for the selected week (students WITHOUT a non-compliant record)
+#  Report: Students Non-Compliant with Dress Code (Habillement)
+#  Lists students by grade level who have a non-compliant entry
+#  in the habillement table for the selected week (COMPLIANT = 'N')
+#
+#  ENHANCED: Teachers can now add/edit habillement compliance entries
+#  ENHANCED: Non-teachers can now see C, M, T status for non-compliant students
 #
 #***************************************************************************************
 
 include('../../RedirectModulesInc.php');
 
-DrawBC("" . _attendance . " > Rapport Habillement Libre");
+DrawBC("" . _attendance . " > Rapport Habillement Non-Conforme");
+
+// Handle form submission for teachers BEFORE displaying the page
+if(User('PROFILE') == 'teacher' && isset($_POST['save_habillement']) && $_POST['save_habillement'] == '1'){
+    $week_start = isset($_POST['week_start']) ? $_POST['week_start'] : '';
+    
+    if(!empty($week_start)){
+        $week_end = date('Y-m-d', strtotime('sunday this week', strtotime($week_start)));
+        
+        $success_count = 0;
+        $error_count = 0;
+        $deleted_count = 0;
+        
+        // Get list of students that were modified (sent via hidden input)
+        $modified_students = isset($_POST['modified_students']) ? explode(',', $_POST['modified_students']) : array();
+        $modified_students = array_filter(array_map('intval', $modified_students));
+        
+        if(!empty($modified_students)){
+            foreach($modified_students as $student_id){
+                if($student_id <= 0) continue;
+                
+                $compliant = isset($_POST['compliant'][$student_id]) ? $_POST['compliant'][$student_id] : 'Y';
+                
+                // If student is marked as Conforme (Y), delete any existing non-compliant entry
+                if($compliant === 'Y'){
+                    $delete_sql = "DELETE FROM habillement 
+                                  WHERE STUDENT_ID = " . $student_id . " 
+                                  AND SCHOOL_ID = '" . UserSchool() . "'
+                                  AND SYEAR = '" . UserSyear() . "'
+                                  AND WEEK_START = '" . $week_start . "'";
+                    
+                    if(DBQuery($delete_sql)){
+                        $deleted_count++;
+                        $success_count++;
+                    } else {
+                        $error_count++;
+                    }
+                    continue;
+                }
+                
+                // If Non-conforme (N), save/update the entry
+                $compliant = 'N';
+                $c = (isset($_POST['c'][$student_id]) && $_POST['c'][$student_id] == 'Y') ? 'Y' : 'N';
+                $m = (isset($_POST['m'][$student_id]) && $_POST['m'][$student_id] == 'Y') ? 'Y' : 'N';
+                $t = (isset($_POST['t'][$student_id]) && $_POST['t'][$student_id] == 'Y') ? 'Y' : 'N';
+                
+                // Check if entry exists
+                $check_sql = "SELECT ID FROM habillement 
+                             WHERE STUDENT_ID = " . $student_id . " 
+                             AND SCHOOL_ID = '" . UserSchool() . "'
+                             AND SYEAR = '" . UserSyear() . "'
+                             AND WEEK_START = '" . $week_start . "'";
+                
+                $existing = DBGet(DBQuery($check_sql));
+                
+                if($existing && count($existing) > 0){
+                    // Update existing entry - UPDATED_AT set to NOW()
+                    $update_sql = "UPDATE habillement SET 
+                                  COMPLIANT = '" . $compliant . "',
+                                  C = '" . $c . "',
+                                  M = '" . $m . "',
+                                  T = '" . $t . "',
+                                  WEEK_END = '" . $week_end . "',
+                                  UPDATED_AT = NOW(),
+                                  UPDATED_BY = '" . User('STAFF_ID') . "'
+                                  WHERE ID = " . intval($existing[1]['ID']);
+                    
+                    if(DBQuery($update_sql)){
+                        $success_count++;
+                    } else {
+                        $error_count++;
+                    }
+                } else {
+                    // Insert new entry - CREATED_AT and UPDATED_AT both set to NOW()
+                    $insert_sql = "INSERT INTO habillement 
+                                  (STUDENT_ID, SCHOOL_ID, SYEAR, WEEK_START, WEEK_END, COMPLIANT, C, M, T, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY)
+                                  VALUES (
+                                      " . $student_id . ",
+                                      '" . UserSchool() . "',
+                                      '" . UserSyear() . "',
+                                      '" . $week_start . "',
+                                      '" . $week_end . "',
+                                      '" . $compliant . "',
+                                      '" . $c . "',
+                                      '" . $m . "',
+                                      '" . $t . "',
+                                      NOW(),
+                                      '" . User('STAFF_ID') . "',
+                                      NOW(),
+                                      '" . User('STAFF_ID') . "'
+                                  )";
+                    
+                    if(DBQuery($insert_sql)){
+                        $success_count++;
+                    } else {
+                        $error_count++;
+                    }
+                }
+            }
+        }
+        
+        // Show success message
+        if($error_count == 0 && $success_count > 0){
+            $message = $success_count . ' enregistrement(s) sauvegardé(s) avec succès!';
+            if($deleted_count > 0){
+                $message .= ' (' . $deleted_count . ' marqué(s) comme conforme)';
+            }
+            echo '<div class="alert alert-success alert-styled-left alert-dismissible">';
+            echo '<button type="button" class="close" data-dismiss="alert"><span>×</span></button>';
+            echo '<i class="icon-checkmark-circle"></i> ' . $message;
+            echo '</div>';
+        } elseif($error_count > 0){
+            echo '<div class="alert alert-warning alert-styled-left alert-dismissible">';
+            echo '<button type="button" class="close" data-dismiss="alert"><span>×</span></button>';
+            echo '<i class="icon-warning"></i> ' . $success_count . ' succès, ' . $error_count . ' erreur(s)';
+            echo '</div>';
+        } elseif($success_count == 0 && $error_count == 0){
+            echo '<div class="alert alert-info alert-styled-left alert-dismissible">';
+            echo '<button type="button" class="close" data-dismiss="alert"><span>×</span></button>';
+            echo '<i class="icon-info"></i> Aucune modification détectée.';
+            echo '</div>';
+        }
+    }
+}
+
+if(User('PROFILE') == 'teacher'){
+    edit_habillement();
+    return;
+}
 
 // Get current week or selected week
 if (isset($_REQUEST['week_start'])) {
@@ -55,13 +186,12 @@ if(! $_REQUEST['_openSIS_PDF']){
     echo 'Semaine suivante <i class="icon-arrow-right14"></i></a>';
     echo '</div>';
     echo '</div>';
-    echo '<h4 class="text-center m-b-20"><strong>Rapport Habillement Libre - Semaine du ' . $week_start_display . ' au ' . $week_end_display . '</strong></h4>';
+    echo '<h4 class="text-center m-b-20"><strong>Rapport Habillement Non-Conforme - Semaine du ' . $week_start_display . ' au ' . $week_end_display . '</strong></h4>';
     echo '</div>';
     echo '</div>';
 }
 
-// Query to get compliant students (students WITHOUT a non-compliant record)
-// This gets all enrolled students who don't have a non-compliant entry for this week
+// Query to get non-compliant students WITH their C, M, T status
 $sql = "SELECT 
     s.STUDENT_ID,
     s.FIRST_NAME,
@@ -72,34 +202,37 @@ $sql = "SELECT
     sg.SHORT_NAME AS GRADE_SHORT,
     sg.SORT_ORDER,
     se.START_DATE,
-    se.END_DATE
+    se.END_DATE,
+    h.CREATED_AT,
+    h.C,
+    h.M,
+    h.T
 FROM students s
 INNER JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID 
     AND se.SYEAR = '" . UserSyear() . "'
     AND se.SCHOOL_ID = '" . UserSchool() . "'
     AND '" . $week_start . "' BETWEEN se.START_DATE AND COALESCE(se.END_DATE, '" . $week_start . "')
 LEFT JOIN school_gradelevels sg ON se.GRADE_ID = sg.ID
-LEFT JOIN habillement h ON s.STUDENT_ID = h.STUDENT_ID
+INNER JOIN habillement h ON s.STUDENT_ID = h.STUDENT_ID
     AND h.SCHOOL_ID = '" . UserSchool() . "'
     AND h.SYEAR = '" . UserSyear() . "'
     AND h.WEEK_START = '" . $week_start . "'
     AND h.COMPLIANT = 'N'
 WHERE (s.is_disable IS NULL OR s.is_disable = '' OR s.is_disable = '0' OR s.is_disable = 'N' OR s.is_disable = 'No')
-    AND h.STUDENT_ID IS NULL
     AND sg.SORT_ORDER >= 8
 ORDER BY sg.SORT_ORDER, s.LAST_NAME, s.FIRST_NAME";
 
-$compliant_RET = DBGet(DBQuery($sql));
+$no_entry_RET = DBGet(DBQuery($sql));
 
-// Count total compliant students
-$total_count = is_countable($compliant_RET) ? count($compliant_RET) : 0;
+// Count total non-compliant students
+$total_count = is_countable($no_entry_RET) ? count($no_entry_RET) : 0;
 
 // Display summary
-if(! $_REQUEST['_openSIS_PDF']){
+if(! $_REQUEST['_openSIS_PDF'] && $total_count){
     echo '<div class="row m-b-10 no-print">';
     echo '<div class="col-md-12">';
-    echo '<div class="alert alert-success">';
-    echo '<i class=""></i> <strong>' . $total_count . '</strong> étudiants pour cette semaine';
+    echo '<div class="alert alert-danger">';
+    echo '<i class=""></i> <strong>' . $total_count . '</strong> étudiants non-conformes pour cette semaine';
     echo '</div>';
     echo '</div>';
     echo '</div>';
@@ -108,7 +241,7 @@ if(! $_REQUEST['_openSIS_PDF']){
 if ($total_count > 0) {
     // Group students by grade level
     $students_by_grade = array();
-    foreach ($compliant_RET as $student) {
+    foreach ($no_entry_RET as $student) {
         $grade_id = $student['GRADE_ID'];
         if (!isset($students_by_grade[$grade_id])) {
             $students_by_grade[$grade_id] = array(
@@ -152,25 +285,50 @@ if ($total_count > 0) {
         echo '<thead>';
         echo '<tr>';
         echo '<th style="width: 50px;"></th>';
-        echo '<th>Nom</th>';
-        echo '<th>Prénom</th>';
+        echo '<th>Nom Complet</th>';
         echo '<th>ID Étudiant</th>';
-        // echo '<th>Date</th>';
-        echo '<th class="text-center"></th>';
+        echo '<th class="text-center" style="width: 80px;">C<br><small>Comportement</small></th>';
+        echo '<th class="text-center" style="width: 80px;">M<br><small>Matériel</small></th>';
+        echo '<th class="text-center" style="width: 80px;">T<br><small>Travaux</small></th>';
         echo '</tr>';
         echo '</thead>';
         echo '<tbody>';
         
         $counter = 1;
         foreach ($grade_data['STUDENTS'] as $student) {
+            $full_name = $student['FIRST_NAME'] . ' ' . $student['LAST_NAME'];
             echo '<tr>';
             echo '<td><i>' . $counter . '</i></td>';
-            echo '<td><strong>' . $student['LAST_NAME'] . '</strong></td>';
-            echo '<td><strong>' . $student['FIRST_NAME'] . '</strong></td>';
+            echo '<td><strong>' . htmlspecialchars($full_name) . '</strong></td>';
             echo '<td>' . $student['STUDENT_ID'] . '</td>';
-            // echo '<td>' . date('d/m/y', $student['CREATED_AT']) . '</td>';
-            echo '<td>';
+            
+            // Display C status
+            echo '<td class="text-center">';
+            if($student['C'] == 'Y'){
+                echo '<span class="status-indicator status-yes">✓</span>';
+            } else {
+                echo '<span class="status-indicator status-no">—</span>';
+            }
             echo '</td>';
+            
+            // Display M status
+            echo '<td class="text-center">';
+            if($student['M'] == 'Y'){
+                echo '<span class="status-indicator status-yes">✓</span>';
+            } else {
+                echo '<span class="status-indicator status-no">—</span>';
+            }
+            echo '</td>';
+            
+            // Display T status
+            echo '<td class="text-center">';
+            if($student['T'] == 'Y'){
+                echo '<span class="status-indicator status-yes">✓</span>';
+            } else {
+                echo '<span class="status-indicator status-no">—</span>';
+            }
+            echo '</td>';
+            
             echo '</tr>';
             $counter++;
         }
@@ -182,8 +340,8 @@ if ($total_count > 0) {
     }
     
 } else {
-    echo '<div class="alert alert-info text-center">';
-    echo '<i class="icon-info"></i> Aucun étudiant trouvé pour cette semaine.';
+    echo '<div class="alert alert-success text-center">';
+    echo '<i class="icon-checkmark"></i> Aucun étudiant non-conforme pour cette semaine.';
     echo '</div>';
 }
 
@@ -202,20 +360,23 @@ if (isset($_REQUEST['export']) && $_REQUEST['export'] == 'csv') {
         se.GRADE_ID,
         sg.TITLE AS GRADE_TITLE,
         sg.SHORT_NAME AS GRADE_SHORT,
-        sg.SORT_ORDER
+        sg.SORT_ORDER,
+        h.CREATED_AT,
+        h.C,
+        h.M,
+        h.T
     FROM students s
     INNER JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID 
         AND se.SYEAR = '" . UserSyear() . "'
         AND se.SCHOOL_ID = '" . UserSchool() . "'
         AND '" . $week_start_export . "' BETWEEN se.START_DATE AND COALESCE(se.END_DATE, '" . $week_start_export . "')
     LEFT JOIN school_gradelevels sg ON se.GRADE_ID = sg.ID
-    LEFT JOIN habillement h ON s.STUDENT_ID = h.STUDENT_ID
+    INNER JOIN habillement h ON s.STUDENT_ID = h.STUDENT_ID
         AND h.SCHOOL_ID = '" . UserSchool() . "'
         AND h.SYEAR = '" . UserSyear() . "'
         AND h.WEEK_START = '" . $week_start_export . "'
         AND h.COMPLIANT = 'N'
     WHERE (s.is_disable IS NULL OR s.is_disable = '' OR s.is_disable = '0' OR s.is_disable = 'N' OR s.is_disable = 'No')
-        AND h.STUDENT_ID IS NULL
         AND sg.SORT_ORDER >= 8
     ORDER BY sg.SORT_ORDER, s.LAST_NAME, s.FIRST_NAME";
     
@@ -223,7 +384,7 @@ if (isset($_REQUEST['export']) && $_REQUEST['export'] == 'csv') {
     
     if (is_countable($export_data) && count($export_data) > 0) {
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename=habillement_conforme_' . $week_start_export . '.csv');
+        header('Content-Disposition: attachment; filename=habillement_non_conforme_' . $week_start_export . '.csv');
         
         $output = fopen('php://output', 'w');
         
@@ -231,23 +392,501 @@ if (isset($_REQUEST['export']) && $_REQUEST['export'] == 'csv') {
         fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
         
         // Headers
-        fputcsv($output, array('ID Étudiant', 'Nom', 'Prénom', 'Niveau', 'Semaine du', 'Semaine au'), ';');
+        fputcsv($output, array('ID Étudiant', 'Nom Complet', 'Niveau', 'Semaine du', 'Semaine au', 'C', 'M', 'T'), ';');
         
         // Data
         foreach ($export_data as $row) {
+            $full_name = $row['FIRST_NAME'] . ' ' . $row['LAST_NAME'];
             fputcsv($output, array(
                 $row['STUDENT_ID'],
-                $row['LAST_NAME'],
-                $row['FIRST_NAME'],
+                $full_name,
                 $row['GRADE_TITLE'] ? $row['GRADE_TITLE'] : 'Non assigné',
                 date('d/m/Y', strtotime($week_start_export)),
-                date('d/m/Y', strtotime($week_end_export))
+                date('d/m/Y', strtotime($week_end_export)),
+                $row['C'] == 'Y' ? 'Oui' : 'Non',
+                $row['M'] == 'Y' ? 'Oui' : 'Non',
+                $row['T'] == 'Y' ? 'Oui' : 'Non'
             ), ';');
         }
         
         fclose($output);
         exit;
     }
+}
+
+// ========================================
+// TEACHER FUNCTIONS
+// ========================================
+
+function edit_habillement(){
+    // Get current week or selected week
+    if (isset($_REQUEST['week_start'])) {
+        $week_start = $_REQUEST['week_start'];
+    } else {
+        $week_start = date('Y-m-d', strtotime('monday this week'));
+    }
+    $week_end = date('Y-m-d', strtotime('sunday this week', strtotime($week_start)));
+
+    // Handle week navigation
+    if (isset($_REQUEST['navigate'])) {
+        if ($_REQUEST['navigate'] == 'prev') {
+            $week_start = date('Y-m-d', strtotime($week_start . ' -7 days'));
+        } elseif ($_REQUEST['navigate'] == 'next') {
+            $week_start = date('Y-m-d', strtotime($week_start . ' +7 days'));
+        } elseif ($_REQUEST['navigate'] == 'current') {
+            $week_start = date('Y-m-d', strtotime('monday this week'));
+        }
+        $week_end = date('Y-m-d', strtotime('sunday this week', strtotime($week_start)));
+    }
+
+    // Format dates for display
+    $week_start_display = date('d/m/Y', strtotime($week_start));
+    $week_end_display = date('d/m/Y', strtotime($week_end));
+
+    echo '<div class="panel panel-default">';
+    echo '<div class="panel-body">';
+    
+    // Header with week navigation
+    echo '<div class="row no-print m-b-20">';
+    echo '<div class="col-md-12">';
+    echo '<div class="text-center">';
+    echo '<div class="btn-group" role="group">';
+    echo '<a href="Modules.php?modname=' . $_REQUEST['modname'] . '&navigate=prev&week_start=' . $week_start . '" class="btn btn-default">';
+    echo '<i class="icon-arrow-left13"></i> Semaine précédente</a>';
+    echo '<a href="Modules.php?modname=' . $_REQUEST['modname'] . '&navigate=current" class="btn btn-primary">';
+    echo '<i class="icon-calendar"></i> Semaine actuelle</a>';
+    echo '<a href="Modules.php?modname=' . $_REQUEST['modname'] . '&navigate=next&week_start=' . $week_start . '" class="btn btn-default">';
+    echo 'Semaine suivante <i class="icon-arrow-right14"></i></a>';
+    echo '</div>';
+    echo '</div>';
+    echo '<h4 class="text-center m-t-20"><strong>Gestion Habillement - Semaine du ' . $week_start_display . ' au ' . $week_end_display . '</strong></h4>';
+    echo '</div>';
+    echo '</div>';
+
+    // Get students for this teacher
+    $extra = array();
+    $extra['SELECT'] = ',s.STUDENT_ID AS STUDENT_ID';
+    $extra['ID'] = CpvId(); // Get current period value ID (class)
+    // Filter out disabled students
+    $extra['WHERE'] = "AND (s.is_disable IS NULL OR s.is_disable = '' OR s.is_disable = '0' OR s.is_disable = 'N' OR s.is_disable = 'No')";
+    
+    $stu_RET = GetStuListAttn($extra);
+
+    if (!$stu_RET || count($stu_RET) == 0) {
+        echo '<div class="alert alert-info">';
+        echo '<i class="icon-info"></i> Aucun étudiant trouvé pour votre classe.';
+        echo '</div>';
+        echo '</div></div>';
+        return;
+    }
+
+    // Get existing habillement entries for this week
+    $student_ids = array_column($stu_RET, 'STUDENT_ID');
+    $student_ids_str = implode(',', $student_ids);
+
+    $sql = "SELECT 
+        h.STUDENT_ID,
+        h.COMPLIANT,
+        h.C,
+        h.M,
+        h.T,
+        h.CREATED_AT,
+        h.UPDATED_AT
+    FROM habillement h
+    WHERE h.STUDENT_ID IN (" . $student_ids_str . ")
+        AND h.SCHOOL_ID = '" . UserSchool() . "'
+        AND h.SYEAR = '" . UserSyear() . "'
+        AND h.WEEK_START = '" . $week_start . "'";
+
+    $habillement_data = DBGet(DBQuery($sql));
+    
+    // Index by student ID for easy lookup
+    $habillement_by_student = array();
+    if ($habillement_data) {
+        foreach ($habillement_data as $row) {
+            $habillement_by_student[$row['STUDENT_ID']] = $row;
+        }
+    }
+
+    // Display form
+    echo '<form id="habillementForm" method="post" action="Modules.php?modname=' . $_REQUEST['modname'] . '&week_start=' . $week_start . '">';
+    echo '<input type="hidden" name="save_habillement" value="1">';
+    echo '<input type="hidden" name="week_start" value="' . $week_start . '">';
+    
+    echo '<div class="table-responsive">';
+    echo '<table class="table table-striped table-hover">';
+    echo '<thead>';
+    echo '<tr>';
+    echo '<th style="width: 50px;">#</th>';
+    echo '<th>Nom complet</th>';
+    echo '<th>ID Étudiant</th>';
+    echo '<th style="width: 150px;">Statut</th>';
+    echo '<th style="width: 100px; text-align: center;">C<br><small>Comportement</small></th>';
+    echo '<th style="width: 100px; text-align: center;">M<br><small>Matériel oublié</small></th>';
+    echo '<th style="width: 100px; text-align: center;">T<br><small>Travaux non-faits</small></th>';
+    echo '</tr>';
+    echo '</thead>';
+    echo '<tbody>';
+
+    $counter = 1;
+    foreach ($stu_RET as $student) {
+        $student_id = $student['STUDENT_ID'];
+        $full_name = $student['FIRST_NAME'] . ' ' . $student['LAST_NAME'];
+        
+        // Get existing data - default to 'Y' (Conforme)
+        $existing = isset($habillement_by_student[$student_id]) ? $habillement_by_student[$student_id] : null;
+        $compliant = $existing ? $existing['COMPLIANT'] : 'Y';
+        $c_checked = $existing && $existing['C'] == 'Y' ? true : false;
+        $m_checked = $existing && $existing['M'] == 'Y' ? true : false;
+        $t_checked = $existing && $existing['T'] == 'Y' ? true : false;
+
+        echo '<tr class="student-row" data-student-id="' . $student_id . '">';
+        echo '<td>' . $counter . '</td>';
+        echo '<td><strong>' . htmlspecialchars($full_name) . '</strong></td>';
+        echo '<td>' . $student_id . '</td>';
+        echo '<td>';
+        echo '<select class="form-control compliant-select" name="compliant[' . $student_id . ']" data-student-id="' . $student_id . '">';
+        echo '<option value="Y"' . ($compliant == 'Y' ? ' selected' : '') . '>✓ Conforme</option>';
+        echo '<option value="N"' . ($compliant == 'N' ? ' selected' : '') . '>✗ Non-conforme</option>';
+        echo '</select>';
+        echo '</td>';
+        echo '<td style="text-align: center;">';
+        echo '<input type="checkbox" class="reason-checkbox" name="c[' . $student_id . ']" value="Y" ';
+        echo 'data-student-id="' . $student_id . '" data-type="C" ';
+        echo ($c_checked ? 'checked ' : '');
+        echo 'style="' . ($compliant != 'N' ? 'opacity: 0.3; pointer-events: none;' : '') . '">';
+        echo '</td>';
+        echo '<td style="text-align: center;">';
+        echo '<input type="checkbox" class="reason-checkbox" name="m[' . $student_id . ']" value="Y" ';
+        echo 'data-student-id="' . $student_id . '" data-type="M" ';
+        echo ($m_checked ? 'checked ' : '');
+        echo 'style="' . ($compliant != 'N' ? 'opacity: 0.3; pointer-events: none;' : '') . '">';
+        echo '</td>';
+        echo '<td style="text-align: center;">';
+        echo '<input type="checkbox" class="reason-checkbox" name="t[' . $student_id . ']" value="Y" ';
+        echo 'data-student-id="' . $student_id . '" data-type="T" ';
+        echo ($t_checked ? 'checked ' : '');
+        echo 'style="' . ($compliant != 'N' ? 'opacity: 0.3; pointer-events: none;' : '') . '">';
+        echo '</td>';
+        echo '</tr>';
+
+        $counter++;
+    }
+
+    echo '</tbody>';
+    echo '</table>';
+    echo '</div>';
+
+    echo '<div class="text-center m-t-20">';
+    echo '<button type="button" id="saveButton" class="btn btn-success btn-lg">';
+    echo '<i class="icon-checkmark"></i> Enregistrer toutes les modifications';
+    echo '</button>';
+    echo '</div>';
+
+    echo '</form>';
+    echo '</div></div>';
+
+    // Add JavaScript for form handling
+    ?>
+    <script>
+    jQuery(document).ready(function($) {
+        // Track modified students
+        var modifiedStudents = new Set();
+        
+        // Store initial state for each student
+        var initialState = {};
+        $('.student-row').each(function() {
+            var studentId = $(this).data('student-id');
+            var $select = $('.compliant-select[data-student-id="' + studentId + '"]');
+            var compliant = $select.val();
+            var c = $('.reason-checkbox[data-student-id="' + studentId + '"][data-type="C"]').is(':checked');
+            var m = $('.reason-checkbox[data-student-id="' + studentId + '"][data-type="M"]').is(':checked');
+            var t = $('.reason-checkbox[data-student-id="' + studentId + '"][data-type="T"]').is(':checked');
+            
+            initialState[studentId] = {
+                compliant: compliant,
+                c: c,
+                m: m,
+                t: t
+            };
+        });
+        
+        // Function to check if student data has changed
+        function hasChanged(studentId) {
+            var current = {
+                compliant: $('.compliant-select[data-student-id="' + studentId + '"]').val(),
+                c: $('.reason-checkbox[data-student-id="' + studentId + '"][data-type="C"]').is(':checked'),
+                m: $('.reason-checkbox[data-student-id="' + studentId + '"][data-type="M"]').is(':checked'),
+                t: $('.reason-checkbox[data-student-id="' + studentId + '"][data-type="T"]').is(':checked')
+            };
+            
+            var initial = initialState[studentId];
+            
+            return current.compliant !== initial.compliant ||
+                current.c !== initial.c ||
+                current.m !== initial.m ||
+                current.t !== initial.t;
+        }
+        
+        // Function to update modified students list
+        function updateModifiedList(studentId) {
+            if (hasChanged(studentId)) {
+                modifiedStudents.add(studentId);
+                // Add visual indicator
+                $('.student-row[data-student-id="' + studentId + '"]').addClass('modified-row');
+            } else {
+                modifiedStudents.delete(studentId);
+                // Remove visual indicator
+                $('.student-row[data-student-id="' + studentId + '"]').removeClass('modified-row');
+            }
+            
+            // Update hidden input with modified students
+            updateHiddenInput();
+            
+            // Update save button text
+            updateSaveButtonText();
+        }
+        
+        // Function to update hidden input
+        function updateHiddenInput() {
+            var $hidden = $('#modified_students');
+            if ($hidden.length === 0) {
+                $hidden = $('<input type="hidden" id="modified_students" name="modified_students">');
+                $('#habillementForm').append($hidden);
+            }
+            $hidden.val(Array.from(modifiedStudents).join(','));
+        }
+        
+        // Function to update save button text
+        function updateSaveButtonText() {
+            var count = modifiedStudents.size;
+            var $button = $('#saveButton');
+            
+            if (count === 0) {
+                $button.html('<i class="icon-checkmark"></i> Aucune modification à enregistrer');
+                $button.prop('disabled', true);
+            } else {
+                $button.html('<i class="icon-checkmark"></i> Enregistrer ' + count + ' modification(s)');
+                $button.prop('disabled', false);
+            }
+        }
+        
+        // Function to update select styling based on value
+        function updateSelectStyling(selectElement) {
+            var $select = $(selectElement);
+            var value = $select.val();
+            
+            // Remove existing classes
+            $select.removeClass('status-conforme status-non-conforme');
+            
+            // Add appropriate class
+            if (value === 'Y') {
+                $select.addClass('status-conforme');
+            } else if (value === 'N') {
+                $select.addClass('status-non-conforme');
+            }
+        }
+        
+        // Enable/disable checkboxes based on compliance status
+        $('.compliant-select').on('change', function() {
+            var studentId = $(this).data('student-id');
+            var compliant = $(this).val();
+            var checkboxes = $('.reason-checkbox[data-student-id="' + studentId + '"]');
+            
+            // Update select styling
+            updateSelectStyling(this);
+            
+            if (compliant === 'N') {
+                checkboxes.css({
+                    'opacity': '1',
+                    'pointer-events': 'auto'
+                });
+            } else {
+                // Uncheck and visually disable (but don't use disabled attribute)
+                checkboxes.prop('checked', false);
+                checkboxes.css({
+                    'opacity': '0.3',
+                    'pointer-events': 'none'
+                });
+                // Remove red background from table cells
+                checkboxes.closest('td').css('background-color', '');
+            }
+            
+            // Track modification
+            updateModifiedList(studentId);
+        });
+
+        // Initialize disabled state and styling on page load
+        $('.student-row').each(function() {
+            var studentId = $(this).data('student-id');
+            var $select = $('.compliant-select[data-student-id="' + studentId + '"]');
+            var compliant = $select.val();
+            
+            // Update select styling
+            updateSelectStyling($select[0]);
+            
+            if (compliant !== 'N') {
+                $('.reason-checkbox[data-student-id="' + studentId + '"]').css({
+                    'opacity': '0.3',
+                    'pointer-events': 'none'
+                });
+            }
+        });
+        
+        // Add visual feedback for checkbox changes
+        $('.reason-checkbox').on('change', function() {
+            var $checkbox = $(this);
+            var $td = $checkbox.closest('td');
+            var studentId = $checkbox.data('student-id');
+            
+            if ($checkbox.is(':checked')) {
+                $td.css('background-color', '#fee');
+            } else {
+                $td.css('background-color', '');
+            }
+            
+            // Track modification
+            updateModifiedList(studentId);
+        });
+
+        // Initialize save button state
+        updateSaveButtonText();
+
+        // Save button handler - just submit the form
+        $('#saveButton').on('click', function(e) {
+            e.preventDefault();
+            
+            if (modifiedStudents.size === 0) {
+                return; // Don't submit if no changes
+            }
+            
+            var button = $(this);
+            button.prop('disabled', true);
+            button.html('<i class="icon-spinner2 spinner"></i> Enregistrement...');
+            
+            // Submit the form normally
+            $('#habillementForm').submit();
+        });
+    });
+    </script>
+
+    <style>
+    /* Status dropdown styling - green for Conforme, red for Non-conforme */
+    .compliant-select {
+        font-weight: 500;
+        transition: all 0.3s ease;
+        padding: 3px 5px;
+        height: 28px;
+        width: auto;
+        border-radius: 6px;
+        font-size: 13px;
+        border: none;
+        border-color: #000000ff;
+    }
+
+    /* Default state - Conforme (Green) */
+    .compliant-select.status-conforme {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+    }
+
+    /* Non-conforme state (Red) */
+    .compliant-select.status-non-conforme {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #dc3545;
+    }
+
+    /* Checkbox styling - red when checked */
+    .reason-checkbox {
+        width: 15px;
+        height: 15px;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+        accent-color: #dc3545;
+    }
+
+    .reason-checkbox:disabled {
+        cursor: not-allowed;
+    }
+
+    /* Additional styling for better visual feedback */
+    .reason-checkbox:checked {
+        filter: brightness(1.1);
+    }
+
+    /* Table cell for checkboxes - add subtle background when checked */
+    td:has(.reason-checkbox:checked) {
+        background-color: #fee;
+    }
+
+    /* Visual indicator for modified rows */
+    .modified-row {
+        border-left: 3px solid #ffc107;
+        background-color: #fffbf0;
+    }
+
+    .modified-row:hover {
+        background-color: #fff8e1 !important;
+    }
+    
+    .student-row {
+        transition: background-color 0.2s ease;
+    }
+    
+    .student-row:hover {
+        background-color: #f5f5f5;
+    }
+
+    table th small {
+        font-weight: normal;
+        font-size: 11px;
+        color: #666;
+        display: block;
+        margin-top: 2px;
+    }
+
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .btn-success {
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+    
+    /* Style for table headers with reasons */
+    .table > thead > tr > th small {
+        display: block;
+        font-size: 10px;
+        font-weight: normal;
+        text-transform: none;
+        margin-top: 2px;
+        color: #6c757d;
+    }
+    
+    /* Status indicators for non-teacher view */
+    .status-indicator {
+        display: inline-block;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .status-yes {
+        color: #dc3545;
+    }
+    
+    .status-no {
+        color: #999;
+    }
+    </style>
+    <?php
 }
 
 ?>
@@ -270,9 +909,6 @@ function printGradeLevel(gradeId, gradeTitle) {
         element.remove();
     });
     
-    // // Create a new window for printing
-    // var printWindow = window.open('', '_blank');
-    
     // Get dates from PHP
     var weekStartDisplay = '<?php echo addslashes($week_start_display); ?>';
     var weekEndDisplay = '<?php echo addslashes($week_end_display); ?>';
@@ -282,100 +918,55 @@ function printGradeLevel(gradeId, gradeTitle) {
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Rapport Habillement Libre - ${gradeTitle}</title>
+            <title>Rapport Habillement Non-Conforme - ${gradeTitle}</title>
             <style>
-                /* ========================================
-                   BASIC LAYOUT
-                   ======================================== */
                 body {
                     font-family: Arial, sans-serif;
                     margin: 20px;
                     padding: 0;
                 }
                 
-                /* ========================================
-                   PRINT BUTTONS
-                   ======================================== */
-                           
-                        .print-toolbar {
-                            background: #f8f9fa;
-                            border-bottom: 2px solid #dee2e6;
-                            padding: 15px 20px;
-                            position: sticky;
-                            top: 0;
-                            z-index: 1000;
-                            display: flex;
-                            justify-content: center;  /* CENTERED */
-                            align-items: center;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        }
-                        
-                        .print-toolbar h2 {
-                            margin: 0;
-                            font-size: 1.5em;
-                            color: #333;
-                        }
-                        
-                        .print-toolbar button {
-                            background: #5c96d4ff;
-                            color: white;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 14px;
-                            margin-left: 10px;
-                            font-weight: 500;
-                        }
-                        
-                        .print-toolbar button:hover {
-                            background: #558ac2ff;
-                        }
-                        
-                        .print-toolbar button.close-btn {
-                            background: #dc3545;
-                        }
-                        
-                        .print-toolbar button.close-btn:hover {
-                            background: #c82333;
-                        }
-                        
-                        
-                .print-buttons {
-                    text-align: center;
-                    margin-bottom: 20px;
-                    padding: 15px;
-                    background-color: #f8f9fa;
-                    border-radius: 4px;
+                .print-toolbar {
+                    background: #f8f9fa;
+                    border-bottom: 2px solid #dee2e6;
+                    padding: 15px 20px;
+                    position: sticky;
+                    top: 0;
+                    z-index: 1000;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                 }
                 
-                .print-buttons button {
-                    padding: 10px 20px;
-                    margin: 0 10px;
-                    font-size: 14px;
-                    font-weight: 500;
+                .print-toolbar h2 {
+                    margin: 0;
+                    font-size: 1.5em;
+                    color: #333;
+                }
+                
+                .print-toolbar button {
+                    background: #5c96d4ff;
+                    color: white;
                     border: none;
+                    padding: 10px 20px;
                     border-radius: 4px;
                     cursor: pointer;
-                    transition: all 0.2s ease;
+                    font-size: 14px;
+                    margin-left: 10px;
+                    font-weight: 500;
                 }
                 
-                .btn-print {
-                    background-color: #5090C1;
-                    color: white;
+                .print-toolbar button:hover {
+                    background: #558ac2ff;
                 }
                 
-                .btn-print:hover {
-                    background-color: #1677c6;
+                .print-toolbar button.close-btn {
+                    background: #dc3545;
                 }
                 
-                .btn-close {
-                    background-color: #d90e0eff;
-                    color: white;
-                }
-                
-                .btn-close:hover {
-                    background-color: #b21e1eff;
+                .print-toolbar button.close-btn:hover {
+                    background: #c82333;
                 }
                 
                 h3 {
@@ -383,9 +974,6 @@ function printGradeLevel(gradeId, gradeTitle) {
                     margin-bottom: 20px;
                 }
                 
-                /* ========================================
-                   PANEL & HEADER
-                   ======================================== */
                 .panel-heading {
                     background-color: rgb(214, 216, 224);
                     padding: 15px;
@@ -399,9 +987,6 @@ function printGradeLevel(gradeId, gradeTitle) {
                     color: #000;
                 }
                 
-                /* ========================================
-                   TABLE STYLING
-                   ======================================== */
                 table {
                     width: 100%;
                     border-collapse: collapse;
@@ -427,9 +1012,6 @@ function printGradeLevel(gradeId, gradeTitle) {
                     background-color: #f9f9f9;
                 }
                 
-                /* ========================================
-                   UTILITIES
-                   ======================================== */
                 .badge {
                     background-color: rgb(214, 216, 224);
                     color: #000;
@@ -448,11 +1030,37 @@ function printGradeLevel(gradeId, gradeTitle) {
                     clear: both;
                 }
                 
-                /* ========================================
-                   PRINT STYLES
-                   ======================================== */
+                .text-center {
+                    text-align: center;
+                }
+                
+                .status-indicator {
+                    display: inline-block;
+                    font-size: 18px;
+                    font-weight: bold;
+                }
+                
+                .status-yes {
+                    color: #dc3545;
+                }
+                
+                .status-no {
+                    color: #999;
+                }
+                
+                th small {
+                    display: block;
+                    font-size: 10px;
+                    font-weight: normal;
+                    margin-top: 2px;
+                    color: #666;
+                }
+                
+                .text-center {
+                    text-align: center;
+                }
+                
                 @media print {
-                    /* Masquer TOUS les éléments non nécessaires */
                     .btn,
                     button,
                     .print-toolbar,
@@ -468,23 +1076,23 @@ function printGradeLevel(gradeId, gradeTitle) {
                         display: none !important;
                     }
                     
-                    /* Configuration de la page */
                     @page {
                         size: A4 landscape;
                         margin: 8mm 5mm;
                     }
-                        </style>
+                }
+            </style>
         </head>
         <body>
             <div class="print-toolbar">
-                <button  onclick="window.print()">
+                <button onclick="window.print()">
                     🖨️ Imprimer
                 </button>
                 <button class="close-btn" onclick="window.close()">
                     ✕ Fermer
                 </button>
             </div>
-            <h3>Rapport Habillement Libre - Semaine du ${weekStartDisplay} au ${weekEndDisplay}</h3>
+            <h3>Rapport Habillement Non-Conforme - Semaine du ${weekStartDisplay} au ${weekEndDisplay}</h3>
             ${clonedSection.outerHTML}
         </body>
         </html>
@@ -496,10 +1104,6 @@ function printGradeLevel(gradeId, gradeTitle) {
 </script>
 
 <style>
-/* ========================================
-   MAIN LAYOUT & PANELS
-   ======================================== */
-
 .panel.panel-default {
     border: none;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
@@ -530,10 +1134,6 @@ function printGradeLevel(gradeId, gradeTitle) {
     color: #000;
 }
 
-/* ========================================
-   TABLE STYLING
-   ======================================== */
-
 .table-responsive {
     border: none;
 }
@@ -563,7 +1163,6 @@ function printGradeLevel(gradeId, gradeTitle) {
     width: 150px;
 }
 
-/* First column (number) styling */
 .table > tbody > tr > td:first-child,
 .table > thead > tr > th:first-child {
     color: #666869;
@@ -572,12 +1171,10 @@ function printGradeLevel(gradeId, gradeTitle) {
     text-align: center;
 }
 
-/* Student name styling */
 .table > tbody > tr > td:nth-child(2) strong {
     font-weight: 600;
 }
 
-/* Student ID styling */
 .table > tbody > tr > td:nth-child(4) {
     font-family: 'Courier New', monospace;
     color: #6c757d;
@@ -587,10 +1184,6 @@ function printGradeLevel(gradeId, gradeTitle) {
 .table-hover > tbody > tr:hover {
     transition: background-color 0.2s ease;
 }
-
-/* ========================================
-   BUTTONS & NAVIGATION
-   ======================================== */
 
 .btn-group .btn {
     padding: 8px 16px;
@@ -629,10 +1222,6 @@ function printGradeLevel(gradeId, gradeTitle) {
     background-color: #1677c6 !important;  
 }
 
-/* ========================================
-   BADGES & ALERTS
-   ======================================== */
-
 .badge {
     display: inline-block;
     padding: 4px 8px;
@@ -655,6 +1244,14 @@ function printGradeLevel(gradeId, gradeTitle) {
     border-radius: 4px;
 }
 
+.alert-danger {
+    background-color: #F8D7DA;
+    border: 1px solid #F5C2C7;
+    border-left: 4px solid #DC3545;
+    color: #842029;
+    border-radius: 4px;
+}
+
 .alert-success {
     background-color: #5090C1 !important;
     border: 1px solid #5090C1;
@@ -662,10 +1259,6 @@ function printGradeLevel(gradeId, gradeTitle) {
     color: #fff;
     border-radius: 4px;
 }
-
-/* ========================================
-   TYPOGRAPHY & LAYOUT
-   ======================================== */
 
 h4.text-center {
     color: #212529;
@@ -687,9 +1280,28 @@ h4.text-center {
     clear: both;
 }
 
-/* ========================================
-   RESPONSIVE DESIGN
-   ======================================== */
+.status-indicator {
+    display: inline-block;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.status-yes {
+    color: #dc3545;
+}
+
+.status-no {
+    color: #999;
+}
+
+.table > thead > tr > th small {
+    display: block;
+    font-size: 10px;
+    font-weight: normal;
+    text-transform: none;
+    margin-top: 2px;
+    color: #6c757d;
+}
 
 @media (max-width: 768px) {
     .table > thead > tr > th,
@@ -706,10 +1318,6 @@ h4.text-center {
         padding: 15px;
     }
 }
-
-/* ========================================
-   PRINT STYLES
-   ======================================== */
 
 @media print {
     .no-print,
@@ -729,7 +1337,7 @@ h4.text-center {
     
     table th:last-child,
     table td:last-child {
-        display: none !important;
+        display: table-cell !important;
     }
     
     body {
@@ -787,6 +1395,18 @@ h4.text-center {
     
     h4, h5 {
         color: #000 !important;
+    }
+    
+    .status-yes {
+        color: #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .status-no {
+        color: #999 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }
 </style>

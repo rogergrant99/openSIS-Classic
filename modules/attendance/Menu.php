@@ -46,6 +46,7 @@ $menu['attendance']['admin'] = array(
 
 $menu['attendance']['teacher'] = array(
 						'attendance/TakeAttendance.php'=>_takeAttendance,
+						'attendance/habillementReport.php'=>_habillement,
 						'attendance/DailySummary.php'=>_attendanceChart,
 						'attendance/StudentSummary.php'=>_absenceSummary,
 					);
