@@ -1,13 +1,16 @@
 <?php
 include('lang/language.php');
 include('../../RedirectModulesInc.php');
+
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ERROR | E_PARSE);
+
 session_start();
 DrawBC("" . _scheduling . " > " . ProgramTitle());
 
 global $course_period_id,$course_id;
 
-if(UserSyear() != date('Y'))
-    return;
 $user_course = UserCourse();
 if( $_REQUEST['print_admin']){
     $user_course = $_REQUEST['marking_period_id'];
