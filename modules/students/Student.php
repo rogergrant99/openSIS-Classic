@@ -2621,10 +2621,22 @@ if ($_REQUEST['category_id'] == 14) {
                                   WHERE STUDENT_ID = '" . UserStudentID() . "' 
                                   AND SCHOOL_ID = '" . UserSchool() . "'"));
     
-    // Parse JSON data
-    if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
-        $plan = json_decode(stripslashes($plan_result[1]['PLAN_DATA']), true) ?? [];
-    } else {
+// FIXED VERSION - Replace the JSON parsing section with this
+
+// Parse JSON data
+if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
+    $raw_json = $plan_result[1]['PLAN_DATA'];
+    
+    // Try decoding without stripslashes first (modern PHP)
+    $plan = json_decode($raw_json, true);
+    
+    // If that fails, try with stripslashes (for older systems with magic quotes)
+    if (!is_array($plan) || json_last_error() !== JSON_ERROR_NONE) {
+        $plan = json_decode(stripslashes($raw_json), true);
+    }
+    
+    // If still fails, initialize empty structure
+    if (!is_array($plan)) {
         $plan = [
             'informations' => [],
             'diagnostic' => ['diagnostics' => []],
@@ -2632,7 +2644,15 @@ if ($_REQUEST['category_id'] == 14) {
             'mesures_appui' => ['mesures' => []]
         ];
     }
-    
+} else {
+    $plan = [
+        'informations' => [],
+        'diagnostic' => ['diagnostics' => []],
+        'spheres' => ['spheres_problematiques' => []],
+        'mesures_appui' => ['mesures' => []]
+    ];
+}   
+ 
     // Prepare student info for display
     $nom_eleve = isset($student_info[1]) ? $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'] : '';
     $date_naissance = isset($student_info[1]['BIRTHDATE']) ? $student_info[1]['BIRTHDATE'] : '';
