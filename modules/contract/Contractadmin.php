@@ -279,24 +279,27 @@ function formatBytes($bytes, $precision = 2) {
             padding: 10px;
             border-bottom: 1px solid #dee2e6;
         }
-        td:last-child {
-            width: auto;
-        }
-
-        td .template-actions,
-        td > .btn-container {
-            display: flex;
-            gap: 6px;
-            flex-wrap: nowrap;
-        }
-
-        tbody td .btn {
-            flex: none;
+        td:first-child {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap;
-            min-width: 70px;
-            padding: 5px 8px;
         }
 
+        /* Increase actions column width and adjust button layout */
+        th:last-child,
+        td:last-child {
+            width: 280px;
+            white-space: nowrap;
+        }
+
+        /* Make buttons in table smaller and remove flex growth */
+        td .btn {
+            flex: none;
+            min-width: auto;
+            padding: 5px 8px;
+            font-size: 11px;
+        }        
         tbody tr:hover {
             background: #f8f9ff;
         }
