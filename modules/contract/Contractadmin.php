@@ -279,7 +279,24 @@ function formatBytes($bytes, $precision = 2) {
             padding: 10px;
             border-bottom: 1px solid #dee2e6;
         }
-        
+        td:last-child {
+            width: auto;
+        }
+
+        td .template-actions,
+        td > .btn-container {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        tbody td .btn {
+            flex: none;
+            white-space: nowrap;
+            min-width: 70px;
+            padding: 5px 8px;
+        }
+
         tbody tr:hover {
             background: #f8f9ff;
         }
