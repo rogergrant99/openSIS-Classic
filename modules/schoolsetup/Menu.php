@@ -31,6 +31,7 @@ $menu['schoolsetup']['admin'] = array(
 						'schoolsetup/MarkingPeriods.php'=>_markingPeriods,
 						'schoolsetup/Calendar.php'=>_calendars,
 						'schoolsetup/Periods.php'=>_periods,
+						'contract/Contractadmin.php'=>"Contrats",
 						'schoolsetup/GradeLevels.php'=>_gradeLevels,
                                                 'schoolsetup/Sections.php'=>_sections,
                                                 'schoolsetup/Rooms.php'=>_rooms,
@@ -62,7 +63,8 @@ $menu['schoolsetup']['teacher'] = array(
 
 $menu['schoolsetup']['parent'] = array(
 						'schoolsetup/Schools.php'=>_schoolInformation,
-						'schoolsetup/Calendar.php'=>_calendar
+						'schoolsetup/Calendar.php'=>_calendar,
+						'contract/Contract.php'=>"Contrats"
 					);
 
 $exceptions['schoolsetup'] = array(

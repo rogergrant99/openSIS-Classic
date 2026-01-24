@@ -734,42 +734,85 @@ function do_cado_bulletins(){
         padding: 5px;
         border-spacing: 15px;
       }
+      .bulletin-content {
+        display: none;
+      }
+      .bulletin-content.show {
+        display: block;
+      }
+      .bulletin-toggle {
+        cursor: pointer;
+        user-select: none;
+      }
+      .bulletin-toggle i {
+        transition: transform 0.3s ease;
+      }
+      .bulletin-toggle.expanded i {
+        transform: rotate(90deg);
+      }
     </style>
     ';
     echo '<div class="panel">';
-    DrawHeader('<span class="text-black">Bulletins: ');
-    foreach ($file_info as $key => $file_val) {
-        if ($gridClass == "even") {
-            $gridClass = "odd";
-        } else {
-            $gridClass = "even";
-        }
-        if ($file_val['NAME']) {
-            if ($file_val['NAME'] == '.' || $file_val['NAME'] == '..')
-                continue;
-            else {
-                $found = true;
-                $sub = $file_val['NAME'];
-                if (strstr($sub, '-_')) {
-                    $file_display = substr($sub, 0, strrpos($sub, '-_'));
-                } else {
-                    $file_display = $sub;
+    
+    // Create unique ID for this bulletin section
+    $bulletinId = 'bulletin-' . UserStudentID();
+    
+    DrawHeader('<span class="text-black bulletin-toggle" id="toggle-' . $bulletinId . '" onclick="toggleBulletin(\'' . $bulletinId . '\')"><i class="fa fa-chevron-right"></i> Bulletins (' . count($file_info) . ')</span>');
+    
+    echo '<div id="' . $bulletinId . '" class="bulletin-content">';
+    
+    if(count($file_info) > 0) {
+        foreach ($file_info as $key => $file_val) {
+            if ($gridClass == "even") {
+                $gridClass = "odd";
+            } else {
+                $gridClass = "even";
+            }
+            if ($file_val['NAME']) {
+                if ($file_val['NAME'] == '.' || $file_val['NAME'] == '..')
+                    continue;
+                else {
+                    $found = true;
+                    $sub = $file_val['NAME'];
+                    if (strstr($sub, '-_')) {
+                        $file_display = substr($sub, 0, strrpos($sub, '-_'));
+                    } else {
+                        $file_display = $sub;
+                    }
+                    $file = explode('.', $file_display);
+                    echo '<table class="myfiles"><tr><td>';
+                    echo '<a class="files" href="DownloadWindow.php?down_id=' . $file_val['DOWNLOAD_ID'] . '&studentfile=Y"><i class="fa fa-file-pdf-o"></i> &nbsp; '. str_replace("opensis_space_here", " ", str_replace(UserStudentID()."-","",$file_display)) . '</a>';
+                    echo '</td></tr></table>';
                 }
-                $file = explode('.', $file_display);
-                echo '<table class="myfiles"><tr><td>';
-                echo '<a class="files" href="DownloadWindow.php?down_id=' . $file_val['DOWNLOAD_ID'] . '&studentfile=Y"><i class="fa fa-file-pdf-o"></i> &nbsp; '. str_replace("opensis_space_here", " ", str_replace(UserStudentID()."-","",$file_display)) . '</a>';
-                echo '</td></tr></table>';
             }
         }
-    }
-    echo '</div>';
-    if(count($file_info)==0){
+    } else {
         echo '<table class="listing"><tr><td>';
         echo '<a class="files">' . _no_report_card_found . '</a>';
         echo '</td></tr></table>';
     }
+    
+    echo '</div>'; // Close bulletin-content
+    echo '</div>'; // Close panel
+    
+    // Add JavaScript for toggle functionality
+    echo '
+    <script>
+    function toggleBulletin(bulletinId) {
+        var content = document.getElementById(bulletinId);
+        var toggle = document.getElementById("toggle-" + bulletinId);
+        
+        if (content.classList.contains("show")) {
+            content.classList.remove("show");
+            toggle.classList.remove("expanded");
+        } else {
+            content.classList.add("show");
+            toggle.classList.add("expanded");
+        }
+    }
+    </script>
+    ';
 }
-
 function do_cado_events(){
             $events_RET = DBGet(DBQuery('SELECT ce.TITLE,ce.DESCRIPTION,ce.SCHOOL_DATE AS INDEX_DATE,ce.SCHOOL_DATE,s.TITLE AS SCHOOL 
                 FROM calendar_events ce,calendar_events_visibility cev,schools s
