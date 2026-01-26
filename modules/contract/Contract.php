@@ -122,6 +122,10 @@ if ($signedDir !== null) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Signature du contrat - École CADO</title>
+    <!-- Google Fonts for Signature -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Allura&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -183,6 +187,32 @@ if ($signedDir !== null) {
             font-size: 22px;
         }
         
+        .signature-mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        
         .signature-pad-container {
             border: 3px solid #667eea;
             border-radius: 10px;
@@ -198,6 +228,42 @@ if ($signedDir !== null) {
             border-radius: 5px;
             cursor: crosshair;
             touch-action: none;
+            display: block;
+        }
+        
+        #signature-pad.hidden {
+            display: none;
+        }
+        
+        .typed-signature-container {
+            display: none;
+            width: 100%;
+            min-height: 200px;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            background: white;
+        }
+        
+        .typed-signature-container.active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #typed-signature-input {
+            font-family: 'Great Vibes', 'Allura', 'Dancing Script', 'Brush Script MT', cursive;
+            font-size: 52px;
+            border: none;
+            border-bottom: 2px solid #667eea;
+            text-align: center;
+            padding: 10px;
+            width: 80%;
+            max-width: 500px;
+            outline: none;
+            background: transparent;
         }
         
         .button-group {
@@ -294,6 +360,14 @@ if ($signedDir !== null) {
             .pdf-preview iframe {
                 height: 400px;
             }
+            
+            #typed-signature-input {
+                font-size: 36px;
+            }
+            
+            #typed-signature-preview {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
@@ -349,12 +423,27 @@ if ($signedDir !== null) {
                 <div class="signature-section">
                     <h2>✍️ Signature du parent / tuteur</h2>
                     
+                    <div class="signature-mode-toggle">
+                        <button type="button" class="mode-btn active" id="draw-mode-btn">
+                            ✏️ Dessiner la signature
+                        </button>
+                        <button type="button" class="mode-btn" id="type-mode-btn">
+                            ⌨️ Taper la signature
+                        </button>
+                    </div>
+                    
                     <div class="info-box">
-                        <p><strong>Instructions:</strong> Utilisez votre souris ou votre doigt pour signer dans la zone ci-dessous.</p>
+                        <p><strong>Instructions:</strong> <span id="mode-instructions">Utilisez votre souris ou votre doigt pour signer dans la zone ci-dessous.</span></p>
                     </div>
                     
                     <div class="signature-pad-container">
                         <canvas id="signature-pad"></canvas>
+                        <div class="typed-signature-container" id="typed-signature-container">
+                            <input type="text" 
+                                   id="typed-signature-input" 
+                                   placeholder="Tapez votre nom ici..."
+                                   maxlength="50">
+                        </div>
                     </div>
                     
                     <div class="button-group">
@@ -368,6 +457,7 @@ if ($signedDir !== null) {
                 </div>
                 
                 <input type="hidden" name="signature" id="signature-data">
+                <input type="hidden" name="signature_mode" id="signature-mode" value="draw">
                 <input type="hidden" name="contract_id" value="<?php echo htmlspecialchars($contractId); ?>">
             </form>
             <?php endif; ?>
@@ -462,21 +552,108 @@ if ($signedDir !== null) {
         const canvas = document.getElementById('signature-pad');
         const signaturePad = new SignaturePad(canvas);
         
+        // Typed signature functionality
+        const typedInput = document.getElementById('typed-signature-input');
+        const typedContainer = document.getElementById('typed-signature-container');
+        const drawModeBtn = document.getElementById('draw-mode-btn');
+        const typeModeBtn = document.getElementById('type-mode-btn');
+        const modeInstructions = document.getElementById('mode-instructions');
+        const signatureModeInput = document.getElementById('signature-mode');
+        
+        let currentMode = 'draw';
+        
+        // Mode switching
+        drawModeBtn.addEventListener('click', () => {
+            currentMode = 'draw';
+            drawModeBtn.classList.add('active');
+            typeModeBtn.classList.remove('active');
+            canvas.classList.remove('hidden');
+            typedContainer.classList.remove('active');
+            modeInstructions.textContent = 'Utilisez votre souris ou votre doigt pour signer dans la zone ci-dessous.';
+            signatureModeInput.value = 'draw';
+            updateSubmitButton();
+        });
+        
+        typeModeBtn.addEventListener('click', () => {
+            currentMode = 'type';
+            typeModeBtn.classList.add('active');
+            drawModeBtn.classList.remove('active');
+            canvas.classList.add('hidden');
+            typedContainer.classList.add('active');
+            modeInstructions.textContent = 'Tapez votre nom complet dans le champ ci-dessous.';
+            signatureModeInput.value = 'type';
+            typedInput.focus();
+            updateSubmitButton();
+        });
+        
+        // Typed signature input
+        typedInput.addEventListener('input', () => {
+            updateSubmitButton();
+        });
+        
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submit-btn');
+            if (currentMode === 'draw') {
+                submitBtn.disabled = !signaturePad.hasSignature;
+            } else {
+                submitBtn.disabled = typedInput.value.trim().length === 0;
+            }
+        }
+        
+        // Convert typed signature to canvas for consistent handling
+        function typedSignatureToCanvas() {
+            const tempCanvas = document.createElement('canvas');
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            
+            // Set canvas size to match signature pad (use actual pixel dimensions)
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Transparent background (no white fill)
+            tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Draw typed signature with Google Fonts
+            tempCtx.fillStyle = '#000000';
+            tempCtx.font = (120 * ratio) + 'px "Great Vibes", "Allura", "Dancing Script", cursive';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillText(typedInput.value, tempCanvas.width / 2, tempCanvas.height / 2);
+            
+            return tempCanvas.toDataURL('image/png');
+        }
+        
         // Clear button
         document.getElementById('clear-btn').addEventListener('click', () => {
-            signaturePad.clear();
+            if (currentMode === 'draw') {
+                signaturePad.clear();
+            } else {
+                typedInput.value = '';
+                updateSubmitButton();
+            }
         });
         
         // Form submission
         document.getElementById('signature-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (!signaturePad.hasSignature) {
-                alert('Veuillez signer avant de soumettre.');
-                return;
+            let signatureData;
+            
+            if (currentMode === 'draw') {
+                if (!signaturePad.hasSignature) {
+                    alert('Veuillez signer avant de soumettre.');
+                    return;
+                }
+                signatureData = signaturePad.toDataURL();
+            } else {
+                if (typedInput.value.trim().length === 0) {
+                    alert('Veuillez taper votre nom avant de soumettre.');
+                    return;
+                }
+                signatureData = typedSignatureToCanvas();
             }
             
-            const signatureData = signaturePad.toDataURL();
             document.getElementById('signature-data').value = signatureData;
             
             const formData = new FormData(e.target);

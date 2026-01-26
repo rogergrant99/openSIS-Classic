@@ -279,29 +279,40 @@ function formatBytes($bytes, $precision = 2) {
             padding: 10px;
             border-bottom: 1px solid #dee2e6;
         }
-        td:first-child {
+        
+        td:nth-child(2) {
             max-width: 300px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        /* Increase actions column width and adjust button layout */
+        th:first-child,
+        td:first-child {
+            width: 40px;
+            text-align: center;
+        }
+
         th:last-child,
         td:last-child {
-            width: 280px;
+            width: 120px;
+            min-width: 120px;
             white-space: nowrap;
         }
 
-        /* Make buttons in table smaller and remove flex growth */
         td .btn {
             flex: none;
             min-width: auto;
             padding: 5px 8px;
             font-size: 11px;
-        }        
+        }
+        
         tbody tr:hover {
             background: #f8f9ff;
+        }
+        
+        tbody tr.selected {
+            background: #e3f2fd;
         }
         
         .empty-state {
@@ -428,6 +439,13 @@ function formatBytes($bytes, $precision = 2) {
             margin-left: 10px;
         }
         
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
         @media (max-width: 768px) {
             .templates-grid {
                 grid-template-columns: 1fr;
@@ -541,7 +559,26 @@ function formatBytes($bytes, $precision = 2) {
         
         <!-- Signed Contracts Section -->
         <div class="section">
-            <h2>✅ Contrats signés (<?php echo count($signedContracts); ?>)</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                <h2 style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">✅ Contrats signés (<?php echo count($signedContracts); ?>)</h2>
+                
+                <?php if (!empty($signedContracts)): ?>
+                <!-- Bulk Actions Buttons -->
+                <div id="bulk-actions-buttons-inline" style="display: flex; gap: 8px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;">
+                    <span id="selected-count-inline" style="font-size: 13px; font-weight: 600; color: #333; align-self: center; margin-right: 8px;">
+                        <span id="selected-number">0</span> sélectionné(s)
+                    </span>
+                    <button class="btn btn-download" onclick="bulkDownload()" style="margin: 0;">
+                        📥 Télécharger
+                    </button>
+                    <button class="btn btn-delete" onclick="bulkDelete()" style="margin: 0;">
+                        🗑️ Supprimer
+                    </button>
+                </div>
+                <?php endif; ?>
+            </div>
+            
+            <div style="border-bottom: 2px solid #667eea; margin-bottom: 10px;"></div>
             
             <!-- Status message for signed contracts -->
             <div id="contract-status-message" class="status-message"></div>
@@ -555,28 +592,30 @@ function formatBytes($bytes, $precision = 2) {
             <table>
                 <thead>
                     <tr>
+                        <th>
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
+                        </th>
                         <th>Nom du fichier</th>
                         <th>Taille</th>
                         <th>Date de signature</th>
-                        <th style="width: 220px;">Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($signedContracts as $contract): ?>
                     <tr>
+                        <td>
+                            <input type="checkbox" 
+                                   class="contract-checkbox" 
+                                   value="<?php echo htmlspecialchars($contract['name']); ?>"
+                                   onchange="updateBulkActions()">
+                        </td>
                         <td><strong><?php echo htmlspecialchars($contract['name']); ?></strong></td>
                         <td><?php echo formatBytes($contract['size']); ?></td>
                         <td><?php echo date('Y-m-d H:i:s', $contract['modified']); ?></td>
                         <td>
                             <button class="btn btn-view" onclick="viewContract('<?php echo htmlspecialchars($contract['name']); ?>')">
                                 👁️ Voir
-                            </button>
-                            <a href="modules/contract/admin_handler.php?action=download&file=<?php echo urlencode($contract['name']); ?>" 
-                               class="btn btn-download" download>
-                                📥 Télécharger
-                            </a>
-                            <button class="btn btn-delete" onclick="deleteContract('<?php echo htmlspecialchars($contract['name']); ?>')">
-                                🗑️ Supprimer
                             </button>
                         </td>
                     </tr>
@@ -599,6 +638,142 @@ function formatBytes($bytes, $precision = 2) {
     </div>
 
     <script>
+        // Bulk selection management
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.contract-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+                updateRowHighlight(cb);
+            });
+            updateBulkActions();
+        }
+        
+        function updateRowHighlight(checkbox) {
+            const row = checkbox.closest('tr');
+            if (checkbox.checked) {
+                row.classList.add('selected');
+            } else {
+                row.classList.remove('selected');
+            }
+        }
+        
+        function updateBulkActions() {
+            const checkboxes = document.querySelectorAll('.contract-checkbox');
+            const checkedBoxes = document.querySelectorAll('.contract-checkbox:checked');
+            const bulkButtons = document.getElementById('bulk-actions-buttons-inline');
+            const selectAll = document.getElementById('select-all');
+            const selectedNumber = document.getElementById('selected-number');
+            
+            // Update row highlighting
+            checkboxes.forEach(cb => updateRowHighlight(cb));
+            
+            // Update select all checkbox state
+            if (checkedBoxes.length === 0) {
+                selectAll.checked = false;
+                selectAll.indeterminate = false;
+            } else if (checkedBoxes.length === checkboxes.length) {
+                selectAll.checked = true;
+                selectAll.indeterminate = false;
+            } else {
+                selectAll.checked = false;
+                selectAll.indeterminate = true;
+            }
+            
+            // Show/hide bulk actions buttons
+            if (bulkButtons) {
+                if (checkedBoxes.length > 0) {
+                    bulkButtons.style.opacity = '1';
+                    bulkButtons.style.pointerEvents = 'auto';
+                    selectedNumber.textContent = checkedBoxes.length;
+                } else {
+                    bulkButtons.style.opacity = '0';
+                    bulkButtons.style.pointerEvents = 'none';
+                }
+            }
+        }
+        
+        function getSelectedFiles() {
+            const checkedBoxes = document.querySelectorAll('.contract-checkbox:checked');
+            return Array.from(checkedBoxes).map(cb => cb.value);
+        }
+        
+        async function bulkDownload() {
+            const selectedFiles = getSelectedFiles();
+            
+            if (selectedFiles.length === 0) {
+                showContractMessage('Aucun fichier sélectionné', 'error');
+                return;
+            }
+            
+            showContractMessage(`Téléchargement de ${selectedFiles.length} fichier(s)...`, 'success');
+            
+            // Download each file
+            for (const filename of selectedFiles) {
+                const link = document.createElement('a');
+                link.href = 'modules/contract/admin_handler.php?action=download&file=' + encodeURIComponent(filename);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Small delay between downloads to avoid browser blocking
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        }
+        
+        async function bulkDelete() {
+            const selectedFiles = getSelectedFiles();
+            
+            if (selectedFiles.length === 0) {
+                showContractMessage('Aucun fichier sélectionné', 'error');
+                return;
+            }
+            
+            if (!confirm(`Êtes-vous sûr de vouloir supprimer ${selectedFiles.length} contrat(s) signé(s)?\n\nCette action est irréversible!`)) {
+                return;
+            }
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const filename of selectedFiles) {
+                try {
+                    const response = await fetch('../../modules/contract/admin_handler.php?action=delete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: 'signed',
+                            filename: filename
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        console.error('Failed to delete:', filename, result.message);
+                    }
+                } catch (error) {
+                    errorCount++;
+                    console.error('Error deleting:', filename, error);
+                }
+            }
+            
+            if (errorCount === 0) {
+                showContractMessage(`✓ ${successCount} contrat(s) supprimé(s) avec succès!`, 'success');
+            } else {
+                showContractMessage(`⚠ ${successCount} supprimé(s), ${errorCount} erreur(s)`, 'error');
+            }
+            
+            setTimeout(() => {
+                check_content("Ajax.php?modname=contract/Contractadmin.php");
+            }, 1500);
+        }
+        
         async function handleTemplateUpload(type, input) {
             const file = input.files[0];
             if (!file) return;
@@ -696,39 +871,6 @@ function formatBytes($bytes, $precision = 2) {
             } catch (error) {
                 console.error('Error:', error);
                 showTemplateMessage('✗ Erreur de connexion', 'error');
-            }
-        }
-        
-        async function deleteContract(filename) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer ce contrat signé?\n\nCette action est irréversible!\n\n' + filename)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('../../modules/contract/admin_handler.php?action=delete', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        type: 'signed',
-                        filename: filename
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showContractMessage('✓ Contrat signé supprimé avec succès!', 'success');
-                    setTimeout(() => {
-                        check_content("Ajax.php?modname=contract/Contractadmin.php");
-                    }, 1500);
-                } else {
-                    showContractMessage('✗ Erreur: ' + result.message, 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showContractMessage('✗ Erreur de connexion', 'error');
             }
         }
         

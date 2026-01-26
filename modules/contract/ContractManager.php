@@ -102,17 +102,17 @@ private function fillFirstPage($pdf, $data, $size) {
 
     private function addSignatureFields($pdf, $data) {
         $pdf->SetFont('helvetica', '', 14);
-        $currentDate = date('Y-m-d');
+        $currentDate = dateFr('d M Y');
         
-        $pdf->SetXY(140, 113);
+        $pdf->SetXY(140, 114);
         $pdf->Write(0, $currentDate);
         
-        $pdf->SetXY(140, 136);
+        $pdf->SetXY(140, 137);
         $pdf->Write(0, $currentDate);
     }
     
     /**
-     * Add signature image to PDF
+     * Add signature image to PDF with dynamic width calculation
      */
     public function addSignatureToPDF($pdfContent, $signatureImageData) {
         require_once(__DIR__ . '/vendor/autoload.php');
@@ -128,11 +128,31 @@ private function fillFirstPage($pdf, $data, $size) {
         $tempSigPath = sys_get_temp_dir() . '/signature_' . uniqid() . '.png';
         file_put_contents($tempSigPath, $signatureImage);
         
-        // Verify it's a valid image
+        // Verify it's a valid image and get dimensions
         $imageInfo = @getimagesize($tempSigPath);
         if ($imageInfo === false) {
             unlink($tempSigPath);
             throw new Exception("Invalid signature image format");
+        }
+        
+        // Get actual image dimensions
+        $imageWidth = $imageInfo[0];
+        $imageHeight = $imageInfo[1];
+        
+        // Calculate aspect ratio
+        $aspectRatio = $imageWidth / $imageHeight;
+        
+        // Set desired height in PDF (mm) - keep this consistent
+        $pdfHeight = 20;
+        
+        // Calculate width to maintain aspect ratio
+        $pdfWidth = $pdfHeight * $aspectRatio;
+        
+        // Optional: Set maximum width to prevent oversized signatures
+        $maxWidth = 100; // Maximum width in mm
+        if ($pdfWidth > $maxWidth) {
+            $pdfWidth = $maxWidth;
+            $pdfHeight = $pdfWidth / $aspectRatio;
         }
         
         // Create new PDF instance
@@ -159,7 +179,13 @@ private function fillFirstPage($pdf, $data, $size) {
             
             // Add signature on page 5
             if ($pageNo == 5) {
-                $pdf->Image($tempSigPath, 30, 105, 50, 20, 'PNG');
+                // Position signature (moved ~70 pixels left from original position)
+                // Note: PDF uses mm, rough conversion 70px ≈ 25mm at 72dpi
+                $xPosition = 8; // Moved from 30 to 5 (25mm shift left)
+                $yPosition = 108;
+                
+                // Add signature with calculated dimensions
+                $pdf->Image($tempSigPath, $xPosition, $yPosition, $pdfWidth, $pdfHeight, 'PNG');
             }
         }
         
@@ -189,4 +215,72 @@ private function fillFirstPage($pdf, $data, $size) {
         
         return file_put_contents($outputPath, $pdfContent);
     }
+}
+function dateFr($format, $timestamp = null) {
+    // Use current time if no timestamp provided
+    if ($timestamp === null) {
+        $timestamp = time();
+    }
+    
+    // French month names
+    $months = [
+        1 => 'janvier', 2 => 'février', 3 => 'mars', 4 => 'avril',
+        5 => 'mai', 6 => 'juin', 7 => 'juillet', 8 => 'août',
+        9 => 'septembre', 10 => 'octobre', 11 => 'novembre', 12 => 'décembre'
+    ];
+    
+    // French abbreviated month names
+    $monthsShort = [
+        1 => 'janv', 2 => 'févr', 3 => 'mars', 4 => 'avr',
+        5 => 'mai', 6 => 'juin', 7 => 'juil', 8 => 'août',
+        9 => 'sept', 10 => 'oct', 11 => 'nov', 12 => 'déc'
+    ];
+    
+    // French day names
+    $days = [
+        0 => 'dimanche', 1 => 'lundi', 2 => 'mardi', 3 => 'mercredi',
+        4 => 'jeudi', 5 => 'vendredi', 6 => 'samedi'
+    ];
+    
+    // French abbreviated day names
+    $daysShort = [
+        0 => 'dim', 1 => 'lun', 2 => 'mar', 3 => 'mer',
+        4 => 'jeu', 5 => 'ven', 6 => 'sam'
+    ];
+    
+    // Get the formatted date using regular date() function
+    $result = date($format, $timestamp);
+    
+    // Replace English names with French ones
+    $result = str_replace([
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ], [
+        'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+    ], $result);
+    
+    $result = str_replace([
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ], [
+        'janv', 'févr', 'mars', 'avr', 'mai', 'juin',
+        'juil', 'août', 'sept', 'oct', 'nov', 'déc'
+    ], $result);
+    
+    $result = str_replace([
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday',
+        'Thursday', 'Friday', 'Saturday'
+    ], [
+        'dimanche', 'lundi', 'mardi', 'mercredi',
+        'jeudi', 'vendredi', 'samedi'
+    ], $result);
+    
+    $result = str_replace([
+        'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+    ], [
+        'dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'
+    ], $result);
+    
+    return $result;
 }
