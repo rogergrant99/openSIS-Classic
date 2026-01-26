@@ -6,6 +6,7 @@
 // Must be first line
 ob_start();
 // Start session
+print_r($_POST);
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -64,9 +65,28 @@ try {
     // Create manager and add signature
     $manager = new ContractManager($templatePath);
     
-    // Add signature to PDF
+    // Add first signature to PDF (client signature at top position)
     ob_start();
-    $signedContent = $manager->addSignatureToPDF($previewContent, $signatureData);
+    $signedContent = $manager->addSignatureToPDF($previewContent, $signatureData, 8, 108);
+    
+    // Load and add Sara's signature
+    $saraSignaturePath = __DIR__ . "/../../assets/contracts/signature/sara.png";
+    if (!file_exists($saraSignaturePath)) {
+        throw new Exception('Sara signature file not found at: ' . $saraSignaturePath);
+    }
+    
+    $saraSignatureData = file_get_contents($saraSignaturePath);
+    if ($saraSignatureData === false) {
+        throw new Exception('Failed to read Sara signature file');
+    }
+    
+    // Convert Sara's signature to base64 with proper data URI format
+    $saraSignatureBase64 = 'data:image/png;base64,' . base64_encode($saraSignatureData);
+    
+    // Add Sara's signature to the PDF (Sara's signature at bottom position)
+    // Position it below the first signature (y=131 is approximately 23mm below y=108)
+    $signedContent = $manager->addSignatureToPDF($signedContent, $saraSignatureBase64, 36, 125);
+    
     $captured = ob_get_clean();
     $signedSize = strlen($signedContent);
     if ($signedSize < 100) {

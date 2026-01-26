@@ -125,7 +125,7 @@ if ($signedDir !== null) {
     <!-- Google Fonts for Signature -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Allura&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -254,7 +254,7 @@ if ($signedDir !== null) {
         }
         
         #typed-signature-input {
-            font-family: 'Great Vibes', 'Allura', 'Dancing Script', 'Brush Script MT', cursive;
+            font-family: 'Caveat', cursive;
             font-size: 52px;
             border: none;
             border-bottom: 2px solid #667eea;
@@ -614,9 +614,9 @@ if ($signedDir !== null) {
             // Transparent background (no white fill)
             tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
             
-            // Draw typed signature with Google Fonts
+            // Draw typed signature with Caveat font
             tempCtx.fillStyle = '#000000';
-            tempCtx.font = (120 * ratio) + 'px "Great Vibes", "Allura", "Dancing Script", cursive';
+            tempCtx.font = (120 * ratio) + 'px "Caveat", cursive';
             tempCtx.textAlign = 'center';
             tempCtx.textBaseline = 'middle';
             tempCtx.fillText(typedInput.value, tempCanvas.width / 2, tempCanvas.height / 2);

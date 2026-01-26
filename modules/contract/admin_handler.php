@@ -2,7 +2,7 @@
 /**
  * admin_handler.php
  * Handler for contract viewing, downloading, and deletion
- * Now includes preview with test data overlay
+ * Now includes preview with test data overlay including test signature
  */
 session_start();
 
@@ -53,7 +53,8 @@ if ($action === 'view') {
             $testData = [
                 'nom_client' => 'Papa Client',
                 'nom_eleve' => 'Enfant Client',
-                'adresse' => "123 Rue Example\nVille, Province, H0H 0H0"
+                'adresse' => "123 Rue Example\nVille, Province, H0H 0H0",
+                'signature' => 'Test Signature'
             ];
             
             // Create ContractManager instance

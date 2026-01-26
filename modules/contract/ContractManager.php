@@ -2,6 +2,8 @@
 /**
  * ContractManager.php
  * Production version - clean code without debugging
+ * Added support for test signature text in preview mode
+ * Added support for multiple signature positions
  */
 
 class ContractManager {
@@ -76,32 +78,33 @@ class ContractManager {
         return $output;
     }
     
-private function fillFirstPage($pdf, $data, $size) {
-    $pdf->SetFont('helvetica', '', 10);
-    $pdf->SetTextColor(0, 0, 0);
-    $pageWidth = $size['width'];
+    private function fillFirstPage($pdf, $data, $size) {
+        $pdf->SetFont('helvetica', '', 10);
+        $pdf->SetTextColor(0, 0, 0);
+        $pageWidth = $size['width'];
 
-    if (isset($data['nom_client'])) {
-        $pdf->SetFont('helvetica', '', 14);
-        $pdf->SetXY(0, 77.5);
-        $pdf->Cell($pageWidth, 10, $data['nom_client'], 0, 0, 'C');
-    }
+        if (isset($data['nom_client'])) {
+            $pdf->SetFont('helvetica', '', 14);
+            $pdf->SetXY(0, 77.5);
+            $pdf->Cell($pageWidth, 10, $data['nom_client'], 0, 0, 'C');
+        }
 
-    if (isset($data['nom_eleve'])) {
-        $pdf->SetFont('helvetica', '', 14);
-        $pdf->SetXY(0, 90);
-        $pdf->Cell($pageWidth, 10, $data['nom_eleve'], 0, 0, 'C');
-    }
+        if (isset($data['nom_eleve'])) {
+            $pdf->SetFont('helvetica', '', 14);
+            $pdf->SetXY(0, 90);
+            $pdf->Cell($pageWidth, 10, $data['nom_eleve'], 0, 0, 'C');
+        }
 
-    if (isset($data['adresse'])) {
-        $pdf->SetFont('helvetica', '', 14);
-        $pdf->SetXY(0, 108);
-        $pdf->MultiCell($pageWidth, 5, $data['adresse'], 0, 'C');
+        if (isset($data['adresse'])) {
+            $pdf->SetFont('helvetica', '', 14);
+            $pdf->SetXY(0, 108);
+            $pdf->MultiCell($pageWidth, 5, $data['adresse'], 0, 'C');
+        }
     }
-}
 
     private function addSignatureFields($pdf, $data) {
         $pdf->SetFont('helvetica', '', 14);
+        $pdf->SetTextColor(0, 0, 0); // Reset to black
         $currentDate = dateFr('d M Y');
         
         $pdf->SetXY(140, 114);
@@ -109,12 +112,27 @@ private function fillFirstPage($pdf, $data, $size) {
         
         $pdf->SetXY(140, 137);
         $pdf->Write(0, $currentDate);
+        
+        // Add test signature text if provided (for preview mode)
+        if (isset($data['signature']) && !empty($data['signature'])) {
+            $pdf->SetFont('helvetica', 'I', 16); // Italic font, slightly larger for signature
+            $pdf->SetTextColor(0, 0, 255); // Blue color to clearly indicate it's test data
+            $pdf->SetXY(35, 114); // Position where signature image would normally appear
+            $pdf->Write(0, $data['signature']);
+            
+            // Reset text color back to black
+            $pdf->SetTextColor(0, 0, 0);
+        }
     }
     
     /**
      * Add signature image to PDF with dynamic width calculation
+     * @param string $pdfContent - The PDF content to add signature to
+     * @param string $signatureImageData - Base64 encoded signature image
+     * @param int $xPosition - X coordinate for signature (default: 8)
+     * @param int $yPosition - Y coordinate for signature (default: 108)
      */
-    public function addSignatureToPDF($pdfContent, $signatureImageData) {
+    public function addSignatureToPDF($pdfContent, $signatureImageData, $xPosition = 8, $yPosition = 108) {
         require_once(__DIR__ . '/vendor/autoload.php');
         
         // Decode signature
@@ -179,12 +197,7 @@ private function fillFirstPage($pdf, $data, $size) {
             
             // Add signature on page 5
             if ($pageNo == 5) {
-                // Position signature (moved ~70 pixels left from original position)
-                // Note: PDF uses mm, rough conversion 70px ≈ 25mm at 72dpi
-                $xPosition = 8; // Moved from 30 to 5 (25mm shift left)
-                $yPosition = 108;
-                
-                // Add signature with calculated dimensions
+                // Add signature with calculated dimensions at specified position
                 $pdf->Image($tempSigPath, $xPosition, $yPosition, $pdfWidth, $pdfHeight, 'PNG');
             }
         }
@@ -216,6 +229,7 @@ private function fillFirstPage($pdf, $data, $size) {
         return file_put_contents($outputPath, $pdfContent);
     }
 }
+
 function dateFr($format, $timestamp = null) {
     // Use current time if no timestamp provided
     if ($timestamp === null) {
