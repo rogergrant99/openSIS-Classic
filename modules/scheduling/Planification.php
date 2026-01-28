@@ -2316,10 +2316,10 @@ function ajaxLink(url) {
     loadingIndicator.style.cssText = `
         position: fixed;
         top: 50%;
-        left: 50%;
+        left: 54%;
         transform: translate(-50%, -50%);
-        padding: 6px 18px;
-        background-color: rgba(226, 28, 28, 0.8);
+        padding: 6px 16px;
+        background-color: rgba(226, 28, 28, 1);
         color: white;
         border-radius: 4px;
         z-index: 1000;
