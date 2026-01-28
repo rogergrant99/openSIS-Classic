@@ -2310,10 +2310,49 @@ function ajaxLink(url) {
     const weekRange = urlParams.get('week_range');
     console.log('Week range:', weekRange);
     
+    // Create loading indicator with gear icon
     const loadingIndicator = document.createElement('div');
     loadingIndicator.id = 'navigation-loading';
-    loadingIndicator.style.cssText = 'position: fixed; top: 10px; right: 10px; padding: 10px 20px; background-color: #007bff; color: white; border-radius: 4px; z-index: 1000;';
-    loadingIndicator.textContent = 'Chargement...';
+    loadingIndicator.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 6px 18px;
+        background-color: rgba(226, 28, 28, 0.8);
+        color: white;
+        border-radius: 4px;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    `;
+    
+loadingIndicator.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="loading-gear">
+        <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+    </svg>
+    <span style="margin-left: 10px;">Chargement...</span>
+`;
+    
+    // Add rotation animation
+    if (!document.getElementById('loading-gear-style')) {
+        const style = document.createElement('style');
+        style.id = 'loading-gear-style';
+        style.textContent = `
+            @keyframes rotate-gear {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .loading-gear {
+                animation: rotate-gear 2s linear infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
     document.body.appendChild(loadingIndicator);
     
     fetch(url)
