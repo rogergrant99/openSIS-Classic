@@ -9,6 +9,10 @@ include('../../RedirectModulesInc.php');
 session_start();
 DrawBC("" . _scheduling . " > " . ProgramTitle());
 
+if ($_REQUEST['modfunc'] == 'print_day' && $_REQUEST['_openSIS_PDF']) {
+    print_daily_schedule();
+    exit;
+}
 global $course_period_id,$course_id;
 
 $user_course = UserCourse();
@@ -260,10 +264,176 @@ $week_range = _makeWeeks('', '', 'Modules.php?modname=' . $_REQUEST['modname'] .
 
 // Add print button
 if(! $_REQUEST['_openSIS_PDF']){
-    DrawHeader($week_range, '<div class="form-inline"><div class="input-group"></div><FORM name="exp" class="no-margin-bottom" id="exp" action="ForExport.php?modname=' . urlencode(strip_tags(trim($_REQUEST["modname"]))) . '&modfunc=print&marking_period_id=' . urlencode($course_id) . '&week_range=' . urlencode($start) . '&_openSIS_PDF=true&report=true" method="POST" target="_blank"><div class="text-right"><INPUT type="submit" class="btn btn-primary" value="' . htmlspecialchars(_print, ENT_QUOTES) . '"></div></form><div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
+    // Wrap week navigation in a div with ID
+    $week_nav = '<div id="week-navigation">' . $week_range . '</div>';
+    
+    // Determine the current week being viewed
+    $current_week = $_REQUEST['week_range'];
+    
+    // Get today's date for the daily print
+    $today_date = date('Y-m-d');
+    
+    $buttons_html = '';
+    
+    // Add "Print Day" button for students with multiple courses (will be on the left) - ALWAYS prints TODAY
+    if (User('PROFILE') != 'teacher' && !$primaire) {
+        $courses_RET_check = DBGet(DBQuery('SELECT COUNT(DISTINCT cp.COURSE_ID) as COURSE_COUNT FROM schedule s,course_periods cp,course_period_var cpv,courses c,attendance_calendar acc WHERE s.SYEAR=\'' . UserSyear() . '\' AND cp.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID  AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID  AND (s.MARKING_PERIOD_ID IN (SELECT MARKING_PERIOD_ID FROM school_years WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_semesters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_quarters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE )or s.MARKING_PERIOD_ID  is NULL) AND (\'' . DBDate() . '\' BETWEEN s.START_DATE AND s.END_DATE OR \'' . DBDate() . '\'>=s.START_DATE AND s.END_DATE IS NULL) AND s.STUDENT_ID=\'' . UserStudentID() . '\' AND cp.GRADE_SCALE_ID IS NOT NULL AND c.COURSE_ID=cp.COURSE_ID AND cp.DOES_NO_PLANNING is NULL'));
+        
+        if ($courses_RET_check[1]['COURSE_COUNT'] > 1) {
+            $buttons_html .= '<FORM name="exp_day" class="no-margin-bottom" id="exp_day" action="ForExport.php?modname=' . urlencode(strip_tags(trim($_REQUEST["modname"]))) . '&modfunc=print_day&week_range=' . urlencode($today_date) . '&_openSIS_PDF=true&report=true" method="POST" target="_blank" style="display: inline-block;"><INPUT type="submit" class="btn btn-success" value="Imprimer la journée d\'aujourdhui"></FORM>';
+        }
+    }
+    
+    // Regular print button (will be on the right) - prints the VIEWED week
+    $buttons_html .= '<FORM name="exp" class="no-margin-bottom" id="exp" action="ForExport.php?modname=' . urlencode(strip_tags(trim($_REQUEST["modname"]))) . '&modfunc=print&marking_period_id=' . urlencode($course_id) . '&week_range=' . urlencode($current_week) . '&_openSIS_PDF=true&report=true" method="POST" target="_blank" style="display: inline-block; float: right;"><div class="text-right"><INPUT type="submit" class="btn btn-primary" value="' . htmlspecialchars(_print, ENT_QUOTES) . '"></div></FORM>';
+    
+    DrawHeader($week_nav, '<div class="form-inline"><div class="input-group"></div>' . $buttons_html . '<div class="input-group"><span class="input-group-addon" id="view_mode"></span></div></div>');
 }
 
-
+function print_daily_schedule() {
+    // Get today's date (not the week start)
+    $today = time(); // Current timestamp
+    
+    // Get current day of week (1 = Monday, 5 = Friday)
+    $day_of_week = dateFr('N', $today);
+    
+    // Get the Monday of the current week (for database query)
+    $week_start = $today;
+    $one_day = 60 * 60 * 24;
+    while (dateFr('N', $week_start) != 1) {
+        $week_start = $week_start - $one_day;
+    }
+    
+    // Map day number to day name
+    $days_map = [
+        1 => 'lundi',
+        2 => 'mardi',
+        3 => 'mercredi',
+        4 => 'jeudi',
+        5 => 'vendredi'
+    ];
+    
+    $day_name = isset($days_map[$day_of_week]) ? $days_map[$day_of_week] : 'lundi';
+    $day_name_display = ucfirst($day_name);
+    
+    // Get all student courses
+    $courses_RET = DBGet(DBQuery('SELECT DISTINCT c.TITLE , cp.COURSE_PERIOD_ID ,cp.COURSE_ID as ID,cp.TEACHER_ID AS STAFF_ID FROM schedule s,course_periods cp,course_period_var cpv,courses c,attendance_calendar acc WHERE s.SYEAR=\'' . UserSyear() . '\' AND cp.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID  AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID  AND (s.MARKING_PERIOD_ID IN (SELECT MARKING_PERIOD_ID FROM school_years WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_semesters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_quarters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE )or s.MARKING_PERIOD_ID  is NULL) AND (\'' . DBDate() . '\' BETWEEN s.START_DATE AND s.END_DATE OR \'' . DBDate() . '\'>=s.START_DATE AND s.END_DATE IS NULL) AND s.STUDENT_ID=\'' . UserStudentID() . '\' AND cp.GRADE_SCALE_ID IS NOT NULL AND c.COURSE_ID=cp.COURSE_ID AND cp.DOES_NO_PLANNING is NULL  ORDER BY TITLE'));
+    
+    echo '<!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Planification Journalière - ' . $day_name_display . ' ' . dateFr('d M Y', $today) . '</title>
+        <style>
+            body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+            }
+            h1 { 
+                text-align: center; 
+                color: #333; 
+                margin-bottom: 30px;
+            }
+            .course-section { 
+                page-break-inside: avoid; 
+                margin-bottom: 30px; 
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+            }
+            th, td {
+                border: 1px solid #000000ff;
+                padding: 8px;
+                vertical-align: top;
+            }
+            th {
+                background-color: #a09b9bff;
+                text-align: center;
+                font-weight: normal;
+            }
+            .course-name-cell {
+                background-color: #5090c1;
+                color: white;
+                text-align: center;
+                font-weight: bold;
+                width: 15%;
+            }
+            .content-cell {
+                width: 28.33%;
+                padding: 8px;
+                min-height: 100px;
+            }
+            .empty-message {
+                color: #999;
+                font-style: italic;
+                text-align: center;
+                padding: 20px;
+            }
+            @media print {
+                .course-section { 
+                    page-break-inside: avoid; 
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Planification du ' . $day_name_display . ' ' . dateFr('d M Y', $today) . '</h1>';
+    
+    if (!$courses_RET || count($courses_RET) == 0) {
+        echo '<p class="empty-message">Aucun cours trouvé.</p>';
+    } else {
+        echo '<table>';
+        echo '<tr>';
+        echo '<th>Cours</th>';
+        echo '<th>Notions et travail en classe</th>';
+        echo '<th>Devoirs/Étude</th>';
+        echo '<th>Matériel</th>';
+        echo '</tr>';
+        
+        foreach ($courses_RET as $course) {
+            $course_id = $course['ID'];
+            
+            // Get course name
+            $course_details = DBGet(DBQuery('select short_name from course_details where course_id=\'' . $course_id . '\''));
+            $course_name = isset($course_details[1]['SHORT_NAME']) ? $course_details[1]['SHORT_NAME'] : 'Cours';
+            
+            // Get planning data for this week
+            $RET = DBGet(DBQuery('select * from planification where start_date=\'' . dateFr('Y-m-d', $week_start) . '\' and course_id=\'' . $course_id . '\''));
+            
+            $notions_content = '';
+            $devoirs_content = '';
+            $materiel_content = '';
+            
+            if ($RET && isset($RET[1]['TEXT']) && $RET[1]['TEXT']) {
+                $raw_content = base64_decode($RET[1]['TEXT']);
+                $data = unserialize($raw_content);
+                
+                if ($data && is_array($data)) {
+                    $notions_key = $day_name . '_notions';
+                    $devoirs_key = $day_name . '_devoirs';
+                    $materiel_key = $day_name . '_materiel';
+                    
+                    $notions_content = isset($data[$notions_key]) ? $data[$notions_key] : '';
+                    $devoirs_content = isset($data[$devoirs_key]) ? $data[$devoirs_key] : '';
+                    $materiel_content = isset($data[$materiel_key]) ? $data[$materiel_key] : '';
+                }
+            }
+            
+            echo '<tr>';
+            echo '<td class="course-name-cell">' . htmlspecialchars($course_name, ENT_QUOTES, 'UTF-8') . '</td>';
+            echo '<td class="content-cell">' . ($notions_content ? $notions_content : '&nbsp;') . '</td>';
+            echo '<td class="content-cell">' . ($devoirs_content ? $devoirs_content : '&nbsp;') . '</td>';
+            echo '<td class="content-cell">' . ($materiel_content ? $materiel_content : '&nbsp;') . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</table>';
+    }
+    
+    echo '</body></html>';
+}
 function CreateSelect($val, $name, $opt, $cap, $link){
     $html = '<label class="control-label text-uppercase"><b>' . $cap . '</b></label>';
     $html .= "<select name=" . $name . " id=" . $name . " class=\"form-control\" onChange=\"window.location='" . $link . "' + this.options[this.selectedIndex].value;\">";
@@ -312,13 +482,11 @@ function _makeWeeks($start, $end, $link){
         $_REQUEST['week_range'] = dateFr('Y-m-d', $start_time_cur);
     }
 
-
-
     $prev = dateFr('Y-m-d', strtotime($_REQUEST['week_range']) - $one_day * 7);
     $next = dateFr('Y-m-d', strtotime($_REQUEST['week_range']) + $one_day * 7);
     $upper = dateFr('Y-m-d', strtotime($_REQUEST['week_range']) + $one_day * 6);
     if ($link != '') {
-        $html .= "<a href='javascript:void(0);' class=\"text-primary\" title=Previous onClick=\"window.location='" . $link . $prev . "';\"><i class=\"fa fa-angle-left\"></i> " . _prev . "</a> &nbsp; &nbsp; <span>" . properDate($_REQUEST['week_range']) . "&nbsp; - &nbsp;" . properDate($upper) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title=Next onClick=\"window.location='" . $link . $next . "';\" class=\"text-primary\">" . _next . " <i class=\"fa fa-angle-right\"></i></a>";
+        $html .= "<a href='javascript:void(0);' class=\"text-primary\" title='Previous' onClick=\"ajaxLink('" . $link . $prev . "');\"><i class=\"fa fa-angle-left\"></i> " . _prev . "</a> &nbsp; &nbsp; <span>" . properDate($_REQUEST['week_range']) . "&nbsp; - &nbsp;" . properDate($upper) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title='Next' onClick=\"ajaxLink('" . $link . $next . "');\" class=\"text-primary\">" . _next . " <i class=\"fa fa-angle-right\"></i></a>";
     }
 
     return $html;
@@ -1626,231 +1794,136 @@ function do_cado_courses_files(){
         </table>
     </div>
 
-    <script>
-        const editableCells = document.querySelectorAll('.editable');
-        const autoSaveStatus = document.getElementById('autoSaveStatus');
-        const autoSaveText = document.getElementById('autoSaveText');
-        const boldBtn = document.getElementById('boldBtn');
-        const italicBtn = document.getElementById('italicBtn');
-        const underlineBtn = document.getElementById('underlineBtn');
-        const highlightBtn = document.getElementById('highlightBtn');
-        const fontSizeBtn = document.getElementById('fontSizeBtn');
-        const ulBtn = document.getElementById('ulBtn');
-        const olBtn = document.getElementById('olBtn');
+<script>
+        // Global variables
+        let autoSaveStatus = document.getElementById('autoSaveStatus');
+        let autoSaveText = document.getElementById('autoSaveText');
+        let boldBtn = document.getElementById('boldBtn');
+        let italicBtn = document.getElementById('italicBtn');
+        let underlineBtn = document.getElementById('underlineBtn');
+        let highlightBtn = document.getElementById('highlightBtn');
+        let fontSizeBtn = document.getElementById('fontSizeBtn');
+        let ulBtn = document.getElementById('ulBtn');
+        let olBtn = document.getElementById('olBtn');
 
-        let isEditingCell = false; // Track editing state
+        let isEditingCell = false;
         let savedSelection = null;
         let savedRange = null;
+        let currentEditableElement = null;
+        let justFocused = false;
 
         // Auto-save configuration
         let autoSaveTimeout;
-        let autoSaveInterval;
         let hasUnsavedChanges = false;
-        let dont_save = false;
+        let lastSavedContent = {};
         
-        const AUTO_SAVE_DELAY = 3000; // 3 seconds after user stops typing
-        const AUTO_SAVE_INTERVAL = 30000; // 30 seconds periodic save
-    // Add this function to detect and convert URLs to clickable links
-    function autoLinkURLs(element) {
-        // URL detection regex pattern
-        const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-        
-        // Get all text nodes in the element
-        const walker = document.createTreeWalker(
-            element,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
-        
-        const textNodes = [];
-        let node;
-        
-        while (node = walker.nextNode()) {
-            // Skip if parent is already a link
-            if (node.parentElement.tagName !== 'A') {
-                textNodes.push(node);
-            }
-        }
-        
-        // Process each text node
-        textNodes.forEach(textNode => {
-            const text = textNode.textContent;
-            const matches = text.match(urlPattern);
-            
-            if (matches) {
-                const fragment = document.createDocumentFragment();
-                let lastIndex = 0;
+        const AUTO_SAVE_DELAY = 3000;
+
+        // Event delegation for editable cells
+        document.addEventListener('focus', function(e) {
+            if (e.target.classList.contains('editable')) {
+                currentEditableElement = e.target;
+                isEditingCell = true;
+                justFocused = true;
                 
-                matches.forEach(url => {
-                    const index = text.indexOf(url, lastIndex);
-                    
-                    // Add text before URL
-                    if (index > lastIndex) {
-                        fragment.appendChild(
-                            document.createTextNode(text.substring(lastIndex, index))
-                        );
-                    }
-                    
-                    // Create clickable link
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.textContent = url;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.style.color = '#007bff';
-                    link.style.textDecoration = 'underline';
-                    
-                    // Prevent link from being editable
-                    link.contentEditable = 'false';
-                    
-                    fragment.appendChild(link);
-                    lastIndex = index + url.length;
-                });
-                
-                // Add remaining text
-                if (lastIndex < text.length) {
-                    fragment.appendChild(
-                        document.createTextNode(text.substring(lastIndex))
-                    );
+                // Store initial content
+                const key = `${e.target.getAttribute('data-week')}_${e.target.getAttribute('data-field')}`;
+                if (lastSavedContent[key] === undefined) {
+                    lastSavedContent[key] = e.target.innerHTML;
                 }
                 
-                // Replace the text node with the fragment
-                textNode.parentNode.replaceChild(fragment, textNode);
+                showFormattingToolbar();
+                updateToolbarButtons();
+                
+                setTimeout(() => {
+                    justFocused = false;
+                }, 100);
             }
-        });
-    }
+        }, true);
 
-    // Add paste event listener to detect URLs when pasting
-    editableCells.forEach(cell => {
-        // Handle paste events
-        cell.addEventListener('paste', function(e) {
-            // Let the paste happen first
-            setTimeout(() => {
-                autoLinkURLs(this);
-                scheduleAutoSave(this);
-            }, 10);
-        });
-        
-        // Also handle manual typing (with debounce)
-        let typingTimer;
-        cell.addEventListener('input', function(e) {
-            clearTimeout(typingTimer);
-            typingTimer = setTimeout(() => {
-                autoLinkURLs(this);
-            }, 500); // Wait 500ms after user stops typing
-        });
-        
-        // Handle blur to ensure links are created
-        const originalBlur = cell.onblur;
-        cell.addEventListener('blur', function(e) {
-            autoLinkURLs(this);
-            if (originalBlur) originalBlur.call(this, e);
-        });
-    });
-
-    // Prevent link editing - handle clicks on links
-    document.addEventListener('click', function(e) {
-        if (e.target.tagName === 'A' && e.target.closest('.editable')) {
-            // If Ctrl/Cmd is pressed, open the link
-            if (e.ctrlKey || e.metaKey) {
-                return; // Allow default link behavior
+        document.addEventListener('blur', function(e) {
+            if (e.target.classList.contains('editable')) {
+                const currentKey = `${e.target.getAttribute('data-week')}_${e.target.getAttribute('data-field')}`;
+                const oldContent = lastSavedContent[currentKey];
+                const newContent = e.target.innerHTML;
+                            
+                if (oldContent !== newContent) {
+                    saveCell(e.target);
+                    lastSavedContent[currentKey] = newContent;
+                }
             }
-            // Otherwise, prevent navigation and allow editing around it
-            else   
-                window.open(e.target.href, '_blank', 'noopener,noreferrer');
-            e.preventDefault();
-        }
-    });
+        }, true);
 
-    // Add CSS for better link styling
-    const linkStyles = document.createElement('style');
-    linkStyles.textContent = `
-        .editable a {
-            color: #007bff;
-            text-decoration: underline;
-            cursor: pointer;
-            padding: 0 2px;
-            border-radius: 2px;
-            transition: background-color 0.2s;
-        }
-        
-        .editable a:hover {
-            background-color: #e7f3ff;
-        }
-        
-        .editable a::before {
-            content: '🔗 ';
-            font-size: 0.8em;
-            opacity: 0.6;
-        }
-    `;
-    document.head.appendChild(linkStyles);
-
-    // Initialize auto-linking for existing content on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        editableCells.forEach(cell => {
-            autoLinkURLs(cell);
+        // Click outside handler
+        document.addEventListener('click', function(e) {
+            if (justFocused) {
+                justFocused = false;
+                return;
+            }
+            
+            const formattingToolbar = document.getElementById('formattingToolbar');
+            const clickedEditable = e.target.closest('.editable');
+            const clickedToolbar = e.target.closest('#formattingToolbar');
+            
+            if (!clickedEditable && !clickedToolbar) {
+                isEditingCell = false;
+                hideFormattingToolbar();
+            }
+            
+            updateToolbarButtons();
         });
-    });
-        
-        editableCells.forEach(cell => {
-            cell.addEventListener('blur', function() {
-                saveCell(this);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeContent();
+        });
+
+        // Also run immediately for initial load
+        initializeContent();
+
+        function initializeContent() {
+            const editableCells = document.querySelectorAll('.editable');
+            editableCells.forEach(cell => {
+                const key = `${cell.getAttribute('data-week')}_${cell.getAttribute('data-field')}`;
+                lastSavedContent[key] = cell.innerHTML;
+                autoLinkURLs(cell);
             });
-                cell.addEventListener('focus', function() {
-        currentEditableElement = this;
-        isEditingCell = true;
-        showFormattingToolbar();
-        updateToolbarButtons();
-    });
-            // Auto-resize textareas
-            if (cell.tagName === 'TEXTAREA') {
-                cell.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = this.scrollHeight + 'px';
-                });
-                
-                // Initial resize
-                cell.style.height = 'auto';
-                cell.style.height = cell.scrollHeight + 'px';
-            }
-        });
+        }
 
-        function formatText(command) {
-            if (currentEditableElement) {
-                currentEditableElement.focus();
-                document.execCommand(command, false, null);
-                scheduleAutoSave(currentEditableElement);
-                
-                // Multiple updates with different delays to catch all scenarios
-                setTimeout(() => updateToolbarButtons(), 10);
-                setTimeout(() => updateToolbarButtons(), 50);
-                setTimeout(() => updateToolbarButtons(), 100);
-            }
-        }        
         function showFormattingToolbar() {
             if (!isEditingCell) return;
-            boldBtn.style.display = 'block';  
-            italicBtn.style.display = 'block';  
-            underlineBtn.style.display = 'block';  
-            highlightBtn.style.display = 'block';  
-            fontSizeBtn.style.display = 'block';
-            ulBtn.style.display = 'block';  
-            olBtn.style.display = 'block';  
+            if (boldBtn) boldBtn.style.display = 'block';
+            if (italicBtn) italicBtn.style.display = 'block';
+            if (underlineBtn) underlineBtn.style.display = 'block';
+            if (highlightBtn) highlightBtn.style.display = 'block';
+            if (fontSizeBtn) fontSizeBtn.style.display = 'block';
+            if (ulBtn) ulBtn.style.display = 'block';
+            if (olBtn) olBtn.style.display = 'block';
             updateToolbarButtons();
         }
 
         function hideFormattingToolbar() {
             if (isEditingCell) return;
-            boldBtn.style.display = 'none';  
-            italicBtn.style.display = 'none';  
-            underlineBtn.style.display = 'none';  
-            highlightBtn.style.display = 'none';  
-            fontSizeBtn.style.display = 'none';
-            ulBtn.style.display = 'none';  
-            olBtn.style.display = 'none';  
+            if (boldBtn) boldBtn.style.display = 'none';
+            if (italicBtn) italicBtn.style.display = 'none';
+            if (underlineBtn) underlineBtn.style.display = 'none';
+            if (highlightBtn) highlightBtn.style.display = 'none';
+            if (fontSizeBtn) fontSizeBtn.style.display = 'none';
+            if (ulBtn) ulBtn.style.display = 'none';
+            if (olBtn) olBtn.style.display = 'none';
         }
+
+        function formatText(command) {
+            if (currentEditableElement) {
+                currentEditableElement.focus();
+                document.execCommand(command, false, null);
+                
+                setTimeout(() => updateToolbarButtons(), 10);
+                setTimeout(() => updateToolbarButtons(), 50);
+                setTimeout(() => updateToolbarButtons(), 100);
+            }
+        }
+
         function insertList(listType) {
             if (currentEditableElement && isEditingCell) {
                 currentEditableElement.focus();
@@ -1859,58 +1932,113 @@ function do_cado_courses_files(){
                 } else if (listType === 'ol') {
                     document.execCommand('insertOrderedList', false, null);
                 }
-                scheduleAutoSave(currentEditableElement);
                 
                 setTimeout(() => updateToolbarButtons(), 10);
                 setTimeout(() => updateToolbarButtons(), 50);
                 setTimeout(() => updateToolbarButtons(), 100);
             }
         }
-function updateToolbarButtons() {
-    if (!currentEditableElement || !isEditingCell) return;
-    
-    setTimeout(() => {
-        try {
-            let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
-            
-            try {
-                isBold = document.queryCommandState('bold');
-                isItalic = document.queryCommandState('italic');
-                isUnderline = document.queryCommandState('underline');
-                isUL = document.queryCommandState('insertUnorderedList');
-                isOL = document.queryCommandState('insertOrderedList');
+
+        function toggleHighlight() {
+            if (currentEditableElement && isEditingCell) {
+                currentEditableElement.focus();
+                
                 const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    isHighlight = isTextHighlighted(selection.getRangeAt(0));
+                if (!selection.rangeCount) return;
+                
+                if (selection.isCollapsed) {
+                    const range = selection.getRangeAt(0);
+                    const highlightedElement = findHighlightedParent(range.startContainer);
+                    
+                    if (highlightedElement) {
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(highlightedElement);
+                        selection.removeAllRanges();
+                        selection.addRange(newRange);
+                    } else {
+                        updateToolbarButtons();
+                        return;
+                    }
                 }
-            } catch (e) {
-                const result = getFormattingFromDOM();
-                isBold = result.isBold;
-                isItalic = result.isItalic;
-                isUnderline = result.isUnderline;
-                isUL = result.isUL;
-                isOL = result.isOL;
+                
+                const range = selection.getRangeAt(0);
+                
+                if (isTextHighlighted(range)) {
+                    document.execCommand('hiliteColor', false, 'transparent');
+                } else {
+                    document.execCommand('hiliteColor', false, '#ffff00');
+                }
+                
+                setTimeout(() => updateToolbarButtons(), 10);
+                setTimeout(() => updateToolbarButtons(), 50);
+                setTimeout(() => updateToolbarButtons(), 100);
             }
-            
-            // Update button states
-            if (boldBtn) boldBtn.classList.toggle('active', isBold);
-            if (italicBtn) italicBtn.classList.toggle('active', isItalic);
-            if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
-            if (highlightBtn) highlightBtn.classList.toggle('active', isHighlight);
-            if (ulBtn) ulBtn.classList.toggle('active', isUL);
-            if (olBtn) olBtn.classList.toggle('active', isOL);
-            
-            // Update font size dropdown
-            if (fontSizeBtn) {
-                const currentSize = getCurrentFontSize();
-                fontSizeBtn.value = currentSize || '';
-            }
-            
-        } catch (error) {
-            console.log('Error updating toolbar buttons:', error);
         }
-    }, 10);
-}
+
+        function changeFontSize(size) {
+            if (!size || !currentEditableElement || !isEditingCell) {
+                if (fontSizeBtn) fontSizeBtn.value = '';
+                return;
+            }
+            
+            currentEditableElement.focus();
+            
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) {
+                if (fontSizeBtn) fontSizeBtn.value = '';
+                return;
+            }
+            
+            document.execCommand('fontSize', false, size);
+            
+            if (fontSizeBtn) fontSizeBtn.value = '';
+            
+            setTimeout(() => updateToolbarButtons(), 10);
+        }
+
+        function updateToolbarButtons() {
+            if (!currentEditableElement || !isEditingCell) return;
+            
+            setTimeout(() => {
+                try {
+                    let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
+                    
+                    try {
+                        isBold = document.queryCommandState('bold');
+                        isItalic = document.queryCommandState('italic');
+                        isUnderline = document.queryCommandState('underline');
+                        isUL = document.queryCommandState('insertUnorderedList');
+                        isOL = document.queryCommandState('insertOrderedList');
+                        const selection = window.getSelection();
+                        if (selection.rangeCount > 0) {
+                            isHighlight = isTextHighlighted(selection.getRangeAt(0));
+                        }
+                    } catch (e) {
+                        const result = getFormattingFromDOM();
+                        isBold = result.isBold;
+                        isItalic = result.isItalic;
+                        isUnderline = result.isUnderline;
+                        isUL = result.isUL;
+                        isOL = result.isOL;
+                    }
+                    
+                    if (boldBtn) boldBtn.classList.toggle('active', isBold);
+                    if (italicBtn) italicBtn.classList.toggle('active', isItalic);
+                    if (underlineBtn) underlineBtn.classList.toggle('active', isUnderline);
+                    if (highlightBtn) highlightBtn.classList.toggle('active', isHighlight);
+                    if (ulBtn) ulBtn.classList.toggle('active', isUL);
+                    if (olBtn) olBtn.classList.toggle('active', isOL);
+                    
+                    if (fontSizeBtn) {
+                        const currentSize = getCurrentFontSize();
+                        fontSizeBtn.value = currentSize || '';
+                    }
+                    
+                } catch (error) {
+                    console.log('Error updating toolbar buttons:', error);
+                }
+            }, 10);
+        }
 
         function getFormattingFromDOM() {
             const selection = window.getSelection();
@@ -1928,10 +2056,10 @@ function updateToolbarButtons() {
             }
             
             if (!element) {
-                return { isBold: false, isItalic: false, isUnderline: false, isHighlight: false, isUL: false, isOL: false };
+                return { isBold: false, isItalic: false, isUnderline: false, isUL: false, isOL: false };
             }
             
-            let isBold = false, isItalic = false, isUnderline = false, isHighlight = false, isUL = false, isOL = false;
+            let isBold = false, isItalic = false, isUnderline = false, isUL = false, isOL = false;
             let current = element;
             
             while (current && current !== currentEditableElement && current !== document.body) {
@@ -1962,140 +2090,6 @@ function updateToolbarButtons() {
             return { isBold, isItalic, isUnderline, isUL, isOL };
         }
 
-
-        function saveCell(element) {
-            const week = element.getAttribute('data-week');
-            const field = element.getAttribute('data-field');
-            const value = element.innerHTML;
-            // Send AJAX request to save data  
-            saveContent(week,field,value);
-        }
-        
-        function showSaveStatus() {
-            const status = document.getElementById('saveStatus');
-            status.style.display = 'block';
-            setTimeout(() => {
-                status.style.display = 'none';
-            }, 2000);
-        }
-
-        function showErrorStatus(message) {
-            const status = document.getElementById('errorStatus');
-            status.textContent = `Erreur: ${message}`;
-            status.style.display = 'block';
-            setTimeout(() => {
-                status.style.display = 'none';
-            }, 3000);
-        }
-
-        // Sauvegarder le contenu
-        function saveContent(week,field,content) {
-            //const content = 'doit';
-            const formData = new FormData();
-
-            updateAutoSaveStatus('saving', 'Sauvegarde manuelle...');
-
-            formData.append('week', week);
-            formData.append('field', field);
-            formData.append('content', content);
-            formData.append('auto_save', 1);
-            // console.log('Full href:', window.location.href);
-            // console.log('Pathname only:', window.location.pathname);
-            // console.log('Search params:', window.location.search);
-            // console.log('Hash:', window.location.hash);
-            //post('Modules.php?modname=scheduling/Planification.php',{content});
-            fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    lastSavedContent = content;
-                    hasUnsavedChanges = false;
-                    const now = new Date().toLocaleTimeString('fr-FR');
-                    updateAutoSaveStatus('saved', `à ${now}`);
-                } else {
-                    throw new Error('Network response was not ok');
-                }
-            })
-            .catch(error => {
-                console.error('Manual save error:', error);
-                updateAutoSaveStatus('error', 'Erreur de sauvegarde manuelle');
-            });
-        }
-
-        // Delete file
-        function deleteFile(delete_file) {
-            const formData = new FormData();
-            // console.log('File :', delete_file);
-            post('Modules.php?modname=scheduling/Planification.php',{delete_file});
-        }
-
-        function updateAutoSaveStatus(status, message) {
-            autoSaveStatus.className = `auto-save-status ${status}`;
-            autoSaveText.textContent = message;
-        }
-        
-        function post(path, params, method='post') {
-            // The rest of this code assumes you are not using a library.
-            // It can be made less verbose if you use one.
-            const form = document.createElement('form');
-            form.method = method;
-            form.action = path;
-
-            for (const key in params) {
-                if (params.hasOwnProperty(key)) {
-                const hiddenField = document.createElement('input');
-                hiddenField.type = 'hidden';
-                hiddenField.name = key;
-                hiddenField.value = params[key];
-                form.appendChild(hiddenField);
-                }
-            }
-            document.body.appendChild(form);
-            form.submit();
-        }
-        function toggleHighlight() {
-            if (currentEditableElement && isEditingCell) {
-                currentEditableElement.focus();
-                
-                const selection = window.getSelection();
-                if (!selection.rangeCount) return;
-                
-                // If no text is selected but cursor is in highlighted text, select the highlighted portion
-                if (selection.isCollapsed) {
-                    const range = selection.getRangeAt(0);
-                    const highlightedElement = findHighlightedParent(range.startContainer);
-                    
-                    if (highlightedElement) {
-                        // Select the entire highlighted element
-                        const newRange = document.createRange();
-                        newRange.selectNodeContents(highlightedElement);
-                        selection.removeAllRanges();
-                        selection.addRange(newRange);
-                    } else {
-                        updateToolbarButtons();
-                        return;
-                    }
-                }
-                
-                const range = selection.getRangeAt(0);
-                
-                // Check if selection is already highlighted
-                if (isTextHighlighted(range)) {
-                    document.execCommand('hiliteColor', false, 'transparent');
-                    cleanupHighlight(range);
-                } else {
-                    document.execCommand('hiliteColor', false, '#ffff00');
-                }
-                
-                scheduleAutoSave(currentEditableElement);
-                setTimeout(() => updateToolbarButtons(), 10);
-                setTimeout(() => updateToolbarButtons(), 50);
-                setTimeout(() => updateToolbarButtons(), 100);
-            }
-        }
-
         function findHighlightedParent(node) {
             let current = node;
             if (current.nodeType === Node.TEXT_NODE) {
@@ -2116,6 +2110,7 @@ function updateToolbarButtons() {
             }
             return null;
         }
+
         function isTextHighlighted(range) {
             let container = range.commonAncestorContainer;
             if (container.nodeType === Node.TEXT_NODE) {
@@ -2138,67 +2133,6 @@ function updateToolbarButtons() {
             return false;
         }
 
-        function removeHighlight(range) {
-            const selectedContent = range.extractContents();
-            const span = document.createElement('span');
-            span.appendChild(selectedContent);
-            
-            // Remove background color from all child elements
-            const highlightedElements = span.querySelectorAll('[style*="background"]');
-            highlightedElements.forEach(el => {
-                el.style.backgroundColor = '';
-                if (!el.getAttribute('style')) {
-                    const parent = el.parentNode;
-                    while (el.firstChild) {
-                        parent.insertBefore(el.firstChild, el);
-                    }
-                    parent.removeChild(el);
-                }
-            });
-            
-            // Remove mark tags
-            const markElements = span.querySelectorAll('mark');
-            markElements.forEach(mark => {
-                const parent = mark.parentNode;
-                while (mark.firstChild) {
-                    parent.insertBefore(mark.firstChild, mark);
-                }
-                parent.removeChild(mark);
-            });
-            
-            range.insertNode(span);
-            
-            // Unwrap the span
-            const parent = span.parentNode;
-            while (span.firstChild) {
-                parent.insertBefore(span.firstChild, span);
-            }
-            parent.removeChild(span);
-        }
-        function changeFontSize(size) {
-            document.execCommand('fontSize', false, size);
-            if (!size || !currentEditableElement || !isEditingCell) {
-                if (fontSizeBtn) fontSizeBtn.value = '';
-                return;
-            }
-            
-            currentEditableElement.focus();
-            
-            const selection = window.getSelection();
-            if (!selection.rangeCount || selection.isCollapsed) {
-                if (fontSizeBtn) fontSizeBtn.value = '';
-                return;
-            }
-            
-            // Use the fontSize command with size value
-            document.execCommand('fontSize', false, size);
-            
-            // Reset the dropdown
-            if (fontSizeBtn) fontSizeBtn.value = '';
-            
-            // scheduleAutoSave(currentEditableElement);
-            setTimeout(() => updateToolbarButtons(), 10);
-        }
         function getCurrentFontSize() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return null;
@@ -2208,18 +2142,15 @@ function updateToolbarButtons() {
                 element = element.parentElement;
             }
             
-            // Check for font tag with size attribute
             let current = element;
             while (current && current !== currentEditableElement) {
                 if (current.tagName === 'FONT' && current.hasAttribute('size')) {
                     return current.getAttribute('size');
                 }
                 
-                // Also check for inline font-size style
                 const fontSize = window.getComputedStyle(current).fontSize;
                 if (fontSize) {
                     const pxSize = parseInt(fontSize);
-                    // Map pixel sizes to font size numbers (approximate)
                     if (pxSize <= 10) return '1';
                     if (pxSize <= 13) return '2';
                     if (pxSize <= 16) return '3';
@@ -2234,67 +2165,308 @@ function updateToolbarButtons() {
             return null;
         }
 
-        if(document.readyState === 'complete') {
-            post('Modules.php?modname=scheduling/Planification.php','auto_save');
+        function autoLinkURLs(element) {
+            const urlPattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+            
+            const walker = document.createTreeWalker(
+                element,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            const textNodes = [];
+            let node;
+            
+            while (node = walker.nextNode()) {
+                if (node.parentElement.tagName !== 'A') {
+                    textNodes.push(node);
+                }
+            }
+            
+            textNodes.forEach(textNode => {
+                const text = textNode.textContent;
+                const matches = text.match(urlPattern);
+                
+                if (matches) {
+                    const fragment = document.createDocumentFragment();
+                    let lastIndex = 0;
+                    
+                    matches.forEach(url => {
+                        const index = text.indexOf(url, lastIndex);
+                        
+                        if (index > lastIndex) {
+                            fragment.appendChild(
+                                document.createTextNode(text.substring(lastIndex, index))
+                            );
+                        }
+                        
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.textContent = url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.style.color = '#007bff';
+                        link.style.textDecoration = 'underline';
+                        link.contentEditable = 'false';
+                        
+                        fragment.appendChild(link);
+                        lastIndex = index + url.length;
+                    });
+                    
+                    if (lastIndex < text.length) {
+                        fragment.appendChild(
+                            document.createTextNode(text.substring(lastIndex))
+                        );
+                    }
+                    
+                    textNode.parentNode.replaceChild(fragment, textNode);
+                }
+            });
         }
+
+        function saveCell(element) {
+            const week = element.getAttribute('data-week');
+            const field = element.getAttribute('data-field');
+            const value = element.innerHTML;
+            
+            saveContent(week, field, value);
+        }
+
+        function saveContent(week, field, content) {
+            const formData = new FormData();
+
+            updateAutoSaveStatus('saving', 'Sauvegarde...');
+
+            formData.append('week', week);
+            formData.append('field', field);
+            formData.append('content', content);
+            formData.append('auto_save', 1);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    lastSavedContent = content;
+                    hasUnsavedChanges = false;
+                    const now = new Date().toLocaleTimeString('fr-FR');
+                    updateAutoSaveStatus('saved', `à ${now}`);
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                updateAutoSaveStatus('error', 'Erreur de sauvegarde');
+            });
+        }
+
+        function updateAutoSaveStatus(status, message) {
+            const statusElement = document.getElementById('autoSaveStatus');
+            const textElement = document.getElementById('autoSaveText');
+            
+            if (!statusElement || !textElement) {
+                return;
+            }
+            
+            statusElement.className = `auto-save-status ${status}`;
+            textElement.textContent = message;
+        }
+
+        function deleteFile(delete_file) {
+            post('Modules.php?modname=scheduling/Planification.php',{delete_file});
+        }
+
+        function post(path, params, method='post') {
+            const form = document.createElement('form');
+            form.method = method;
+            form.action = path;
+
+            for (const key in params) {
+                if (params.hasOwnProperty(key)) {
+                    const hiddenField = document.createElement('input');
+                    hiddenField.type = 'hidden';
+                    hiddenField.name = key;
+                    hiddenField.value = params[key];
+                    form.appendChild(hiddenField);
+                }
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+
         function showUploading() {
             document.getElementById('upload-status').style.display = 'block';
         }
-        // Click outside handler to hide toolbar
-        document.addEventListener('click', function(e) {
-            // Check if click is outside all editable cells and the toolbar
-            const isOutsideEditable = !Array.from(editableCells).some(cell => cell.contains(e.target));
-            const isOutsideToolbar = !formattingToolbar || !formattingToolbar.contains(e.target);
-            
-            if (isOutsideEditable && isOutsideToolbar) {
-                isEditingCell = false;
-                hideFormattingToolbar();
-            }
-             updateToolbarButtons();
-        });
-        document.addEventListener('keydown', function(e) {
-                    
-                    // Only process if we're in an editable cell
-                    if (!currentEditableElement || !currentEditableElement.contains(document.activeElement) && 
-                        document.activeElement !== currentEditableElement) {
-                        return;
-                    }
-                    setTimeout(() => updateToolbarButtons(), 10);
-                    
-                    // Handle Ctrl/Cmd + formatting shortcuts
-                    if (e.ctrlKey || e.metaKey) {
-                        let command = null;
-                        switch(e.key.toLowerCase()) {
-                            case 'b':
-                                command = 'bold';
-                                updateToolbarButtons();
-                                break;
-                            case 'i':
-                                command = 'italic';
-                                updateToolbarButtons();
-                                break;
-                            case 'u':
-                                command = 'underline';
-                                updateToolbarButtons();
-                                break;
-                        }
-                        
-                        if (command) {
-                            e.preventDefault(); // Prevent default browser behavior
-                            document.execCommand(command, false, null);
-                            scheduleAutoSave(currentEditableElement);
-                            
-                            // Update toolbar buttons after command execution
-                            setTimeout(() => updateToolbarButtons(), 10);
-                            setTimeout(() => updateToolbarButtons(), 50);
-                            setTimeout(() => updateToolbarButtons(), 100);
-                        }
-                    }
-                    
-                    // Always update toolbar on any key press (for arrow keys, etc.)
-                    setTimeout(() => updateToolbarButtons(), 10);
-                });
 
+function ajaxLink(url) {
+    console.log('=== AJAX NAVIGATION START ===');
+    console.log('URL:', url);
+    
+    // Extract week_range from URL
+    const urlParams = new URLSearchParams(url.split('?')[1]);
+    const weekRange = urlParams.get('week_range');
+    console.log('Week range:', weekRange);
+    
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'navigation-loading';
+    loadingIndicator.style.cssText = 'position: fixed; top: 10px; right: 10px; padding: 10px 20px; background-color: #007bff; color: white; border-radius: 4px; z-index: 1000;';
+    loadingIndicator.textContent = 'Chargement...';
+    document.body.appendChild(loadingIndicator);
+    
+    fetch(url)
+        .then(response => {
+            console.log('Response received:', response.status);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.text();
+        })
+        .then(html => {
+            console.log('HTML received, length:', html.length);
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Update week-section table
+            const newTable = doc.querySelector('.week-section');
+            const currentTable = document.querySelector('.week-section');
+            console.log('Table update - new:', !!newTable, 'current:', !!currentTable);
+            if (newTable && currentTable) {
+                currentTable.innerHTML = newTable.innerHTML;
+                console.log('Table updated');
+            }
+            
+            // Update navigation header
+            const newHeader = doc.querySelector('body > div:first-child');
+            const currentHeader = document.querySelector('body > div:first-child');
+            console.log('Header update - new:', !!newHeader, 'current:', !!currentHeader);
+            if (newHeader && currentHeader) {
+                const hasNavigation = newHeader.innerHTML.includes('fa-angle-left');
+                console.log('Has navigation:', hasNavigation);
+                if (hasNavigation) {
+                    currentHeader.innerHTML = newHeader.innerHTML;
+                    console.log('Header updated');
+                }
+            }
+            
+            // **NEW: Update print button URL with current week_range**
+            const printForm = document.getElementById('exp');
+            if (printForm && weekRange) {
+                const currentAction = printForm.action;
+                const actionUrl = new URL(currentAction, window.location.origin);
+                actionUrl.searchParams.set('week_range', weekRange);
+                printForm.action = actionUrl.toString();
+                console.log('Print button updated with week:', weekRange);
+            }
+            
+            // Update file panel - with better handling
+            const newFilePanel = doc.querySelector('.dl-panel');
+            const currentFilePanel = document.querySelector('.dl-panel');
+            console.log('File panel - new:', !!newFilePanel, 'current:', !!currentFilePanel);
+            
+            try {
+                if (newFilePanel && currentFilePanel) {
+                    // Both exist - update
+                    const newParent = newFilePanel.parentElement;
+                    const currentParent = currentFilePanel.parentElement;
+                    if (newParent && currentParent) {
+                        currentParent.innerHTML = newParent.innerHTML;
+                        console.log('File panel updated');
+                    }
+                } else if (newFilePanel && !currentFilePanel) {
+                    // New panel exists but current doesn't
+                    const weekSection = document.querySelector('.week-section');
+                    if (weekSection && newFilePanel.parentElement) {
+                        const clone = newFilePanel.parentElement.cloneNode(true);
+                        weekSection.parentElement.insertBefore(clone, weekSection.nextSibling);
+                        console.log('File panel added');
+                    }
+                } else if (!newFilePanel && currentFilePanel) {
+                    // Remove current panel
+                    if (currentFilePanel.parentElement) {
+                        currentFilePanel.parentElement.remove();
+                        console.log('File panel removed');
+                    }
+                }
+            } catch (e) {
+                console.error('Error updating file panel:', e);
+            }
+            
+            // Update button references
+            autoSaveStatus = document.getElementById('autoSaveStatus');
+            autoSaveText = document.getElementById('autoSaveText');
+            boldBtn = document.getElementById('boldBtn');
+            italicBtn = document.getElementById('italicBtn');
+            underlineBtn = document.getElementById('underlineBtn');
+            highlightBtn = document.getElementById('highlightBtn');
+            fontSizeBtn = document.getElementById('fontSizeBtn');
+            ulBtn = document.getElementById('ulBtn');
+            olBtn = document.getElementById('olBtn');
+            console.log('Button references updated');
+            
+            // Re-initialize content
+            initializeContent();
+            console.log('Content initialized');
+            
+            const newNavigation = doc.querySelector('#week-navigation');
+            const currentNavigation = document.querySelector('#week-navigation');
+            console.log('Navigation update - new:', !!newNavigation, 'current:', !!currentNavigation);
+            if (newNavigation && currentNavigation) {
+                currentNavigation.innerHTML = newNavigation.innerHTML;
+                console.log('Navigation updated');
+            }            
+            
+            // Update browser URL
+            window.history.pushState({}, '', url);
+            console.log('URL updated');
+            
+            // Remove loading indicator
+            const indicator = document.getElementById('navigation-loading');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            console.log('=== AJAX NAVIGATION COMPLETE ===');
+        })
+        .catch(error => {
+            console.error('=== AJAX ERROR ===');
+            console.error('Error:', error);
+            console.error('Stack:', error.stack);
+            
+            const indicator = document.getElementById('navigation-loading');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            alert('Erreur de chargement. Rechargement de la page...');
+            window.location.href = url;
+        });
+}
+
+        // Add CSS for link styling
+        const linkStyles = document.createElement('style');
+        linkStyles.textContent = `
+            .editable a {
+                color: #007bff;
+                text-decoration: underline;
+                cursor: pointer;
+                padding: 0 2px;
+                border-radius: 2px;
+                transition: background-color 0.2s;
+            }
+            
+            .editable a:hover {
+                background-color: #e7f3ff;
+            }
+            
+            .editable a::before {
+                content: '🔗 ';
+                font-size: 0.8em;
+                opacity: 0.6;
+            }
+        `;
+        document.head.appendChild(linkStyles);
 </script>
 <?php
 if(! $_REQUEST['_openSIS_PDF'])
