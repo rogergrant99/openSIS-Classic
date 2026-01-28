@@ -842,13 +842,12 @@ function _makeWeeks($start, $end, $link)
         $_REQUEST['week_range'] = date('Y-m-d', $start_time_cur);
     }
 
-
-
     $prev = date('Y-m-d', strtotime($_REQUEST['week_range']) - $one_day * 7);
     $next = date('Y-m-d', strtotime($_REQUEST['week_range']) + $one_day * 7);
     $upper = date('Y-m-d', strtotime($_REQUEST['week_range']) + $one_day * 6);
+    
     if ($link != '') {
-        $html .= "<a href='javascript:void(0);' class=\"text-primary\" title=Previous onClick=\"window.location='" . $link . $prev . "';\"><i class=\"fa fa-angle-left\"></i> " . _prev . "</a> &nbsp; &nbsp; <span>" . properDate($_REQUEST['week_range']) . "&nbsp; - &nbsp;" . properDate($upper) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title=Next onClick=\"window.location='" . $link . $next . "';\" class=\"text-primary\">" . _next . " <i class=\"fa fa-angle-right\"></i></a>";
+        $html .= "<a href='javascript:void(0);' class=\"text-primary\" title='Previous' onClick=\"ajaxNavigate('" . $link . $prev . "');\"><i class=\"fa fa-angle-left\"></i> " . _prev . "</a> &nbsp; &nbsp; <span>" . properDate($_REQUEST['week_range']) . "&nbsp; - &nbsp;" . properDate($upper) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title='Next' onClick=\"ajaxNavigate('" . $link . $next . "');\" class=\"text-primary\">" . _next . " <i class=\"fa fa-angle-right\"></i></a>";
     }
 
     return $html;
@@ -863,8 +862,9 @@ function _makeMonths($link)
     }
     $prev = $_REQUEST['month'] - $one_day * 30;
     $next = $_REQUEST['month'] + $one_day * 30;
+    
     if ($link != '') {
-        $html .= "<a href='javascript:void(0);' class=\"btn btn-default btn-icon\" title=Previous onClick=\"window.location='" . $link . $prev . "';\"><i class=\"fa fa-chevron-left\"></i></a> &nbsp; &nbsp; <span class=\"calendar-title\">" . dateFr('F', $_REQUEST['month']) . "&nbsp; - &nbsp;" . date('Y', $_REQUEST['month']) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title=Next onClick=\"window.location='" . $link . $next . "';\" class=\"btn btn-default btn-icon\"><i class=\"fa fa-chevron-right\"></i></a>";
+        $html .= "<a href='javascript:void(0);' class=\"btn btn-default btn-icon\" title='Previous' onClick=\"ajaxNavigate('" . $link . $prev . "')\"><i class=\"fa fa-chevron-left\"></i></a> &nbsp; &nbsp; <span class=\"calendar-title\">" . dateFr('F', $_REQUEST['month']) . "&nbsp; - &nbsp;" . date('Y', $_REQUEST['month']) . "</span> &nbsp; &nbsp; <a href='javascript:void(0);' title='Next' onClick=\"ajaxNavigate('" . $link . $next . "');\" class=\"btn btn-default btn-icon\"><i class=\"fa fa-chevron-right\"></i></a>";
     }
 
     return $html;
@@ -1072,3 +1072,103 @@ function GetDaysNames($dayShort)
 
 	return $ret;
 }
+?>
+<script>
+function ajaxNavigate(url) {
+    console.log('=== AJAX SCHEDULE NAVIGATION START ===');
+    console.log('URL:', url);
+    
+    // Create loading indicator
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'schedule-loading';
+    loadingIndicator.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 10px 20px;
+        background-color: rgba(226, 28, 28, 0.95);
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    `;
+    
+    loadingIndicator.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="loading-spinner">
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/>
+        </svg>
+        <span style="margin-left: 10px;">Chargement...</span>
+    `;
+    
+    // Add rotation animation
+    if (!document.getElementById('loading-spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'loading-spinner-style';
+        style.textContent = `
+            @keyframes rotate-spinner {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .loading-spinner {
+                animation: rotate-spinner 2s linear infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(loadingIndicator);
+    
+    fetch(url)
+        .then(response => {
+            console.log('Response received:', response.status);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.text();
+        })
+        .then(html => {
+            console.log('HTML received, length:', html.length);
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Update the main content panel
+            const newPanel = doc.querySelector('.panel.panel-default');
+            const currentPanel = document.querySelector('.panel.panel-default');
+            
+            console.log('Panel - new:', !!newPanel, 'current:', !!currentPanel);
+            
+            if (newPanel && currentPanel) {
+                // Only update the innerHTML to preserve the structure
+                currentPanel.innerHTML = newPanel.innerHTML;
+                console.log('Panel content updated');
+            }
+            
+            // Update browser URL
+            window.history.pushState({}, '', url);
+            console.log('URL updated');
+            
+            // Remove loading indicator
+            const indicator = document.getElementById('schedule-loading');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            console.log('=== AJAX SCHEDULE NAVIGATION COMPLETE ===');
+        })
+        .catch(error => {
+            console.error('=== AJAX ERROR ===');
+            console.error('Error:', error);
+            
+            const indicator = document.getElementById('schedule-loading');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            alert('Erreur de chargement. Rechargement de la page...');
+            window.location.href = url;
+        });
+}
+</script>
