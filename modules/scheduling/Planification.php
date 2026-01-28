@@ -436,9 +436,8 @@ function print_daily_schedule() {
 }
 function CreateSelect($val, $name, $opt, $cap, $link){
     $html = '<label class="control-label text-uppercase"><b>' . $cap . '</b></label>';
-    $html .= "<select name=" . $name . " id=" . $name . " class=\"form-control\" onChange=\"window.location='" . $link . "' + this.options[this.selectedIndex].value;\">";
-    // $html .= "<option value=''>" . $opt . "</option>";
-
+    $html .= "<select name=" . $name . " id=" . $name . " class=\"form-control\" onChange=\"ajaxCourseChange('" . $link . "', this.value);\">";
+    
     foreach ($val as $key => $value) {
         if ($value[strtoupper($name)] == $opt)
             $html .= "<option selected value=" . $value[strtoupper($name)] . ">" . $value['TITLE'] . "</option>";
@@ -2302,13 +2301,17 @@ function do_cado_courses_files(){
         }
 
 function ajaxLink(url) {
-    console.log('=== AJAX NAVIGATION START ===');
-    console.log('URL:', url);
+    // console.log('=== AJAX NAVIGATION START ===');
+    // console.log('URL:', url);
     
-    // Extract week_range from URL
+    // Extract week_range and course ID from URL
     const urlParams = new URLSearchParams(url.split('?')[1]);
     const weekRange = urlParams.get('week_range');
-    console.log('Week range:', weekRange);
+    const currentUrl = new URL(window.location.href);
+    const courseId = currentUrl.searchParams.get('id');
+    
+    // console.log('Week range:', weekRange);
+    // console.log('Course ID:', courseId);
     
     // Create loading indicator with gear icon
     const loadingIndicator = document.createElement('div');
@@ -2329,12 +2332,12 @@ function ajaxLink(url) {
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     `;
     
-loadingIndicator.innerHTML = `
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" class="loading-gear">
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/>
-    </svg>
-    <span style="margin-left: 10px;">Chargement...</span>
-`;
+    loadingIndicator.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" class="loading-gear">
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/>
+        </svg>
+        <span style="margin-left: 10px;">Chargement...</span>
+    `;
     
     // Add rotation animation
     if (!document.getElementById('loading-gear-style')) {
@@ -2356,12 +2359,12 @@ loadingIndicator.innerHTML = `
     
     fetch(url)
         .then(response => {
-            console.log('Response received:', response.status);
+            // console.log('Response received:', response.status);
             if (!response.ok) throw new Error('Network response was not ok');
             return response.text();
         })
         .then(html => {
-            console.log('HTML received, length:', html.length);
+            // console.log('HTML received, length:', html.length);
             
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
@@ -2369,39 +2372,46 @@ loadingIndicator.innerHTML = `
             // Update week-section table
             const newTable = doc.querySelector('.week-section');
             const currentTable = document.querySelector('.week-section');
-            console.log('Table update - new:', !!newTable, 'current:', !!currentTable);
+            // console.log('Table update - new:', !!newTable, 'current:', !!currentTable);
             if (newTable && currentTable) {
                 currentTable.innerHTML = newTable.innerHTML;
-                console.log('Table updated');
+                // console.log('Table updated');
             }
             
             // Update navigation header
             const newHeader = doc.querySelector('body > div:first-child');
             const currentHeader = document.querySelector('body > div:first-child');
-            console.log('Header update - new:', !!newHeader, 'current:', !!currentHeader);
+            // console.log('Header update - new:', !!newHeader, 'current:', !!currentHeader);
             if (newHeader && currentHeader) {
                 const hasNavigation = newHeader.innerHTML.includes('fa-angle-left');
-                console.log('Has navigation:', hasNavigation);
+                // console.log('Has navigation:', hasNavigation);
                 if (hasNavigation) {
                     currentHeader.innerHTML = newHeader.innerHTML;
-                    console.log('Header updated');
+                    // console.log('Header updated');
                 }
             }
             
-            // **NEW: Update print button URL with current week_range**
+            // Update print button URL with current week_range and course ID
             const printForm = document.getElementById('exp');
-            if (printForm && weekRange) {
+            if (printForm) {
                 const currentAction = printForm.action;
                 const actionUrl = new URL(currentAction, window.location.origin);
-                actionUrl.searchParams.set('week_range', weekRange);
+                
+                if (weekRange) {
+                    actionUrl.searchParams.set('week_range', weekRange);
+                }
+                if (courseId) {
+                    actionUrl.searchParams.set('marking_period_id', courseId);
+                }
+                
                 printForm.action = actionUrl.toString();
-                console.log('Print button updated with week:', weekRange);
+                // console.log('Print button updated with week:', weekRange, 'course:', courseId);
             }
             
             // Update file panel - with better handling
             const newFilePanel = doc.querySelector('.dl-panel');
             const currentFilePanel = document.querySelector('.dl-panel');
-            console.log('File panel - new:', !!newFilePanel, 'current:', !!currentFilePanel);
+            // console.log('File panel - new:', !!newFilePanel, 'current:', !!currentFilePanel);
             
             try {
                 if (newFilePanel && currentFilePanel) {
@@ -2410,7 +2420,7 @@ loadingIndicator.innerHTML = `
                     const currentParent = currentFilePanel.parentElement;
                     if (newParent && currentParent) {
                         currentParent.innerHTML = newParent.innerHTML;
-                        console.log('File panel updated');
+                        // console.log('File panel updated');
                     }
                 } else if (newFilePanel && !currentFilePanel) {
                     // New panel exists but current doesn't
@@ -2418,13 +2428,13 @@ loadingIndicator.innerHTML = `
                     if (weekSection && newFilePanel.parentElement) {
                         const clone = newFilePanel.parentElement.cloneNode(true);
                         weekSection.parentElement.insertBefore(clone, weekSection.nextSibling);
-                        console.log('File panel added');
+                        // console.log('File panel added');
                     }
                 } else if (!newFilePanel && currentFilePanel) {
                     // Remove current panel
                     if (currentFilePanel.parentElement) {
                         currentFilePanel.parentElement.remove();
-                        console.log('File panel removed');
+                        // console.log('File panel removed');
                     }
                 }
             } catch (e) {
@@ -2441,23 +2451,33 @@ loadingIndicator.innerHTML = `
             fontSizeBtn = document.getElementById('fontSizeBtn');
             ulBtn = document.getElementById('ulBtn');
             olBtn = document.getElementById('olBtn');
-            console.log('Button references updated');
+            // console.log('Button references updated');
             
             // Re-initialize content
             initializeContent();
-            console.log('Content initialized');
+            // console.log('Content initialized');
             
+            // Update navigation
             const newNavigation = doc.querySelector('#week-navigation');
             const currentNavigation = document.querySelector('#week-navigation');
-            console.log('Navigation update - new:', !!newNavigation, 'current:', !!currentNavigation);
+            // console.log('Navigation update - new:', !!newNavigation, 'current:', !!currentNavigation);
             if (newNavigation && currentNavigation) {
                 currentNavigation.innerHTML = newNavigation.innerHTML;
-                console.log('Navigation updated');
+                // console.log('Navigation updated');
             }            
+            
+            // Update course selector if it exists
+            const newCourseSelector = doc.querySelector('.form-inline select[name="id"]');
+            const currentCourseSelector = document.querySelector('.form-inline select[name="id"]');
+            if (newCourseSelector && currentCourseSelector && courseId) {
+                currentCourseSelector.innerHTML = newCourseSelector.innerHTML;
+                currentCourseSelector.value = courseId;
+                // console.log('Course selector updated');
+            }
             
             // Update browser URL
             window.history.pushState({}, '', url);
-            console.log('URL updated');
+            // console.log('URL updated');
             
             // Remove loading indicator
             const indicator = document.getElementById('navigation-loading');
@@ -2465,7 +2485,7 @@ loadingIndicator.innerHTML = `
                 indicator.remove();
             }
             
-            console.log('=== AJAX NAVIGATION COMPLETE ===');
+            // console.log('=== AJAX NAVIGATION COMPLETE ===');
         })
         .catch(error => {
             console.error('=== AJAX ERROR ===');
@@ -2482,6 +2502,217 @@ loadingIndicator.innerHTML = `
         });
 }
 
+function ajaxCourseChange(baseUrl, courseId) {
+    // console.log('=== AJAX COURSE CHANGE START ===');
+    // console.log('Base URL:', baseUrl);
+    // console.log('Course ID:', courseId);
+    
+    // Get current week_range from URL or default
+    const currentUrl = new URL(window.location.href);
+    const weekRange = currentUrl.searchParams.get('week_range') || '';
+    
+    // Build the full URL with both course ID and week_range
+    let url = baseUrl + courseId;
+    if (weekRange) {
+        url += '&week_range=' + encodeURIComponent(weekRange);
+    }
+    
+    // console.log('Full URL:', url);
+    
+    // Create loading indicator
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.id = 'navigation-loading';
+    loadingIndicator.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 54%;
+        transform: translate(-50%, -50%);
+        padding: 7px 12px;
+        background-color: rgba(226, 28, 28, 1.0);
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    `;
+    
+    loadingIndicator.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" class="loading-gear">
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/>
+        </svg>
+        <span style="margin-left: 10px;">Changement de cours...</span>
+    `;
+    
+    // Add rotation animation if not already present
+    if (!document.getElementById('loading-gear-style')) {
+        const style = document.createElement('style');
+        style.id = 'loading-gear-style';
+        style.textContent = `
+            @keyframes rotate-gear {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .loading-gear {
+                animation: rotate-gear 2s linear infinite;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(loadingIndicator);
+    
+    fetch(url)
+        .then(response => {
+            // console.log('Response received:', response.status);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.text();
+        })
+        .then(html => {
+            // console.log('HTML received, length:', html.length);
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // 1. Update course selector dropdown ONLY
+            const newCourseSelector = doc.querySelector('select[name="id"]');
+            const currentCourseSelector = document.querySelector('select[name="id"]');
+            // console.log('Course selector - new:', !!newCourseSelector, 'current:', !!currentCourseSelector);
+            if (newCourseSelector && currentCourseSelector) {
+                const selectedValue = currentCourseSelector.value;
+                currentCourseSelector.innerHTML = newCourseSelector.innerHTML;
+                currentCourseSelector.value = courseId;
+                // console.log('Course selector updated');
+            }
+            
+            // 2. Update week navigation ONLY the inner HTML
+            const newNavigation = doc.querySelector('#week-navigation');
+            const currentNavigation = document.querySelector('#week-navigation');
+            // console.log('Navigation - new:', !!newNavigation, 'current:', !!currentNavigation);
+            
+            if (newNavigation && currentNavigation) {
+                currentNavigation.innerHTML = newNavigation.innerHTML;
+                // console.log('Navigation updated');
+            } else if (newNavigation && !currentNavigation) {
+                // Only create if we can find a safe place to put it
+                const courseSelectDiv = document.querySelector('.form-inline');
+                if (courseSelectDiv) {
+                    const navDiv = document.createElement('div');
+                    navDiv.id = 'week-navigation';
+                    navDiv.innerHTML = newNavigation.innerHTML;
+                    courseSelectDiv.parentNode.insertBefore(navDiv, courseSelectDiv.nextSibling);
+                    // console.log('Navigation created');
+                }
+            }
+            
+            // 3. Update formatting toolbar inner HTML only
+            const newToolbar = doc.querySelector('.formatting-toolbar');
+            const currentToolbar = document.querySelector('.formatting-toolbar');
+            if (newToolbar && currentToolbar) {
+                currentToolbar.innerHTML = newToolbar.innerHTML;
+                // console.log('Toolbar updated');
+            }
+            
+            // 4. Update week-section table inner HTML only
+            const newTable = doc.querySelector('.week-section');
+            const currentTable = document.querySelector('.week-section');
+            // console.log('Table - new:', !!newTable, 'current:', !!currentTable);
+            if (newTable && currentTable) {
+                currentTable.innerHTML = newTable.innerHTML;
+                // console.log('Table updated');
+            }
+            
+            // 5. Update file panel - be very careful here
+            const newDlPanel = doc.querySelector('.dl-panel');
+            const currentDlPanel = document.querySelector('.dl-panel');
+            // console.log('File panel - new:', !!newDlPanel, 'current:', !!currentDlPanel);
+            
+            if (newDlPanel && currentDlPanel) {
+                // Both exist - just update innerHTML
+                currentDlPanel.innerHTML = newDlPanel.innerHTML;
+                // console.log('File panel updated');
+            } else if (newDlPanel && !currentDlPanel) {
+                // New panel exists - insert after week-section
+                const weekSection = document.querySelector('.week-section');
+                if (weekSection) {
+                    const container = document.createElement('div');
+                    container.innerHTML = newDlPanel.outerHTML;
+                    weekSection.parentNode.insertBefore(container.firstChild, weekSection.nextSibling);
+                    // console.log('File panel added');
+                }
+            } else if (!newDlPanel && currentDlPanel) {
+                // Remove current panel
+                currentDlPanel.parentNode.removeChild(currentDlPanel);
+                // console.log('File panel removed');
+            }
+            
+            // 6. Update print button action URL
+            const printForm = document.getElementById('exp');
+            if (printForm) {
+                const actionUrl = new URL(printForm.action, window.location.origin);
+                actionUrl.searchParams.set('marking_period_id', courseId);
+                if (weekRange) {
+                    actionUrl.searchParams.set('week_range', weekRange);
+                }
+                printForm.action = actionUrl.toString();
+                // console.log('Print button updated');
+            }
+            
+            // 7. Update global button references (if they exist)
+            try {
+                if (typeof autoSaveStatus !== 'undefined') {
+                    autoSaveStatus = document.getElementById('autoSaveStatus');
+                    autoSaveText = document.getElementById('autoSaveText');
+                    boldBtn = document.getElementById('boldBtn');
+                    italicBtn = document.getElementById('italicBtn');
+                    underlineBtn = document.getElementById('underlineBtn');
+                    highlightBtn = document.getElementById('highlightBtn');
+                    fontSizeBtn = document.getElementById('fontSizeBtn');
+                    ulBtn = document.getElementById('ulBtn');
+                    olBtn = document.getElementById('olBtn');
+                    // console.log('Button references updated');
+                }
+            } catch (e) {
+                console.log('Could not update button references:', e);
+            }
+            
+            // 8. Re-initialize content
+            try {
+                if (typeof initializeContent === 'function') {
+                    initializeContent();
+                    // console.log('Content initialized');
+                }
+            } catch (e) {
+                console.log('Could not initialize content:', e);
+            }
+            
+            // 9. Update browser URL
+            window.history.pushState({}, '', url);
+            // console.log('URL updated');
+            
+            // 10. Remove loading indicator
+            const indicator = document.getElementById('navigation-loading');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            // console.log('=== AJAX COURSE CHANGE COMPLETE ===');
+        })
+        .catch(error => {
+            console.error('=== AJAX ERROR ===');
+            console.error('Error:', error);
+            console.error('Stack:', error.stack);
+            
+            const indicator = document.getElementById('navigation-loading');
+            if (indicator) {
+                indicator.remove();
+            }
+            
+            alert('Erreur de chargement. Rechargement de la page...');
+            window.location.href = url;
+        });
+}
         // Add CSS for link styling
         const linkStyles = document.createElement('style');
         linkStyles.textContent = `
