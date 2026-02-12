@@ -416,15 +416,18 @@ echo '</ul>
         <div class="sidebar-overlay"></div>
         <!-- Page header -->
         <div class="page-header">
-            <div class="breadcrumb-line">
+            <div class="breadcrumb-line" style="display: flex; align-items: center;">
                 <ul class="breadcrumb">
                     <li id="header"></li>
                 </ul>';
 
 
-echo '<div class="navbar-text pull-right">';
+echo '<div class="navbar-text" style="flex: 1; display: flex; justify-content: center;">';
 if (User('PROFILE') == 'teacher') {
-    //echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
+    echo '<div class="alert alert-warning alert-dismissible" style="margin: 2px;">
+        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        <strong><i class="icon-warning22"></i> Important :</strong> Pour éviter des problèmes avec les données de cours, veuillez utiliser un seul onglet de navigateur à la fois.
+    </div>';
 } elseif (User('PROFILE') == 'student') {
     //echo '<a href="https://support.os4ed.com/hc/en-us" class="text-white" target="_blank" data-popup="tooltip" data-placement="left" data-container="body" data-original-title="Support"><i class="fa fa-life-ring fa-lg"></i></a>';
 } elseif (User('PROFILE') == 'parent') {
