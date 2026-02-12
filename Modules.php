@@ -416,16 +416,16 @@ echo '</ul>
         <div class="sidebar-overlay"></div>
         <!-- Page header -->
         <div class="page-header">
-            <div class="breadcrumb-line" style="display: flex; align-items: center;">
+            <div class="breadcrumb-line" style="position: relative;">
                 <ul class="breadcrumb">
                     <li id="header"></li>
                 </ul>';
 
 
-echo '<div class="navbar-text" style="flex: 1; display: flex; justify-content: center;">';
+echo '<div class="navbar-text" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);">';
 if (User('PROFILE') == 'teacher') {
-    echo '<div class="alert alert-warning alert-dismissible" style="margin: 2px;">
-        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+    echo '<div class="alert alert-warning alert-dismissible" style="margin: 0; padding: 0 35px 0 10px; font-size: 12px; border: none; display: inline-flex; align-items: center; white-space: nowrap;">
+        <button type="button" class="close" data-dismiss="alert" style="font-size: 22px; font-weight: bold; opacity: 0.8; padding: 0; position: absolute; right: 10px;"><span>&times;</span></button>
         <strong><i class="icon-warning22"></i> Important :</strong> Pour éviter des problèmes avec les données de cours, veuillez utiliser un seul onglet de navigateur à la fois.
     </div>';
 } elseif (User('PROFILE') == 'student') {
