@@ -2491,6 +2491,14 @@ if ($_REQUEST['category_id'] == 13) {
 }
 // END ID 13 Note évolutive
 
+// At the very start of the category_id == 14 block, before the main echo:
+echo '<style>
+@media print {
+    .alert { display: none !important; }
+    .col-md-12.text-right { display: none !important; }
+}
+</style>';
+
 // START ID 14 plan d'intervention
 if ($_REQUEST['category_id'] == 14) {
     // Handle form submission
@@ -2683,8 +2691,9 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
     
     // Get helper values for form
     $diagnostics_array = $plan['diagnostic']['diagnostics'] ?? [];
-    $spheres_array = $plan['spheres']['spheres_problematiques'] ?? [];
-    
+    $spheres_array = $plan['spheres']['spheres_problematiques'] ?? [];  
+    // Get logo
+    $sch_img_info= DBGet(DBQuery('SELECT * FROM user_file_upload WHERE SCHOOL_ID='. UserSchool().' AND FILE_INFO=\'schlogo\''));    
     echo '
     <!DOCTYPE html>
     <html lang="fr">
@@ -2935,8 +2944,7 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                     margin: 0 !important;
                     padding: 20px !important;
                     box-shadow: none !important;
-                }
-                
+                }              
                 body {
                     background: white !important;
                 }
@@ -2964,14 +2972,25 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                     margin: 1cm;
                 }
             }
-        </style>
+                        .print-only {
+                    display: none;
+                }
+
+                @media print {
+                    .print-only {
+                        display: block !important;
+                    }
+                }  
+                    </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>PLAN D\'INTERVENTION</h1>
-            </div>
-            
+';
+    echo "<img src='data:image/jpeg;base64,".base64_encode($sch_img_info[1]['CONTENT'])."' width='100' class='m-r-15 img-responsive print-only' alt='Logo'/>";
+    echo '
+                    <h1>PLAN D\'INTERVENTION</h1>
+            </div>            
             <form method="POST" action="">
                 <div class="section">
                     <div class="section-title">INFORMATIONS DE L\'ÉLÈVE</div>
