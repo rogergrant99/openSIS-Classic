@@ -2552,7 +2552,6 @@ if ($_REQUEST['category_id'] == 14) {
             }
         }
         
-        // Build complete plan data as associative array (WITHOUT student info and signatures)
         $plan_data = [
             'informations' => [
                 'reprise' => $_POST['reprise'] ?? ''
@@ -2578,26 +2577,21 @@ if ($_REQUEST['category_id'] == 14) {
             'recommandations' => $_POST['recommandations'] ?? ''
         ];
         
-        // Convert to JSON
         $plan_json = json_encode($plan_data, JSON_UNESCAPED_UNICODE);
         
-        // Check if a plan already exists for this student
         $existing_plan = DBGet(DBQuery("SELECT ID FROM plan_intervention 
                                         WHERE STUDENT_ID = '" . $student_id . "' 
                                         AND SCHOOL_ID = '" . $school_id . "'"));
         
         if (count($existing_plan) > 0) {
-            // Update existing plan
             $sql = "UPDATE plan_intervention SET 
                     PLAN_DATA = '" . addslashes($plan_json) . "',
                     LAST_UPDATED = NOW()
                     WHERE STUDENT_ID = '" . $student_id . "' 
                     AND SCHOOL_ID = '" . $school_id . "'";
-            
             DBQuery($sql);
             echo '<div class="alert alert-success">Plan d\'intervention mis à jour avec succès!</div>';
         } else {
-            // Insert new plan
             $sql = "INSERT INTO plan_intervention (
                     STUDENT_ID, SCHOOL_ID, PLAN_DATA, CREATED_DATE, LAST_UPDATED
                 ) VALUES (
@@ -2607,13 +2601,12 @@ if ($_REQUEST['category_id'] == 14) {
                     NOW(),
                     NOW()
                 )";
-            
             DBQuery($sql);
             echo '<div class="alert alert-success">Plan d\'intervention créé avec succès!</div>';
         }
     }
     
-    // Fetch student's information from database
+    // Fetch student info
     $student_info = DBGet(DBQuery("SELECT s.FIRST_NAME, s.LAST_NAME, s.BIRTHDATE, s.ALT_ID, sg.TITLE as GRADE_LEVEL 
                                    FROM students s
                                    JOIN student_enrollment se ON s.STUDENT_ID = se.STUDENT_ID
@@ -2624,27 +2617,26 @@ if ($_REQUEST['category_id'] == 14) {
                                    ORDER BY se.START_DATE DESC 
                                    LIMIT 1"));
     
-    // Fetch existing plan data
+    // Fetch existing plan
     $plan_result = DBGet(DBQuery("SELECT PLAN_DATA FROM plan_intervention 
                                   WHERE STUDENT_ID = '" . UserStudentID() . "' 
                                   AND SCHOOL_ID = '" . UserSchool() . "'"));
-    
-// FIXED VERSION - Replace the JSON parsing section with this
 
-// Parse JSON data
-if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
-    $raw_json = $plan_result[1]['PLAN_DATA'];
-    
-    // Try decoding without stripslashes first (modern PHP)
-    $plan = json_decode($raw_json, true);
-    
-    // If that fails, try with stripslashes (for older systems with magic quotes)
-    if (!is_array($plan) || json_last_error() !== JSON_ERROR_NONE) {
-        $plan = json_decode(stripslashes($raw_json), true);
-    }
-    
-    // If still fails, initialize empty structure
-    if (!is_array($plan)) {
+    if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
+        $raw_json = $plan_result[1]['PLAN_DATA'];
+        $plan = json_decode($raw_json, true);
+        if (!is_array($plan) || json_last_error() !== JSON_ERROR_NONE) {
+            $plan = json_decode(stripslashes($raw_json), true);
+        }
+        if (!is_array($plan)) {
+            $plan = [
+                'informations' => [],
+                'diagnostic' => ['diagnostics' => []],
+                'spheres' => ['spheres_problematiques' => []],
+                'mesures_appui' => ['mesures' => []]
+            ];
+        }
+    } else {
         $plan = [
             'informations' => [],
             'diagnostic' => ['diagnostics' => []],
@@ -2652,33 +2644,21 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
             'mesures_appui' => ['mesures' => []]
         ];
     }
-} else {
-    $plan = [
-        'informations' => [],
-        'diagnostic' => ['diagnostics' => []],
-        'spheres' => ['spheres_problematiques' => []],
-        'mesures_appui' => ['mesures' => []]
-    ];
-}   
- 
-    // Prepare student info for display
+
     $nom_eleve = isset($student_info[1]) ? $student_info[1]['FIRST_NAME'] . ' ' . $student_info[1]['LAST_NAME'] : '';
     $date_naissance = isset($student_info[1]['BIRTHDATE']) ? $student_info[1]['BIRTHDATE'] : '';
     $niveau_scolaire = isset($student_info[1]['GRADE_LEVEL']) ? $student_info[1]['GRADE_LEVEL'] : '';
     $code_permanent = isset($student_info[1]['ALT_ID']) ? $student_info[1]['ALT_ID'] : '';
     $annee_scolaire = UserSyear() . '-' . (UserSyear() + 1);
     
-    // Helper function to check if diagnostic is selected
     function isDiagnosticChecked($plan, $diagnostic) {
         return in_array($diagnostic, $plan['diagnostic']['diagnostics'] ?? []);
     }
     
-    // Helper function to check if sphere is selected
     function isSphereChecked($plan, $sphere) {
         return in_array($sphere, $plan['spheres']['spheres_problematiques'] ?? []);
     }
     
-    // Helper function to check if measure is selected and get its type
     function getMesureStatus($plan, $label) {
         $mesures = $plan['mesures_appui']['mesures'] ?? [];
         foreach ($mesures as $mesure) {
@@ -2688,12 +2668,9 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
         }
         return ['checked' => false, 'type' => ''];
     }
-    
-    // Get helper values for form
-    $diagnostics_array = $plan['diagnostic']['diagnostics'] ?? [];
-    $spheres_array = $plan['spheres']['spheres_problematiques'] ?? [];  
-    // Get logo
-    $sch_img_info= DBGet(DBQuery('SELECT * FROM user_file_upload WHERE SCHOOL_ID='. UserSchool().' AND FILE_INFO=\'schlogo\''));    
+
+    $sch_img_info = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE SCHOOL_ID=' . UserSchool() . ' AND FILE_INFO=\'schlogo\''));
+
     echo '
     <!DOCTYPE html>
     <html lang="fr">
@@ -2702,11 +2679,7 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Plan d\'intervention</title>
         <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
             
             .container {
                 max-width: 900px;
@@ -2723,16 +2696,9 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 padding-bottom: 20px;
             }
             
-            h1 {
-                font-size: 28px;
-                color: #333;
-                margin-bottom: 10px;
-                font-weight: bold;
-            }
+            h1 { font-size: 28px; color: #333; margin-bottom: 10px; font-weight: bold; }
             
-            .section {
-                margin-bottom: 25px;
-            }
+            .section { margin-bottom: 25px; }
             
             .section-title {
                 background-color: #e8e8e8;
@@ -2742,46 +2708,50 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 border-left: 4px solid #4a90e2;
             }
             
-            .form-row {
-                display: flex;
-                gap: 20px;
-                margin-bottom: 15px;
-            }
+            .form-row { display: flex; gap: 20px; margin-bottom: 15px; }
             
-            .form-group {
-                flex: 1;
-                margin-bottom: 15px;
-            }
+            .form-group { flex: 1; margin-bottom: 15px; }
             
-            label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: 600;
-                color: #555;
-            }
+            label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 14px; }
             
             input[type="text"],
-            input[type="date"],
-            textarea {
+            input[type="date"] {
                 width: 100%;
                 padding: 8px 12px;
-                border: 1px solid #605d5dff;
+                border: 1px solid #605d5d;
                 border-radius: 4px;
                 font-size: 14px;
             }
-            
-    textarea {
-        min-height: 80px;
-        resize: vertical;
-        overflow-y: hidden;
-        box-sizing: border-box;
-    }
 
+            textarea {
+                width: 100%;
+                min-height: 80px;
+                padding: 8px 12px;
+                border: 1px solid #605d5d;
+                border-radius: 4px;
+                font-size: 14px;
+                overflow: hidden;
+                resize: none;
+                box-sizing: border-box;
+                display: block;
+            }
+
+            .print-div {
+                display: none;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                border: 1px solid #000;
+                padding: 8px 12px;
+                font-size: 14px;
+                font-family: Arial, sans-serif;
+                min-height: 30px;
+                width: 100%;
+                box-sizing: border-box;
+            }
             
             .diagnostic-select {
                 display: flex;
                 gap: 8px;
-                text-align: left;
                 align-items: center;
             }
             .diagnostic-select input[type="checkbox"] {
@@ -2792,21 +2762,15 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
             .mesure-type-select {
                 text-align: right;
             }
-            .mesure-type-select input[type="checkbox"] {
-                margin: 0;
-                margin-top: -4px;
-                flex-shrink: 0;
+            .diagnostic-group {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
             }
-
             .checkbox-group {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin-top: 10px;
-            }
-            .diagnostic-group{
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
             }
             .checkbox-item {
                 display: flex;
@@ -2814,38 +2778,8 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 gap: 8px;
                 justify-content: space-between;
             }
-            .checkbox-item input[type="checkbox"] {
-                margin: 0;
-                flex-shrink: 0;
-            }
-            .checkbox-item .mesure-type-select {
-                margin-left: auto;
-            }
-
-            .checkbox-item .diagnostic-select {
-                margin-left: auto;
-            }            
-            .checkbox-item label {
-                margin: 0;
-                font-weight: bold;
-            }
-           
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 10px;
-            }
-            
-            th, td {
-                border: 1px solid #ddd;
-                padding: 10px;
-                text-align: left;
-            }
-            
-            th {
-                background-color: #f0f0f0;
-                font-weight: bold;
-            }
+            .checkbox-item input[type="checkbox"] { margin: 0; flex-shrink: 0; }
+            .checkbox-item label { margin: 0; font-weight: bold; }
             
             .signature-section {
                 display: grid;
@@ -2854,35 +2788,13 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 margin-top: 30px;
             }
             
-            .signature-box {
-                border: 1px solid #ddd;
-                padding: 15px;
-                min-height: 120px;
-            }
+            .signature-box { border: 1px solid #ddd; padding: 15px; min-height: 120px; }
             
-            .signature-line {
-                border-bottom: 1px solid #000;
-                min-height: 40px;
-                margin-top: 10px;
-                margin-bottom: 10px;
-            }
+            .signature-line { border-bottom: 1px solid #000; min-height: 40px; margin-top: 10px; margin-bottom: 10px; }
             
-            .date-line {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-top: 10px;
-            }
-            
-            .date-line span {
-                font-weight: 600;
-            }
-            
-            .date-underline {
-                border-bottom: 1px solid #000;
-                flex: 1;
-                min-height: 25px;
-            }
+            .date-line { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+            .date-line span { font-weight: 600; }
+            .date-underline { border-bottom: 1px solid #000; flex: 1; min-height: 25px; }
             
             .btn-save {
                 background-color: #4a90e2;
@@ -2894,10 +2806,7 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 cursor: pointer;
                 margin-top: 20px;
             }
-            
-            .btn-save:hover {
-                background-color: #357abd;
-            }
+            .btn-save:hover { background-color: #357abd; }
             
             .btn-print {
                 background-color: #28a745;
@@ -2910,10 +2819,7 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 margin-top: 20px;
                 margin-right: 10px;
             }
-            
-            .btn-print:hover {
-                background-color: #218838;
-            }
+            .btn-print:hover { background-color: #218838; }
             
             .button-container {
                 display: flex;
@@ -2921,90 +2827,136 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 gap: 10px;
                 margin-top: 20px;
             }
-            
-            @media print {
-                .btn-save,
-                .btn-print,
-                .button-container {
-                    display: none !important;
-                }
-                
-                .navbar,
-                .sidebar,
-                .panel-heading,
-                nav,
-                .nav-tabs,
-                ul[role="tablist"] {
-                    display: none !important;
-                }
-                
-                .container {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    margin: 0 !important;
-                    padding: 20px !important;
-                    box-shadow: none !important;
-                }              
-                body {
-                    background: white !important;
-                }
-                
-                input[type="text"],
-                input[type="date"],
-                textarea {
-                    border: none;
-                    border-bottom: 1px solid #000;
-                    background: transparent;
-                }
-                
-                .mesure-type-select {
-                    text-align: right;
-                    direction: rtl;
-                    padding: 4px 8px;
-                    transform: translateY(-1px);
-                }
 
-                .mesure-type-select option {
-                    direction: ltr;
-                }                
-                
-                @page {
-                    margin: 1cm;
-                }
-            }
-                        .print-only {
-                    display: none;
-                }
+            .print-only { display: none; }
 
-                @media print {
-                    .print-only {
-                        display: block !important;
-                    }
-                }  
-                    </style>
+@media print {
+    .btn-save,
+    .btn-print,
+    .button-container,
+    .navbar,
+    .sidebar,
+    .panel-heading,
+    .page-header,
+    nav,
+    .nav-tabs,
+    ul[role="tablist"] {
+        display: none !important;
+    }
+
+    .print-only { display: block !important; }
+
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        box-shadow: none !important;
+    }
+
+    body { background: white !important; }
+
+    input[type="text"],
+    input[type="date"] {
+        border: 1px solid #000 !important;
+        background: transparent;
+    }
+
+    textarea {
+        display: none !important;
+    }
+
+    .print-div {
+        display: block !important;
+        border: 1px solid #000;
+        padding: 8px 12px;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        min-height: 30px;
+        width: 100%;
+        box-sizing: border-box;
+        /* Prevent the div itself from breaking across pages */
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Keep label and its input/div together */
+    .form-group {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Keep section titles with their first field */
+    .section-title {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+
+    /* Allow sections to break between each other but not within */
+    .section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    /* Keep signature boxes together */
+    .signature-section {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    .signature-box {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    .checkbox-group {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    .checkbox-item {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    .mesure-type-select {
+        text-align: right;
+        direction: rtl;
+        padding: 4px 8px;
+    }
+
+    .mesure-type-select option { direction: ltr; }
+
+    @page { margin: 1cm; }
+}
+        </style>
     </head>
     <body>
         <div class="container">
-            <div class="header">
-';
-    echo "<img src='data:image/jpeg;base64,".base64_encode($sch_img_info[1]['CONTENT'])."' width='100' class='m-r-15 img-responsive print-only' alt='Logo'/>";
+            <div class="header">';
+
+    echo "<img src='data:image/jpeg;base64," . base64_encode($sch_img_info[1]['CONTENT']) . "' width='100' class='m-r-15 img-responsive print-only' alt='Logo'/>";
+
     echo '
-                    <h1>PLAN D\'INTERVENTION</h1>
-            </div>            
+                <h1>PLAN D\'INTERVENTION</h1>
+            </div>
+
             <form method="POST" action="">
+
                 <div class="section">
                     <div class="section-title">INFORMATIONS DE L\'ÉLÈVE</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Nom de l\'élève:</label>
-                            <input type="text" value="' . htmlspecialchars($nom_eleve) . '" required readonly>
+                            <input type="text" value="' . htmlspecialchars($nom_eleve) . '" readonly>
                         </div>
                         <div class="form-group">
                             <label>Année scolaire:</label>
                             <input type="text" value="' . htmlspecialchars($annee_scolaire) . '" readonly>
                         </div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>Code permanent:</label>
@@ -3015,7 +2967,6 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                             <input type="date" value="' . $date_naissance . '" readonly>
                         </div>
                     </div>
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label>Niveau scolaire:</label>
@@ -3027,7 +2978,7 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <div class="section-title">DIAGNOSTIC</div>
                     <div class="diagnostic-group">
@@ -3072,33 +3023,33 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                             <label for="diag_gilles">Gilles de la Tourette</label>
                         </div>
                     </div>
-                    
+
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Autres:</label>
                         <textarea name="autres_diagnostic">' . htmlspecialchars($plan['diagnostic']['autres_diagnostic'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['diagnostic']['autres_diagnostic'] ?? '') . '</div>
                     </div>
-                    
                     <div class="form-group">
                         <label>Date(s) de l\'évaluation(s):</label>
                         <textarea name="date_evaluation">' . htmlspecialchars($plan['diagnostic']['date_evaluation'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['diagnostic']['date_evaluation'] ?? '') . '</div>
                     </div>
-                    
                     <div class="form-group">
                         <label>Précisions:</label>
                         <textarea name="precisions">' . htmlspecialchars($plan['diagnostic']['precisions'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['diagnostic']['precisions'] ?? '') . '</div>
                     </div>
-                    
                     <div class="form-group">
                         <label>Hypothèse:</label>
                         <textarea name="hypothese">' . htmlspecialchars($plan['diagnostic']['hypothese'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['diagnostic']['hypothese'] ?? '') . '</div>
                     </div>
-                    
                     <div class="form-group">
                         <label>Médication:</label>
                         <input type="text" name="medication" value="' . htmlspecialchars($plan['diagnostic']['medication'] ?? '') . '">
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <div class="section-title">SPHÈRE(S) PROBLÉMATIQUE(S)</div>
                     <div class="diagnostic-group">
@@ -3111,145 +3062,131 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                             <label for="sphere_apprentissage">Apprentissage</label>
                         </div>
                     </div>
-                    
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Précisions (Manifestations observées) - Comportementale:</label>
                         <textarea name="manifestations_comportementale">' . htmlspecialchars($plan['spheres']['manifestations_comportementale'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['spheres']['manifestations_comportementale'] ?? '') . '</div>
                     </div>
-                    
                     <div class="form-group">
                         <label>Précisions (Manifestations observées) - Apprentissage:</label>
                         <textarea name="manifestations_apprentissage">' . htmlspecialchars($plan['spheres']['manifestations_apprentissage'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['spheres']['manifestations_apprentissage'] ?? '') . '</div>
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <div class="section-title">BESOINS ET OBJECTIFS</div>
                     <div class="form-group">
                         <textarea name="besoins_objectifs" rows="5">' . htmlspecialchars($plan['besoins_objectifs'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['besoins_objectifs'] ?? '') . '</div>
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <div class="section-title">MESURES D\'APPUI</div>
                     <div class="checkbox-group">';
-    
-    // Define all measures
+
     $all_measures = [
-            'temps_supp' => '1/3 de temps supplémentaire',
-            'dictionnaire' => 'Utilisation du dictionnaire électronique',
-            'calculatrice' => 'Utilisation de la calculatrice',
-            'place_pref' => 'Place préférentielle',
-            'reponses_orales' => 'Accepter les réponses orales ou Surligner les réponses dans le texte',
-            'verifier_comp' => 'Vérifier la compréhension des questions',
-            'ordinateur' => 'Permettre l\'utilisation de l\'ordinateur',
-            'materiel_manip' => 'Matériel de manipulation',
-            'logiciel_correction' => 'Utilisation d\'un logiciel de correction (ex. Antidote)',
-            'coquilles' => 'Coquilles insonorisantes',
-            'word' => 'Utilisation du logiciel de traitement de texte Word',
-            'fragmenter' => 'Fragmenter la tâche',
-            'synthetiseur' => 'Utilisation d\'un synthétiseur vocal',
-            'diminuer' => 'Diminuer les exigences'
+        'temps_supp'        => '1/3 de temps supplémentaire',
+        'dictionnaire'      => 'Utilisation du dictionnaire électronique',
+        'calculatrice'      => 'Utilisation de la calculatrice',
+        'place_pref'        => 'Place préférentielle',
+        'reponses_orales'   => 'Accepter les réponses orales ou Surligner les réponses dans le texte',
+        'verifier_comp'     => 'Vérifier la compréhension des questions',
+        'ordinateur'        => 'Permettre l\'utilisation de l\'ordinateur',
+        'materiel_manip'    => 'Matériel de manipulation',
+        'logiciel_correction' => 'Utilisation d\'un logiciel de correction (ex. Antidote)',
+        'coquilles'         => 'Coquilles insonorisantes',
+        'word'              => 'Utilisation du logiciel de traitement de texte Word',
+        'fragmenter'        => 'Fragmenter la tâche',
+        'synthetiseur'      => 'Utilisation d\'un synthétiseur vocal',
+        'diminuer'          => 'Diminuer les exigences'
     ];
-    
+
     foreach ($all_measures as $key => $label) {
-        $status = getMesureStatus($plan, $label);
-        $checked = $status['checked'] ? 'checked' : '';
+        $status   = getMesureStatus($plan, $label);
+        $checked  = $status['checked'] ? 'checked' : '';
         $disabled = !$status['checked'] ? 'disabled' : '';
         $selected_type = $status['type'];
-        
+
         echo '
                         <div class="checkbox-item">
                             <input type="checkbox" id="mes_' . $key . '" name="mes_' . $key . '" ' . $checked . ' onchange="toggleMesureType(\'' . $key . '\')">
                             <label for="mes_' . $key . '">' . $label . '</label>
                             <select class="mesure-type-select" id="mes_' . $key . '_type" name="mes_' . $key . '_type" ' . $disabled . '>
                                 <option value=""></option>
-                                <option value="M" ' . ($selected_type == 'M' ? 'selected' : '') . '>M</option>
+                                <option value="M"  ' . ($selected_type == 'M'  ? 'selected' : '') . '>M</option>
                                 <option value="MA" ' . ($selected_type == 'MA' ? 'selected' : '') . '>MA</option>
                                 <option value="MM" ' . ($selected_type == 'MM' ? 'selected' : '') . '>MM</option>
                             </select>
                         </div>';
     }
-    
+
     echo '
                     </div>
                     <br>
-                        <strong>Légende des types:</strong> M (Moyen), MA (Moyen d\'adaptation), MM (Moyen de modification)
-                    
+                    <strong>Légende des types:</strong> M (Moyen), MA (Moyen d\'adaptation), MM (Moyen de modification)
+
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Autres/Précisions (ex: récupérations):</label>
                         <textarea name="autres_mesures">' . htmlspecialchars($plan['mesures_appui']['autres_mesures'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['mesures_appui']['autres_mesures'] ?? '') . '</div>
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <div class="section-title">RECOMMANDATIONS ET COMMENTAIRES</div>
                     <div class="form-group">
                         <textarea name="recommandations" rows="5">' . htmlspecialchars($plan['recommandations'] ?? '') . '</textarea>
+                        <div class="print-div">' . htmlspecialchars($plan['recommandations'] ?? '') . '</div>
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <div class="section-title">SIGNATURES DES COLLABORATEURS</div>
                     <p style="margin-bottom: 20px; font-style: italic;">Nous avons pris connaissance du plan d\'intervention et nous nous engageons à collaborer à sa réalisation.</p>
-                    
                     <div class="signature-section">
                         <div class="signature-box">
                             <label>Autorité parentale:</label>
                             <div class="signature-line"></div>
-                            <div class="date-line">
-                                <span>Date:</span>
-                                <div class="date-underline"></div>
-                            </div>
+                            <div class="date-line"><span>Date:</span><div class="date-underline"></div></div>
                         </div>
-                        
                         <div class="signature-box">
                             <label>Autorité parentale:</label>
                             <div class="signature-line"></div>
-                            <div class="date-line">
-                                <span>Date:</span>
-                                <div class="date-underline"></div>
-                            </div>
+                            <div class="date-line"><span>Date:</span><div class="date-underline"></div></div>
                         </div>
                     </div>
-                    
                     <div class="signature-section" style="margin-top: 20px;">
                         <div class="signature-box">
                             <label>Élève:</label>
                             <div class="signature-line"></div>
-                            <div class="date-line">
-                                <span>Date:</span>
-                                <div class="date-underline"></div>
-                            </div>
+                            <div class="date-line"><span>Date:</span><div class="date-underline"></div></div>
                         </div>
-                        
                         <div class="signature-box">
                             <label>Direction:</label>
                             <div class="signature-line"></div>
-                            <div class="date-line">
-                                <span>Date:</span>
-                                <div class="date-underline"></div>
-                            </div>
+                            <div class="date-line"><span>Date:</span><div class="date-underline"></div></div>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="button-container">
                     <button type="button" onclick="printPlan()" class="btn-print">Imprimer le plan</button>
                     <button type="submit" name="save_plan_intervention" class="btn-save">Enregistrer le plan</button>
                 </div>
+
             </form>
         </div>
-        
-    <script>
+
+        <script>
         function printPlan() {
             window.print();
         }
-        
+
         function toggleMesureType(measureName) {
             const checkbox = document.getElementById("mes_" + measureName);
-            const select = document.getElementById("mes_" + measureName + "_type");
-            
+            const select   = document.getElementById("mes_" + measureName + "_type");
             if (checkbox.checked) {
                 select.disabled = false;
             } else {
@@ -3257,76 +3194,69 @@ if (count($plan_result) > 0 && !empty($plan_result[1]['PLAN_DATA'])) {
                 select.value = "";
             }
         }
-        
-        // Auto-resize textarea function
+
         function autoResizeTextarea(textarea) {
             textarea.style.height = "auto";
             textarea.style.height = (textarea.scrollHeight) + "px";
         }
-        
-        // Initialize measures on load
+
+        function syncPrintDivs() {
+            document.querySelectorAll("textarea").forEach(function(ta) {
+                var next = ta.nextElementSibling;
+                if (next && next.classList.contains("print-div")) {
+                    next.textContent = ta.value;
+                }
+                ta.addEventListener("input", function() {
+                    var n = ta.nextElementSibling;
+                    if (n && n.classList.contains("print-div")) {
+                        n.textContent = ta.value;
+                    }
+                });
+            });
+        }
+
         function initMeasures() {
-            const measures = ["temps_supp", "calculatrice", "reponses_orales", "ordinateur", 
-                            "logiciel_correction", "word", "synthetiseur", "dictionnaire", 
-                            "place_pref", "verifier_comp", "materiel_manip", "coquilles", 
-                            "fragmenter", "diminuer"];
-            
+            const measures = ["temps_supp", "calculatrice", "reponses_orales", "ordinateur",
+                              "logiciel_correction", "word", "synthetiseur", "dictionnaire",
+                              "place_pref", "verifier_comp", "materiel_manip", "coquilles",
+                              "fragmenter", "diminuer"];
             measures.forEach(function(measure) {
                 const checkbox = document.getElementById("mes_" + measure);
-                if (checkbox) {
-                    toggleMesureType(measure);
-                }
+                if (checkbox) { toggleMesureType(measure); }
             });
         }
-        
-        // Initialize textareas
+
         function initTextareas() {
-            const textareas = document.querySelectorAll("textarea");
-            console.log("Found " + textareas.length + " textareas");
-            
-            if (textareas.length === 0) {
-                console.error("No textareas found!");
-                return;
-            }
-            
-            textareas.forEach(function(textarea) {
-                // Initial resize
-                setTimeout(function() {
-                    autoResizeTextarea(textarea);
-                }, 10);
-                
-                // Add event listeners
-                textarea.addEventListener("input", function() {
-                    autoResizeTextarea(this);
-                });
-                
-                textarea.addEventListener("change", function() {
-                    autoResizeTextarea(this);
-                });
+            document.querySelectorAll("textarea").forEach(function(textarea) {
+                setTimeout(function() { autoResizeTextarea(textarea); }, 10);
+                textarea.addEventListener("input",  function() { autoResizeTextarea(this); });
+                textarea.addEventListener("change", function() { autoResizeTextarea(this); });
             });
         }
-        
-        // Run initialization
+
         if (document.readyState === "loading") {
             document.addEventListener("DOMContentLoaded", function() {
                 initMeasures();
                 initTextareas();
+                syncPrintDivs();
             });
         } else {
             initMeasures();
             initTextareas();
+            syncPrintDivs();
         }
-        
-        // Also try on full load as backup
+
         window.addEventListener("load", function() {
             initTextareas();
+            syncPrintDivs();
         });
         </script>
     </body>
     </html>
     ';
 }
-// END ID 14 Plan d'intervention
+// END ID 14 Plan d\'intervention
+
 
 // START ID 15 Profil d'élève
 if ($_REQUEST['category_id'] == 15) {
