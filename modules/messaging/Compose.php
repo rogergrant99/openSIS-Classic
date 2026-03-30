@@ -145,9 +145,75 @@ if (User('PROFILE') == 'teacher' ){
             DBQuery('INSERT INTO mail_groupmembers(GROUP_ID,USER_NAME,profile,SCHOOL_ID) VALUES(' . ($level+10) . ',\'' . $member['EMAIL'] . '\',4,\'' . UserSchool(). '\')');
     }
 
-    $primaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id)) as CONTACT , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Primary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
-    $secondaryContactlist = DBGet(DBQuery('SELECT concat(first_name, " ", last_name ) as STUDENT_NAME , student_id , (select concat(first_name, " ", last_name ) as CONTACT_NAME from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id)) as CONTACT2 , (select STAFF_ID from people p where staff_id IN (select person_id from students_join_people where emergency_type = "Secondary" and student_id = st.student_id )) as STAFF_ID , (select username from login_authentication where user_id = staff_id and profile_id=4) as email from students st where is_disable is null and STUDENT_ID IN (SELECT STUDENT_ID FROM schedule WHERE dropped = "N" and course_period_id = '. UserCoursePeriod() .')  order by first_name'));
+$primaryContactlist = DBGet(DBQuery('
+    SELECT 
+        CONCAT(first_name, " ", last_name) AS STUDENT_NAME,
+        student_id,
+        (SELECT CONCAT(first_name, " ", last_name)
+         FROM people p 
+         WHERE staff_id IN (
+             SELECT person_id FROM students_join_people 
+             WHERE emergency_type = "Primary" AND student_id = st.student_id
+         ) LIMIT 1) AS CONTACT,
+        (SELECT STAFF_ID 
+         FROM people p 
+         WHERE staff_id IN (
+             SELECT person_id FROM students_join_people 
+             WHERE emergency_type = "Primary" AND student_id = st.student_id
+         ) LIMIT 1) AS STAFF_ID,
+        (SELECT username 
+         FROM login_authentication 
+         WHERE user_id = (
+             SELECT STAFF_ID FROM people p 
+             WHERE staff_id IN (
+                 SELECT person_id FROM students_join_people 
+                 WHERE emergency_type = "Primary" AND student_id = st.student_id
+             ) LIMIT 1
+         ) AND profile_id = 4 
+         LIMIT 1) AS email
+    FROM students st
+    WHERE is_disable IS NULL 
+      AND student_id IN (
+          SELECT student_id FROM schedule 
+          WHERE dropped = "N" AND course_period_id = '. UserCoursePeriod() .'
+      )
+    ORDER BY first_name
+'));
 
+$secondaryContactlist = DBGet(DBQuery('
+    SELECT 
+        CONCAT(first_name, " ", last_name) AS STUDENT_NAME,
+        student_id,
+        (SELECT CONCAT(first_name, " ", last_name)
+         FROM people p 
+         WHERE staff_id IN (
+             SELECT person_id FROM students_join_people 
+             WHERE emergency_type = "Secondary" AND student_id = st.student_id
+         ) LIMIT 1) AS CONTACT2,
+        (SELECT STAFF_ID 
+         FROM people p 
+         WHERE staff_id IN (
+             SELECT person_id FROM students_join_people 
+             WHERE emergency_type = "Secondary" AND student_id = st.student_id
+         ) LIMIT 1) AS STAFF_ID,
+        (SELECT username 
+         FROM login_authentication 
+         WHERE user_id = (
+             SELECT STAFF_ID FROM people p 
+             WHERE staff_id IN (
+                 SELECT person_id FROM students_join_people 
+                 WHERE emergency_type = "Secondary" AND student_id = st.student_id
+             ) LIMIT 1
+         ) AND profile_id = 4 
+         LIMIT 1) AS email
+    FROM students st
+    WHERE is_disable IS NULL 
+      AND student_id IN (
+          SELECT student_id FROM schedule 
+          WHERE dropped = "N" AND course_period_id = '. UserCoursePeriod() .'
+      )
+    ORDER BY first_name
+'));
     DBQuery('delete from mail_groupmembers where group_id='. UserCoursePeriod() .'');
     DBQuery('delete from mail_group where group_id='. UserCoursePeriod() .'');
     DBQuery('INSERT INTO mail_group(GROUP_ID,GROUP_NAME,USER_NAME,SCHOOL_ID) VALUES(' . UserCoursePeriod() . ',"Tous les parents de ' . $course_RET[1]['SHORT_NAME'] . '",\'' . User('USERNAME') . '\',\'' . UserSchool(). '\')');
