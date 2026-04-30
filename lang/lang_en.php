@@ -712,6 +712,8 @@ define("_roomNo", "Room No");
 define("_printStudentInfo", "Print Student Info");
 define("_addressesContacts", "Addresses & Contacts");
 define("_files", "Files");
+define("_files2", "Contract");
+define("_files3", "Documents");
 define("_printInfoForSelectedStudents", "PRINT INFO FOR SELECTED STUDENTS");
 define("_printContactInfoForSelectedStudents", "PRINT CONTACT INFO FOR SELECTED STUDENTS");
 define("_printGoalsProgresses", "Print Goals & Progresses");

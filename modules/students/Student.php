@@ -1263,7 +1263,7 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
                 if ($_REQUEST['values'] && $_REQUEST['include'] == 'CommentsInc')
                     SaveData(array('student_mp_comments' => "ID='__ID__'", 'fields' => array('student_mp_comments' => 'STUDENT_ID,SYEAR,MARKING_PERIOD_ID,STAFF_ID,'), 'values' => array('student_mp_comments' => "'" . UserStudentID() . "','" . UserSyear() . "','" . UserMP() . "','" . User('STAFF_ID') . "',")));
 
-                if ($_REQUEST['include'] != 'GeneralInfoInc' && $_REQUEST['include'] != 'AddressInc' && $_REQUEST['include'] != 'MedicalInc' && $_REQUEST['include'] != 'GoalInc' && $_REQUEST['include'] != 'OtherInfoInc' && $_REQUEST['include'] != 'EnrollmentInfoInc' && $_REQUEST['include'] != 'FilesInc')
+                if ($_REQUEST['include'] != 'GeneralInfoInc' && $_REQUEST['include'] != 'AddressInc' && $_REQUEST['include'] != 'MedicalInc' && $_REQUEST['include'] != 'GoalInc' && $_REQUEST['include'] != 'OtherInfoInc' && $_REQUEST['include'] != 'EnrollmentInfoInc' && $_REQUEST['include'] != 'FilesInc' && $_REQUEST['include'] != 'FilesInc2' && $_REQUEST['include'] != 'FilesInc3')
                     if (!strpos($_REQUEST['include'], '/'))
                         include('modules/students/includes/' . $_REQUEST['include'] . '.php');
                     else
@@ -1746,6 +1746,12 @@ if ($_REQUEST['action'] != 'delete' && $_REQUEST['action'] != 'delete_goal') {
                                     break;
                                 case 'Files':
                                     $categoryTitle = _files;
+                                    break;
+                                case 'Contract':
+                                    $categoryTitle = _files2;
+                                    break;
+                                case 'Documents':
+                                    $categoryTitle = _files3;
                                     break;
                                 default:
                                     $categoryTitle = $category['TITLE'];
