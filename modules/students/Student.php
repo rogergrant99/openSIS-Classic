@@ -2508,7 +2508,7 @@ echo '<style>
 // START ID 14 plan d'intervention
 if ($_REQUEST['category_id'] == 14) {
     // Handle form submission
-    if (isset($_POST['save_plan_intervention'])) {
+    if (isset($_POST['save_plan_intervention']) && AllowEdit()) {
         $student_id = UserStudentID();
         $school_id = UserSchool();
         
@@ -2656,7 +2656,10 @@ if ($_REQUEST['category_id'] == 14) {
     $niveau_scolaire = isset($student_info[1]['GRADE_LEVEL']) ? $student_info[1]['GRADE_LEVEL'] : '';
     $code_permanent = isset($student_info[1]['ALT_ID']) ? $student_info[1]['ALT_ID'] : '';
     $annee_scolaire = UserSyear() . '-' . (UserSyear() + 1);
-    
+    $plan_readonly = !AllowEdit();
+    $ro_attr  = $plan_readonly ? ' readonly' : '';
+    $dis_attr = $plan_readonly ? ' disabled' : '';
+
     function isDiagnosticChecked($plan, $diagnostic) {
         return in_array($diagnostic, $plan['diagnostic']['diagnostics'] ?? []);
     }
@@ -2980,7 +2983,7 @@ if ($_REQUEST['category_id'] == 14) {
                         </div>
                         <div class="form-group">
                             <label>Reprise:</label>
-                            <input type="text" name="reprise" value="' . htmlspecialchars($plan['informations']['reprise'] ?? '') . '">
+                            <input type="text" name="reprise" value="' . htmlspecialchars($plan['informations']['reprise'] ?? '') . '"' . $ro_attr . '>
                         </div>
                     </div>
                 </div>
@@ -2989,70 +2992,70 @@ if ($_REQUEST['category_id'] == 14) {
                     <div class="section-title">DIAGNOSTIC</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_dysphasie" name="diag_dysphasie" ' . (isDiagnosticChecked($plan, 'Dysphasie') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_dysphasie" name="diag_dysphasie" ' . (isDiagnosticChecked($plan, 'Dysphasie') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_dysphasie">Dysphasie</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_tda" name="diag_tda" ' . (isDiagnosticChecked($plan, 'TDA') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_tda" name="diag_tda" ' . (isDiagnosticChecked($plan, 'TDA') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_tda">TDA</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_dyspraxie" name="diag_dyspraxie" ' . (isDiagnosticChecked($plan, 'Dyspraxie') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_dyspraxie" name="diag_dyspraxie" ' . (isDiagnosticChecked($plan, 'Dyspraxie') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_dyspraxie">Dyspraxie</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_tdah" name="diag_tdah" ' . (isDiagnosticChecked($plan, 'TDAH') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_tdah" name="diag_tdah" ' . (isDiagnosticChecked($plan, 'TDAH') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_tdah">TDAH</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_dyslexie" name="diag_dyslexie" ' . (isDiagnosticChecked($plan, 'Dyslexie') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_dyslexie" name="diag_dyslexie" ' . (isDiagnosticChecked($plan, 'Dyslexie') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_dyslexie">Dyslexie</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_ted" name="diag_ted" ' . (isDiagnosticChecked($plan, 'TED') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_ted" name="diag_ted" ' . (isDiagnosticChecked($plan, 'TED') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_ted">TED</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_dysorthographie" name="diag_dysorthographie" ' . (isDiagnosticChecked($plan, 'Dysorthographie') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_dysorthographie" name="diag_dysorthographie" ' . (isDiagnosticChecked($plan, 'Dysorthographie') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_dysorthographie">Dysorthographie</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_anxiete" name="diag_anxiete" ' . (isDiagnosticChecked($plan, 'Anxiété') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_anxiete" name="diag_anxiete" ' . (isDiagnosticChecked($plan, 'Anxiété') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_anxiete">Anxiété</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_dyscalculie" name="diag_dyscalculie" ' . (isDiagnosticChecked($plan, 'Dyscalculie') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_dyscalculie" name="diag_dyscalculie" ' . (isDiagnosticChecked($plan, 'Dyscalculie') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_dyscalculie">Dyscalculie</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="diag_gilles" name="diag_gilles" ' . (isDiagnosticChecked($plan, 'Gilles de la Tourette') ? 'checked' : '') . '>
+                            <input type="checkbox" id="diag_gilles" name="diag_gilles" ' . (isDiagnosticChecked($plan, 'Gilles de la Tourette') ? 'checked' : '') . $dis_attr . '>
                             <label for="diag_gilles">Gilles de la Tourette</label>
                         </div>
                     </div>
 
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Autres:</label>
-                        <textarea name="autres_diagnostic">' . htmlspecialchars($plan['diagnostic']['autres_diagnostic'] ?? '') . '</textarea>
+                        <textarea name="autres_diagnostic"' . $ro_attr . '>' . htmlspecialchars($plan['diagnostic']['autres_diagnostic'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['diagnostic']['autres_diagnostic'] ?? '') . '</div>
                     </div>
                     <div class="form-group">
                         <label>Date(s) de l\'évaluation(s):</label>
-                        <textarea name="date_evaluation">' . htmlspecialchars($plan['diagnostic']['date_evaluation'] ?? '') . '</textarea>
+                        <textarea name="date_evaluation"' . $ro_attr . '>' . htmlspecialchars($plan['diagnostic']['date_evaluation'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['diagnostic']['date_evaluation'] ?? '') . '</div>
                     </div>
                     <div class="form-group">
                         <label>Précisions:</label>
-                        <textarea name="precisions">' . htmlspecialchars($plan['diagnostic']['precisions'] ?? '') . '</textarea>
+                        <textarea name="precisions"' . $ro_attr . '>' . htmlspecialchars($plan['diagnostic']['precisions'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['diagnostic']['precisions'] ?? '') . '</div>
                     </div>
                     <div class="form-group">
                         <label>Hypothèse:</label>
-                        <textarea name="hypothese">' . htmlspecialchars($plan['diagnostic']['hypothese'] ?? '') . '</textarea>
+                        <textarea name="hypothese"' . $ro_attr . '>' . htmlspecialchars($plan['diagnostic']['hypothese'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['diagnostic']['hypothese'] ?? '') . '</div>
                     </div>
                     <div class="form-group">
                         <label>Médication:</label>
-                        <input type="text" name="medication" value="' . htmlspecialchars($plan['diagnostic']['medication'] ?? '') . '">
+                        <input type="text" name="medication" value="' . htmlspecialchars($plan['diagnostic']['medication'] ?? '') . '"' . $ro_attr . '>
                     </div>
                 </div>
 
@@ -3060,22 +3063,22 @@ if ($_REQUEST['category_id'] == 14) {
                     <div class="section-title">SPHÈRE(S) PROBLÉMATIQUE(S)</div>
                     <div class="diagnostic-group">
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="sphere_comportementale" name="sphere_comportementale" ' . (isSphereChecked($plan, 'Comportementale') ? 'checked' : '') . '>
+                            <input type="checkbox" id="sphere_comportementale" name="sphere_comportementale" ' . (isSphereChecked($plan, 'Comportementale') ? 'checked' : '') . $dis_attr . '>
                             <label for="sphere_comportementale">Comportementale</label>
                         </div>
                         <div class="diagnostic-select">
-                            <input type="checkbox" id="sphere_apprentissage" name="sphere_apprentissage" ' . (isSphereChecked($plan, 'Apprentissage') ? 'checked' : '') . '>
+                            <input type="checkbox" id="sphere_apprentissage" name="sphere_apprentissage" ' . (isSphereChecked($plan, 'Apprentissage') ? 'checked' : '') . $dis_attr . '>
                             <label for="sphere_apprentissage">Apprentissage</label>
                         </div>
                     </div>
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Précisions (Manifestations observées) - Comportementale:</label>
-                        <textarea name="manifestations_comportementale">' . htmlspecialchars($plan['spheres']['manifestations_comportementale'] ?? '') . '</textarea>
+                        <textarea name="manifestations_comportementale"' . $ro_attr . '>' . htmlspecialchars($plan['spheres']['manifestations_comportementale'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['spheres']['manifestations_comportementale'] ?? '') . '</div>
                     </div>
                     <div class="form-group">
                         <label>Précisions (Manifestations observées) - Apprentissage:</label>
-                        <textarea name="manifestations_apprentissage">' . htmlspecialchars($plan['spheres']['manifestations_apprentissage'] ?? '') . '</textarea>
+                        <textarea name="manifestations_apprentissage"' . $ro_attr . '>' . htmlspecialchars($plan['spheres']['manifestations_apprentissage'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['spheres']['manifestations_apprentissage'] ?? '') . '</div>
                     </div>
                 </div>
@@ -3083,7 +3086,7 @@ if ($_REQUEST['category_id'] == 14) {
                 <div class="section">
                     <div class="section-title">BESOINS ET OBJECTIFS</div>
                     <div class="form-group">
-                        <textarea name="besoins_objectifs" rows="5">' . htmlspecialchars($plan['besoins_objectifs'] ?? '') . '</textarea>
+                        <textarea name="besoins_objectifs" rows="5"' . $ro_attr . '>' . htmlspecialchars($plan['besoins_objectifs'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['besoins_objectifs'] ?? '') . '</div>
                     </div>
                 </div>
@@ -3112,12 +3115,12 @@ if ($_REQUEST['category_id'] == 14) {
     foreach ($all_measures as $key => $label) {
         $status   = getMesureStatus($plan, $label);
         $checked  = $status['checked'] ? 'checked' : '';
-        $disabled = !$status['checked'] ? 'disabled' : '';
+        $disabled = ($plan_readonly || !$status['checked']) ? 'disabled' : '';
         $selected_type = $status['type'];
 
         echo '
                         <div class="checkbox-item">
-                            <input type="checkbox" id="mes_' . $key . '" name="mes_' . $key . '" ' . $checked . ' onchange="toggleMesureType(\'' . $key . '\')">
+                            <input type="checkbox" id="mes_' . $key . '" name="mes_' . $key . '" ' . $checked . $dis_attr . ' onchange="toggleMesureType(\'' . $key . '\')">
                             <label for="mes_' . $key . '">' . $label . '</label>
                             <select class="mesure-type-select" id="mes_' . $key . '_type" name="mes_' . $key . '_type" ' . $disabled . '>
                                 <option value=""></option>
@@ -3135,7 +3138,7 @@ if ($_REQUEST['category_id'] == 14) {
 
                     <div class="form-group" style="margin-top: 15px;">
                         <label>Autres/Précisions (ex: récupérations):</label>
-                        <textarea name="autres_mesures">' . htmlspecialchars($plan['mesures_appui']['autres_mesures'] ?? '') . '</textarea>
+                        <textarea name="autres_mesures"' . $ro_attr . '>' . htmlspecialchars($plan['mesures_appui']['autres_mesures'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['mesures_appui']['autres_mesures'] ?? '') . '</div>
                     </div>
                 </div>
@@ -3143,7 +3146,7 @@ if ($_REQUEST['category_id'] == 14) {
                 <div class="section">
                     <div class="section-title">RECOMMANDATIONS ET COMMENTAIRES</div>
                     <div class="form-group">
-                        <textarea name="recommandations" rows="5">' . htmlspecialchars($plan['recommandations'] ?? '') . '</textarea>
+                        <textarea name="recommandations" rows="5"' . $ro_attr . '>' . htmlspecialchars($plan['recommandations'] ?? '') . '</textarea>
                         <div class="print-div">' . htmlspecialchars($plan['recommandations'] ?? '') . '</div>
                     </div>
                 </div>
@@ -3179,7 +3182,7 @@ if ($_REQUEST['category_id'] == 14) {
 
                 <div class="button-container">
                     <button type="button" onclick="printPlan()" class="btn-print">Imprimer le plan</button>
-                    <button type="submit" name="save_plan_intervention" class="btn-save">Enregistrer le plan</button>
+                    ' . ($plan_readonly ? '' : '<button type="submit" name="save_plan_intervention" class="btn-save">Enregistrer le plan</button>') . '
                 </div>
 
             </form>
