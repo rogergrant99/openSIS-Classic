@@ -305,9 +305,9 @@ switch (User('PROFILE')) {
         $rolled = count($notice_roll_date);
         $last_date = strtotime($notice_date[1]['END_DATE']) - strtotime(DBDate());
         $last_date = $last_date / (60 * 60 * 24);
-        if ($last_date <= 15 && $rolled == 0) {
-            echo '<div class="alert alert-warning alert-styled-left">'._schoolYearIsEndingOrHasEndedRolloverRequired.'.</div>';
-        }
+        // if ($last_date <= 15 && $rolled == 0) {
+        //     echo '<div class="alert alert-warning alert-styled-left">'._schoolYearIsEndingOrHasEndedRolloverRequired.'.</div>';
+        // }
         //-------------------------------------------------------------------------------ROLLOVER NOTIFICATION ENDS----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
