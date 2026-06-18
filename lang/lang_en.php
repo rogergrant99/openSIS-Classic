@@ -1744,6 +1744,7 @@ define("_dueDateMustBeGreaterThanAssignedDate", "Due date must be greater than a
 define("_cannotModifyTheEndDateOrStartDateBecauseGradeHasBeenAssignedToTheStudentForThisAssignment", "Cannot modify the end date or start date because grade has been assigned to the student for this assignment");
 define("_cannotModifyThePointsBecauseGradeHasBeenAssignedToTheStudentForThisAssignment", "Cannot modify the points because grade has been assigned to the student for this assignment");
 define("_titleCannotBeBlank", "Title Cannot be Blank");
+define("_assignmentTitleReserved", "\"Examen Final\" is a reserved title and cannot be used for an assignment");
 define("_gradebookAssignmentTypeCannotBeDeletedBecauseAssignmentsAreCreatedInThisAssignmentType", "Gradebook Assignment Type cannot be deleted because assignments are created in this assignment type");
 define("_gradebookAssignmentCannotBeDeletedBecauseGradeWasGivenForThisAssignment", "Gradebook Assignment cannot be deleted because grade was given for this assignment");
 define("_newAssignment", "New Assignment");

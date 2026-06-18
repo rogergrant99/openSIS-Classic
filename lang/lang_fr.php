@@ -1751,6 +1751,7 @@ define("_dueDateMustBeGreaterThanAssignedDate", "Date d'échéance doit être su
 define("_cannotModifyTheEndDateOrStartDateBecauseGradeHasBeenAssignedToTheStudentForThisAssignment", "Impossible de modifier la date de fin ou la date de début parce que des devoirs ont été attribués");
 define("_cannotModifyThePointsBecauseGradeHasBeenAssignedToTheStudentForThisAssignment", "Impossible de modifier les points parce des notes ont été attribué à l'étudiant pour ce devoir");
 define("_titleCannotBeBlank", "Titre ne peut pas être vide");
+define("_assignmentTitleReserved", "« Examen final » est un titre réservé et ne peut pas être utilisé pour un devoir");
 define("_gradebookAssignmentTypeCannotBeDeletedBecauseAssignmentsAreCreatedInThisAssignmentType", "Cette compétence ne peut pas être supprimé car les devoirs sont créées dans cette compétence");
 define("_gradebookAssignmentCannotBeDeletedBecauseGradeWasGivenForThisAssignment", "Ce devoir ne peut pas être supprimée car des notes y ont été attribué");
 define("_newAssignment", "Nouveau devoir");

@@ -97,6 +97,12 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                     $columns['COURSE_ID'] = 'N';
                 $err_ck = 0;
                 foreach ($columns as $column => $value) {
+                    if ($column == 'TITLE' && $table == 'gradebook_assignments' && strcasecmp(trim($value), 'Examen final') == 0) {
+                        $msg = '<Font color=red>' . _assignmentTitleReserved . '.</FONT>';
+                        $err = true;
+                        $err_ck = 1;
+                        continue;
+                    }
                     if ($column == 'DUE_DATE' || $column == 'ASSIGNED_DATE') {
 
                         $due_date_sql = DBGet(DBQuery('SELECT ASSIGNED_DATE,DUE_DATE FROM gradebook_assignments WHERE ASSIGNMENT_ID=\'' . $_REQUEST['assignment_id'] . '\''));
@@ -245,6 +251,13 @@ if (clean_param($_REQUEST['tables'], PARAM_NOTAGS) && ($_POST['tables'] || $_REQ
                 $columns['COURSE_ID'] = 'N';
 
             foreach ($columns as $column => $value) {
+
+                if ($column == 'TITLE' && $table == 'gradebook_assignments' && strcasecmp(trim($value), 'Examen final') == 0) {
+                    $msg = '<Font color=red>' . _assignmentTitleReserved . '.</FONT>';
+                    $err = true;
+                    $err_ck = 1;
+                    break;
+                }
 
                 if ($columns['DUE_DATE'] && $columns['ASSIGNED_DATE']) {
                     if (strtotime($columns['DUE_DATE']) < strtotime($columns['ASSIGNED_DATE'])) {
