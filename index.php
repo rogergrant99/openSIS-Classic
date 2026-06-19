@@ -110,6 +110,20 @@ if (optional_param('register', '', PARAM_NOTAGS)) {
         header("Location:register.php");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Portal closure check
+// Returns true when the current date/time falls between June 1 00:00:00
+// and June 26 23:59:59 (inclusive) of the current year.
+// Only parent and student profiles are blocked; admins and teachers are not.
+// ─────────────────────────────────────────────────────────────────────────────
+function isPortalClosed(): bool {
+    $now   = new DateTime('now');
+    $year  = $now->format('Y');
+    $start = new DateTime('June 1 '  . $year . ' 00:00:00');
+    $end   = new DateTime('June 26 ' . $year . ' 23:59:59');
+    return ($now >= $start && $now <= $end);
+}
+
 if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', PARAM_RAW) && CSRFSecure::ValidateToken(optional_param('TOKEN', '', PARAM_RAW))) {
     db_start();
 
@@ -395,6 +409,15 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
     }
 
     if ($login_RET && $login_RET[1]['IS_DISABLE'] != 'Y') {
+
+        // ── Portal closure: block parent and student logins ───────────────────
+        // Admin (PROFILE_ID 0 or 1) and teacher accounts are not affected.
+        if (isPortalClosed() && in_array($login_RET[1]['PROFILE'], ['parent', 'student'])) {
+            session_destroy();
+            $error[] = "Le portail est présentement fermé pour compilation des notes.";
+        } else {
+        // ─────────────────────────────────────────────────────────────────────
+
         $_SESSION['STAFF_ID'] = $login_RET[1]['STAFF_ID'];
         //$_SESSION['LAST_LOGIN'] = $login_RET[1]['LAST_LOGIN'];
         $_SESSION['LAST_LOGIN'] = isset($login_RET[1]['LAST_LOGIN']) ? $login_RET[1]['LAST_LOGIN'] : '';
@@ -515,6 +538,9 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
             DBQuery("UPDATE login_authentication SET LAST_LOGIN=CURRENT_TIMESTAMP WHERE USER_ID='" . $admin_RET[1]['STAFF_ID'] . "' AND PROFILE_ID='" . $admin_RET[1]['PROFILE_ID'] . "'");
         else
             DBQuery("UPDATE login_authentication SET LAST_LOGIN=CURRENT_TIMESTAMP,FAILED_LOGIN=0 WHERE USER_ID='" . $login_RET[1]['STAFF_ID'] . "' AND PROFILE_ID='" . $login_RET[1]['PROFILE_ID'] . "'");
+
+        } // end isPortalClosed() else
+
     } elseif (($login_RET && $login_RET[1]['IS_DISABLE'] == 'Y') || ($student_RET && $student_RET[1]['IS_DISABLE'] == 'Y')) {
         $admin_failed_count = DBGet(DBQuery("SELECT FAIL_COUNT FROM system_preference_misc"));
         $ad_f_cnt = $admin_failed_count[1]['FAIL_COUNT'];
@@ -536,6 +562,13 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
                 $error[] = "Votre compte a été désactivé. Contactez l'administration de l'école pour le réactiver.";
         }
     } elseif ($student_RET) {
+
+        // ── Portal closure: block student logins ──────────────────────────────
+        if (isPortalClosed()) {
+            session_destroy();
+            $error[] = "Le portail est présentement fermé pour compilation des notes.";
+        } else {
+        // ─────────────────────────────────────────────────────────────────────
 
         if ($_SERVER['HTTP_X_FORWARDED_FOR']) {
             $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
@@ -588,6 +621,9 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
             DBQuery("UPDATE login_authentication SET LAST_LOGIN=CURRENT_TIMESTAMP WHERE USER_ID='" . $admin_RET[1]['STAFF_ID'] . "' AND PROFILE_ID='" . $admin_RET[1]['PROFILE_ID'] . "' AND USERNAME='" . $admin_RET[1]['USERNAME'] . "'");
         else
             DBQuery("UPDATE login_authentication SET LAST_LOGIN=CURRENT_TIMESTAMP,FAILED_LOGIN=0 WHERE USER_ID='" . $student_RET[1]['STUDENT_ID'] . "' AND PROFILE_ID='" . $student_RET[1]['PROFILE_ID'] . "' AND USERNAME='" . $student_RET[1]['USERNAME'] . "'");
+
+        } // end isPortalClosed() else
+
     } else {
 
         $openSIS_uname = mysqli_real_escape_string($connection, trim(optional_param('USERNAME', 0, PARAM_RAW)));
@@ -623,6 +659,7 @@ if (optional_param('USERNAME', '', PARAM_RAW) && optional_param('PASSWORD', '', 
         $failed_login_staff = $res[1]['FAILED_LOGIN'];
         $failed_login_stu = $res[1]['FAILED_LOGIN'];
         if ($failed_login_stu != '' && $res[1]['PROFILE'] == 'student') {
+            //            echo "$ad_f_cnt";
             if ($ad_f_cnt && $ad_f_cnt != 0 && $failed_login_stu >= $ad_f_cnt) {
                 $check_enrollment = DBGet(DBQuery('SELECT COUNT(*) AS REC_EX FROM student_enrollment WHERE STUDENT_ID=' . $res[1]['USER_ID'] . ' AND END_DATE<\'' . date('Y-m-d') . '\' ORDER BY ID DESC LIMIT 0,1'));
                 if ($check_enrollment[1]['REC_EX'] == 0)
