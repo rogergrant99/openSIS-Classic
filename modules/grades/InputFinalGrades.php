@@ -60,7 +60,7 @@ echo '<div class="panel-body">';
             {
                 echo $weight['ASSIGNMENT_WEIGHT'];
                 $total+=$weight['ASSIGNMENT_WEIGHT'];
-                if($weight['ASSIGNMENT_WEIGHT']=='' )
+                if($weight['ASSIGNMENT_WEIGHT']=='' || $weight['ASSIGNMENT_WEIGHT']== '0')
                     $total=0;
             }
             if ($total != 100)
