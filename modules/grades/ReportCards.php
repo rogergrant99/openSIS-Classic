@@ -1426,7 +1426,7 @@ function CadoHTMLresultatsPrimaire($title,$course,$quarts,$results,$comments,$re
                         echo '<td></td>';   
                     echo '<td></td>';             
                     if($exam_value[$courseloop]){
-                        echo '<tr><td class="class-results--align-center highligth">Examen Final = '. $exam_value[$courseloop] . '</td></tr>';
+                        echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
                     }
                 }
 
@@ -1540,7 +1540,7 @@ function CadoHTMLresultatsSecondaire($title,$course,$quarts,$results,$comments,$
                 echo '<td></td>';
             }   
             if($exam_value[$courseloop]){
-                echo '<tr><td class="class-results--align-center highligth">Examen Final = '. $exam_value[$courseloop] . '</td></tr>';
+                echo '<tr><td class="class-results--align-center highligth">Examen final = '. $exam_value[$courseloop] . '</td></tr>';
             }
         }
         echo '  
