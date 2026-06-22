@@ -63,7 +63,7 @@ echo '<div class="panel-body">';
                     $total=0;
             }
             if ($total != 100)
-                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
+                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$total . '</div>';
             }
             $total=0;
     }
