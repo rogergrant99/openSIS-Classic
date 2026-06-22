@@ -120,7 +120,7 @@ function isPortalClosed(): bool {
     $now   = new DateTime('now');
     $year  = $now->format('Y');
     $start = new DateTime('June 1 '  . $year . ' 00:00:00');
-    $end   = new DateTime('June 26 ' . $year . ' 23:59:59');
+    $end   = new DateTime('June 21 ' . $year . ' 23:59:59');
     return ($now >= $start && $now <= $end);
 }
 
