@@ -608,7 +608,8 @@ function check_weight($course_period_id, $staff_id, $mp, $course_id)
         $total = 0;
         foreach ($assignment_weight as $weight) {
             // If any weight is missing or zero, return error
-            if ($weight['ASSIGNMENT_WEIGHT'] == '' || $weight['ASSIGNMENT_WEIGHT'] == '0') {
+#            if ($weight['ASSIGNMENT_WEIGHT'] == '' || $weight['ASSIGNMENT_WEIGHT'] == '0') {
+            if ($weight['ASSIGNMENT_WEIGHT'] == '') {
                 return 1;
             }
             $total += $weight['ASSIGNMENT_WEIGHT'];
