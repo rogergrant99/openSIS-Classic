@@ -58,12 +58,13 @@ echo '<div class="panel-body">';
             $assignment_weight=DBGet(DBQuery('SELECT ASSIGNMENT_WEIGHT AS ASSIGNMENT_WEIGHT FROM gradebook_assignments WHERE MARKING_PERIOD_ID=\''.   UserMP() . '\' AND assignment_type_id= ('.$type['ASSIGNMENT_TYPE_ID'].')'));
             foreach ($assignment_weight as $key => $weight) 
             {
+                echo $weight['ASSIGNMENT_WEIGHT'];
                 $total+=$weight['ASSIGNMENT_WEIGHT'];
                 if($weight['ASSIGNMENT_WEIGHT']=='' || $weight['ASSIGNMENT_WEIGHT']== '0')
                     $total=0;
             }
             if ($total != 100)
-                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$total . '</div>';
+                echo '<div class="alert alert-warning alert-styled-left">' . _coursePeriodIsConfiguredAsWeightedButNoWeightsAreAssignedToTheAssignmentTypes . ' '.$type['TITLE'] . '</div>';
             }
             $total=0;
     }
