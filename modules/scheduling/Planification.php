@@ -67,7 +67,7 @@ if ($_REQUEST['id']) {
 // Set default course id on initial load
 if (!$course_id && User('PROFILE') != 'teacher') {
     $courses_RET = DBGet(DBQuery('SELECT DISTINCT c.TITLE , cp.DOES_NO_PLANNING, cp.COURSE_PERIOD_ID ,cp.COURSE_ID as ID,cp.TEACHER_ID AS STAFF_ID FROM schedule s,course_periods cp,course_period_var cpv,courses c,attendance_calendar acc WHERE s.SYEAR=\'' . UserSyear() . '\' AND cp.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID  AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID  AND (s.MARKING_PERIOD_ID IN (SELECT MARKING_PERIOD_ID FROM school_years WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_semesters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_quarters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE )or s.MARKING_PERIOD_ID  is NULL) AND (\'' . DBDate() . '\' BETWEEN s.START_DATE AND s.END_DATE OR \'' . DBDate() . '\'>=s.START_DATE AND s.END_DATE IS NULL) AND s.STUDENT_ID=\'' . UserStudentID() . '\' AND cp.GRADE_SCALE_ID IS NOT NULL' . (User('PROFILE') == 'teacher' ? ' AND cp.TEACHER_ID=\'' . User('STAFF_ID') . '\'' : '') . ' AND c.COURSE_ID=cp.COURSE_ID ORDER BY TITLE'));
-    $course_RET = DBGet(DBQuery('SELECT course_id,grade_level,teacher_id FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . $courses_RET[1]['ID'] . ''));
+    $course_RET = $courses_RET[1]['ID'] ? DBGet(DBQuery('SELECT course_id,grade_level,teacher_id FROM course_details WHERE SYEAR=\'' . UserSyear() . '\' AND course_id=' . $courses_RET[1]['ID'] . '')) : array();
     $course_id = $course_RET[1]['COURSE_ID'];
     if ($course_RET[1]['GRADE_LEVEL'] >= '1' && $course_RET[1]['GRADE_LEVEL'] <= '7') {
         $primaire = $course_RET[1]['GRADE_LEVEL'];
@@ -928,7 +928,7 @@ function checkPlanningExists($date, $gradeLevel, $courseId) {
 function do_cado_courses_files() {
     global $course_id, $default_course_id, $primaire;
     if (!$course_id && $_REQUEST['c_period_id']) $course_id = $_REQUEST['c_period_id'];
-    $course_period_id = DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id . ' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME'));
+    $course_period_id = $course_id ? DBGet(DBQuery('SELECT COURSE_PERIOD_ID,TEACHER_ID FROM course_details WHERE course_id = ' . $course_id . ' AND syear=' . UserSyear() . '  ORDER BY SHORT_NAME')) : array();
     $search = '%[';
     $search .= $course_period_id[1]['COURSE_PERIOD_ID'];
     $search .= ']%';
@@ -939,7 +939,9 @@ function do_cado_courses_files() {
         $course_period_id[1]['TEACHER_ID'] = 0;
     }
 
-    if (User('PROFILE') == 'teacher')
+    if (!isset($course_period_id[1]['TEACHER_ID'])) {
+        $fileid = array();
+    } elseif (User('PROFILE') == 'teacher')
         $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course_period_id[1]['TEACHER_ID'] . ' AND FILE_INFO="stafffile" '));
     else
         $fileid = DBGet(DBQuery('SELECT * FROM user_file_upload WHERE name like "' . $search . '" AND PROFILE_ID=2 AND syear=' . UserSyear() . ' AND user_id=' . $course_period_id[1]['TEACHER_ID'] . ' AND FILE_INFO="stafffile" ORDER BY NAME'));
