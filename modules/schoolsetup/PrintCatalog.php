@@ -98,7 +98,7 @@ function prescolaire($start,$end){
     global $colors;
 
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
-    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'M%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `sort_order`"));
+    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'M%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `start_time`"));
     $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level = '1'"));
     if (empty($get_periods) || empty($course_periods))
         return false;
@@ -286,7 +286,7 @@ function primaire($start,$end){
     global $colors;
 
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
-    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'P%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `sort_order`"));
+    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'P%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `start_time`"));
     $primaire_overrides = getScheduleOverrides($get_periods, 'PP');
     $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (2,3,4,5,6,7)"));
     $data = array();
@@ -401,7 +401,7 @@ function secondaire($start,$end){
     global $colors;
 
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
-    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'S%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `sort_order`"));
+    $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'S%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `start_time`"));
     $secondaire_overrides = getScheduleOverrides($get_periods, 'SP');
     $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (8,9,10,11,12)"));
     $data = array();
