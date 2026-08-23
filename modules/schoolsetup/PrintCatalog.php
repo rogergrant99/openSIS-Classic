@@ -30,7 +30,6 @@ include('lang/language.php');
 include('../../RedirectModulesInc.php');
 
 
-
 $colors= array();
 $data = array();
 $colors[0]='255, 255, 255'; // room 108
@@ -61,8 +60,8 @@ if(! $_REQUEST['_openSIS_PDF']){
 do_style();
 //echo $_REQUEST['id'];
 if($_REQUEST['id']==''){
-    prescolaire('1','2');
-    echo '<br>';
+    if (prescolaire('1','2'))
+        echo '<br>';
     primaire('0','6');
     echo '<br>';
     secondaire('0','5');
@@ -86,6 +85,8 @@ function prescolaire($start,$end){
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
     $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'M%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `sort_order`"));
     $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level = '1'"));
+    if (empty($get_periods) || empty($course_periods))
+        return false;
     $data = array();
     // echo '<pre>'; print_r($course_periods); echo '</pre>';
 
@@ -172,7 +173,88 @@ echo '                <tr>
         </table>
     </body>
     ';
+    return true;
+}
 
+// Finds, for each primaire period digit (1-4), which levels (1-6) are claimed by an
+// override short_name (e.g. PP212 claims levels 1 & 2 of period 2). A basic short_name
+// (PP2) only applies to levels that no override has claimed for that period.
+function getPrimaireOverrides($periods)
+{
+    $overrides = array();
+    foreach ($periods as $period) {
+        if (preg_match('/^PP(\d)(\d+)$/', strtoupper(trim($period["SHORT_NAME"])), $m)) {
+            $existing = isset($overrides[$m[1]]) ? $overrides[$m[1]] : array();
+            $overrides[$m[1]] = array_unique(array_merge($existing, array_map('intval', str_split($m[2]))));
+        }
+    }
+    return $overrides;
+}
+
+// Parses a primaire school_periods short_name to find which levels (1-6) it applies to.
+// Special short names encode the levels directly after the period digit,
+// e.g. PP212 = period 2, levels 1 & 2 only; PP33456 = period 3, levels 3-6 only.
+// A basic short name (PP1, PP2, PP3, PP4) applies to every level EXCEPT those already
+// claimed by an override for that same period (see getPrimaireOverrides()); if every
+// level is overridden, the basic row applies to no level and is skipped.
+// Non-period short names (P-AM, P-Diner, P-PM) always apply to every level.
+function getPrimaireLevels($short_name, $start, $end, $overrides = array())
+{
+    $short_name = strtoupper(trim($short_name));
+    if (preg_match('/^PP(\d)(\d+)$/', $short_name, $m)) {
+        $levels = array_map('intval', str_split($m[2]));
+    } elseif (preg_match('/^PP(\d)$/', $short_name, $m)) {
+        $claimed = isset($overrides[$m[1]]) ? $overrides[$m[1]] : array();
+        $levels = array_diff(range(1, 6), $claimed);
+    } else {
+        $levels = range(1, 6);
+    }
+    return array_values(array_intersect($levels, range($start + 1, $end)));
+}
+
+// Groups the levels in [start+1, end] by which set of class periods (school_periods
+// rows, identified by PERIOD_ID) applies to each of them. Levels that share the exact
+// same set of periods/times end up in the same group, e.g. if period 2 has separate
+// PP212 / PP23456 rows, levels 1-2 and 3-6 land in different groups even though periods
+// 1, 3 and 4 are shared by everyone.
+function getPrimaireLevelGroups($periods, $overrides, $start, $end)
+{
+    $signatures = array();
+    foreach (range($start + 1, $end) as $lvl) {
+        $sig = array();
+        foreach ($periods as $period) {
+            if ($period["ATTENDANCE"] != 'Y') continue;
+            if (in_array($lvl, getPrimaireLevels($period["SHORT_NAME"], $start, $end, $overrides)))
+                $sig[] = $period["PERIOD_ID"];
+        }
+        $signatures[$lvl] = implode('-', $sig);
+    }
+    $groups = array();
+    foreach ($signatures as $lvl => $sig) {
+        $groups[$sig][] = $lvl;
+    }
+    return array_values($groups);
+}
+
+// Formats a level list like [3,4,5,6] as "3-6" and [1,2,4] as "1-2, 4" for headings.
+function formatPrimaireLevelLabel($levels)
+{
+    sort($levels);
+    $ranges = array();
+    $rangeStart = $rangeEnd = null;
+    foreach ($levels as $lvl) {
+        if ($rangeStart === null) {
+            $rangeStart = $rangeEnd = $lvl;
+        } elseif ($lvl == $rangeEnd + 1) {
+            $rangeEnd = $lvl;
+        } else {
+            $ranges[] = ($rangeStart == $rangeEnd) ? $rangeStart : "$rangeStart-$rangeEnd";
+            $rangeStart = $rangeEnd = $lvl;
+        }
+    }
+    if ($rangeStart !== null)
+        $ranges[] = ($rangeStart == $rangeEnd) ? $rangeStart : "$rangeStart-$rangeEnd";
+    return implode(', ', $ranges);
 }
 
 function primaire($start,$end){
@@ -180,6 +262,7 @@ function primaire($start,$end){
 
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
     $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'P%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `sort_order`"));
+    $primaire_overrides = getPrimaireOverrides($get_periods);
     $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (2,3,4,5,6,7)"));
     $data = array();
     // echo '<pre>'; print_r($get_periods); echo '</pre>';
@@ -210,8 +293,22 @@ function primaire($start,$end){
     // $data[2]['12:30:00']['F']='dîner';
     // $data[3]['12:30:00']['COLOUR']['F']='77, 81, 77, 0.52';
     // $data[3]['12:30:00']['F']='dîner';
+    $groups = getPrimaireLevelGroups($get_periods, $primaire_overrides, $start, $end);
+    $multipleSchedules = count($groups) > 1;
+    foreach ($groups as $group) {
+        sort($group);
+        if ($multipleSchedules)
+            echo '<h4>Horaire Primaire ' . formatPrimaireLevelLabel($group) . '</h4>';
+        renderPrimaireGroupTable($get_periods, $data, $group, $primaire_overrides);
+    }
+}
+
+// Renders one primaire schedule table scoped to the given levels (a subset of 1-6).
+function renderPrimaireGroupTable($periods, $data, $levels, $overrides)
+{
+    $singleLevel = count($levels) < 2;
     echo '
-    <body>   
+    <body>
         <table>
             <thead>
                 <tr>
@@ -225,38 +322,40 @@ function primaire($start,$end){
                 </tr>
             </thead>
             <tbody>
-    ';       
-    foreach ($get_periods as $key => $period) {
+    ';
+    foreach ($periods as $key => $period) {
         if( $period["ATTENDANCE"]=='Y' ){
+            $rowLevels = array_values(array_intersect(getPrimaireLevels($period["SHORT_NAME"], 0, 6, $overrides), $levels));
+            if (empty($rowLevels)) continue;
 echo '                <tr>
-                    <td class="spanning-cell" rowspan="' . $end - $start. '">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
+                    <td class="spanning-cell" rowspan="' . count($rowLevels). '">'. $period["TITLE"] .'<br> ' . substr($period["START_TIME"], 0, -3) . ' - '. substr($period["END_TIME"], 0, -3) . '</td>
         ';
-         for ($i = $start; $i < $end; $i++){
-            if(($end - $start)  < 2) 
+         foreach ($rowLevels as $lvl){
+            if($singleLevel)
                 $cell=1;
-            else 
-                $cell=$i+1;
+            else
+                $cell=$lvl;
             echo '     <!-- Rows 1-5 -->
-                    <td class="regular-cell'. $cell .'">'. $i+1 .'</td>
-                    <td class="data-cell" style="background-color:rgb('. $data[$i+2][$get_periods[$key]["START_TIME"]]['COLOUR']['M'] .');  ">'. $data[$i+2][$get_periods[$key]["START_TIME"]]['M']. '</td>
-                    <td class="data-cell" style="background-color:rgb('. $data[$i+2][$get_periods[$key]["START_TIME"]]['COLOUR']['T'] .');  ">'. $data[$i+2][$get_periods[$key]["START_TIME"]]['T']. '</td>
-                    <td class="data-cell" style="background-color:rgb('. $data[$i+2][$get_periods[$key]["START_TIME"]]['COLOUR']['W'] .');  ">'. $data[$i+2][$get_periods[$key]["START_TIME"]]['W']. '</td>
-                    <td class="data-cell" style="background-color:rgb('. $data[$i+2][$get_periods[$key]["START_TIME"]]['COLOUR']['H'] .');  ">'. $data[$i+2][$get_periods[$key]["START_TIME"]]['H']. '</td>
-                    <td class="data-cell" style="background-color:rgb('. $data[$i+2][$get_periods[$key]["START_TIME"]]['COLOUR']['F'] .');  ">'. $data[$i+2][$get_periods[$key]["START_TIME"]]['F']. '</td>
-                
-                
+                    <td class="regular-cell'. $cell .'">'. $lvl .'</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$lvl+1][$period["START_TIME"]]['COLOUR']['M'] .');  ">'. $data[$lvl+1][$period["START_TIME"]]['M']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$lvl+1][$period["START_TIME"]]['COLOUR']['T'] .');  ">'. $data[$lvl+1][$period["START_TIME"]]['T']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$lvl+1][$period["START_TIME"]]['COLOUR']['W'] .');  ">'. $data[$lvl+1][$period["START_TIME"]]['W']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$lvl+1][$period["START_TIME"]]['COLOUR']['H'] .');  ">'. $data[$lvl+1][$period["START_TIME"]]['H']. '</td>
+                    <td class="data-cell" style="background-color:rgb('. $data[$lvl+1][$period["START_TIME"]]['COLOUR']['F'] .');  ">'. $data[$lvl+1][$period["START_TIME"]]['F']. '</td>
+
+
             ';
         echo '</tr>';
          }
         }else{
                 echo'<tr>
-                    <td class="lunch last-tr" rowspan="1">'. $get_periods[$key]["TITLE"] .'<br> ' . substr($get_periods[$key]["START_TIME"], 0, -3) . ' - '. substr($get_periods[$key]["END_TIME"], 0, -3) . '</td>
+                    <td class="lunch last-tr" rowspan="1">'. $period["TITLE"] .'<br> ' . substr($period["START_TIME"], 0, -3) . ' - '. substr($period["END_TIME"], 0, -3) . '</td>
                     <td class="lunch last-tr"></td>
                     <td class="lunch last-tr"></tdr>
                     <td class="lunch last-tr"></td>
                     <td class="lunch last-tr"></td>
                     <td class="lunch last-tr"></td>
-                    <td class="lunch last-tr" style="background-color:rgb('. $data[2][$get_periods[$key]["START_TIME"]]['COLOUR']['F'] .');  ">'. $data[2][$get_periods[$key]["START_TIME"]]['F']. ' <br> '. $data[3][$get_periods[$key]["START_TIME"]]['F']. '</td>
+                    <td class="lunch last-tr" style="background-color:rgb('. $data[2][$period["START_TIME"]]['COLOUR']['F'] .');  ">'. $data[2][$period["START_TIME"]]['F']. ' <br> '. $data[3][$period["START_TIME"]]['F']. '</td>
                     </tr>
                 ';
         }
