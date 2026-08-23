@@ -46,6 +46,21 @@ $colors[10]='229, 255, 204';// room Gym
 $colors[11]='229, 204, 100';// room Mat
 $colors[12]='255, 255, 204';// room Pr 1-2
 $colors[16]='229, 204, 100';// room Ext
+
+// Rooms not covered by the hardcoded palette above (any sort_order not listed) got no
+// background color at all, since $colors[$index] was simply undefined. This generates a
+// deterministic pastel fallback so every room still gets highlighted.
+function getRoomColor($colors, $index)
+{
+    if (isset($colors[$index]) && $colors[$index] !== '')
+        return $colors[$index];
+    $seed = intval($index);
+    $r = 180 + (($seed * 47) % 76);
+    $g = 180 + (($seed * 91) % 76);
+    $b = 180 + (($seed * 137) % 76);
+    return "$r, $g, $b";
+}
+
 if(! $_REQUEST['_openSIS_PDF']){
     echo "<FORM name=exp class=no-margin-bottom id=exp action=ForExport.php?modname=" . strip_tags(trim($_REQUEST['modname'])) . "&modfunc=print&id=" . $_REQUEST['id'] . "&_openSIS_PDF=true&report=true method=POST target=_blank>";
     echo '<div class="text-right"><INPUT type=submit class="btn btn-primary" value=\'' . _print . '\'></div>';
@@ -96,7 +111,7 @@ function prescolaire($start,$end){
         for($x = 1; $x <= $len ; $x++) {
             $cp['DAYS']=substr($days,$x-1,1);
             // echo $cp['DAYS'];
-            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=$colors[$cp['COLOUR']];
+            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getRoomColor($colors, $cp['COLOUR']);
             if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
@@ -272,7 +287,7 @@ function primaire($start,$end){
         $days=$cp['DAYS'];
         for($x = 1; $x <= $len ; $x++) {
             $cp['DAYS']=substr($days,$x-1,1);
-            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=$colors[$cp['COLOUR']];
+            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getRoomColor($colors, $cp['COLOUR']);
             if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
@@ -380,7 +395,7 @@ function secondaire($start,$end){
     $days=$cp['DAYS'];
     for($x = 1; $x <= $len ; $x++) {
         $cp['DAYS']=substr($days,$x-1,1);
-        $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=$colors[$cp['COLOUR']];
+        $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getRoomColor($colors, $cp['COLOUR']);
         if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
             $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
             $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
