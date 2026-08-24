@@ -45,19 +45,41 @@ $colors[9]='204, 229, 255'; // room 213
 $colors[10]='229, 255, 204';// room Gym
 $colors[11]='229, 204, 100';// room Mat
 $colors[12]='255, 255, 204';// room Pr 1-2
+$colors[13]='255, 155, 204';// room Pr 3-4
+$colors[14]='115, 255, 204';// room Pr 5-6
 $colors[16]='229, 204, 100';// room Ext
 
-// Rooms not covered by the hardcoded palette above (any sort_order not listed) got no
-// background color at all, since $colors[$index] was simply undefined. This generates a
-// deterministic pastel fallback so every room still gets highlighted.
-function getRoomColor($colors, $index)
+// Looks up a color by index in the hardcoded palette above (originally keyed by room
+// sort_order, now also used to key by course_id in primaire - see primaire()). Any
+// index not covered by the hardcoded palette got no background color at all, since
+// $colors[$index] was simply undefined. This generates a deterministic pastel fallback
+// so every room/course still gets highlighted, using a fixed saturation/lightness so
+// the result is never washed-out/grey, with hues spread via the golden angle so
+// consecutive indexes (e.g. course_id 1, 2, 3...) land on clearly different colors.
+function getColorForIndex($colors, $index)
 {
     if (isset($colors[$index]) && $colors[$index] !== '')
         return $colors[$index];
-    $seed = intval($index);
-    $r = 180 + (($seed * 47) % 76);
-    $g = 180 + (($seed * 91) % 76);
-    $b = 180 + (($seed * 137) % 76);
+    $hue = fmod(intval($index) * 137.508, 360);
+    return hslToRgbString($hue, 60, 80);
+}
+
+function hslToRgbString($h, $s, $l)
+{
+    $s /= 100;
+    $l /= 100;
+    $c = (1 - abs(2 * $l - 1)) * $s;
+    $x = $c * (1 - abs(fmod($h / 60, 2) - 1));
+    $m = $l - $c / 2;
+    if ($h < 60)        { $r = $c; $g = $x; $b = 0; }
+    elseif ($h < 120)   { $r = $x; $g = $c; $b = 0; }
+    elseif ($h < 180)   { $r = 0; $g = $c; $b = $x; }
+    elseif ($h < 240)   { $r = 0; $g = $x; $b = $c; }
+    elseif ($h < 300)   { $r = $x; $g = 0; $b = $c; }
+    else                { $r = $c; $g = 0; $b = $x; }
+    $r = round(($r + $m) * 255);
+    $g = round(($g + $m) * 255);
+    $b = round(($b + $m) * 255);
     return "$r, $g, $b";
 }
 
@@ -111,7 +133,7 @@ function prescolaire($start,$end){
         for($x = 1; $x <= $len ; $x++) {
             $cp['DAYS']=substr($days,$x-1,1);
             // echo $cp['DAYS'];
-            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getRoomColor($colors, $cp['COLOUR']);
+            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getColorForIndex($colors, $cp['COLOUR']);
             if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
@@ -288,7 +310,7 @@ function primaire($start,$end){
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
     $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'P%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `start_time`"));
     $primaire_overrides = getScheduleOverrides($get_periods, 'PP');
-    $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (2,3,4,5,6,7)"));
+    $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM, courses.course_id as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (2,3,4,5,6,7)"));
     $data = array();
     // echo '<pre>'; print_r($get_periods); echo '</pre>';
 
@@ -297,7 +319,7 @@ function primaire($start,$end){
         $days=$cp['DAYS'];
         for($x = 1; $x <= $len ; $x++) {
             $cp['DAYS']=substr($days,$x-1,1);
-            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getRoomColor($colors, $cp['COLOUR']);
+            $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getColorForIndex($colors, $cp['COLOUR']);
             if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
                 $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
@@ -411,7 +433,7 @@ function secondaire($start,$end){
     $days=$cp['DAYS'];
     for($x = 1; $x <= $len ; $x++) {
         $cp['DAYS']=substr($days,$x-1,1);
-        $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getRoomColor($colors, $cp['COLOUR']);
+        $data[$cp['GRADE_LEVEL']][$cp['START_TIME']]['COLOUR'][$cp['DAYS']]=getColorForIndex($colors, $cp['COLOUR']);
         if($data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']]){
             $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].='<br><b style="color:red;">';
             $data[$cp['GRADE_LEVEL']][$cp['START_TIME']][$cp['DAYS']].=$cp['TITLE'];
