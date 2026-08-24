@@ -50,10 +50,11 @@ $colors[14]='115, 255, 204';// room Pr 5-6
 $colors[16]='229, 204, 100';// room Ext
 
 // Looks up a color by index in the hardcoded palette above (originally keyed by room
-// sort_order, now also used to key by course_id in primaire - see primaire()). Any
-// index not covered by the hardcoded palette got no background color at all, since
+// sort_order for prescolaire, now also used to key by course_id in primaire and by
+// teacher_id in secondaire - see primaire()/secondaire()). Any index not covered by
+// the hardcoded palette got no background color at all, since
 // $colors[$index] was simply undefined. This generates a deterministic pastel fallback
-// so every room/course still gets highlighted, using a fixed saturation/lightness so
+// so every room/course/teacher still gets highlighted, using a fixed saturation/lightness so
 // the result is never washed-out/grey, with hues spread via the golden angle so
 // consecutive indexes (e.g. course_id 1, 2, 3...) land on clearly different colors.
 function getColorForIndex($colors, $index)
@@ -425,7 +426,7 @@ function secondaire($start,$end){
     $get_subjects = DBGet(DBQuery("SELECT subject_id, title FROM `course_subjects` WHERE `school_id` = '".UserSchool()."' AND syear = '".UserSyear()."' ORDER BY `subject_id`"));
     $get_periods = DBGet(DBQuery("SELECT attendance,period_id, title, short_name, start_time, end_time , sort_order FROM `school_periods` WHERE short_name like 'S%' AND `syear` = '".UserSyear()."' AND `school_id` = '".UserSchool()."' ORDER BY `start_time`"));
     $secondaire_overrides = getScheduleOverrides($get_periods, 'SP');
-    $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM,rooms.sort_order as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (8,9,10,11,12)"));
+    $course_periods = DBGet(DBQuery("SELECT rooms.title as ROOM, course_periods.teacher_id as COLOUR, course_periods.TITLE,DAYS,START_TIME,END_TIME,course_periods.COURSE_PERIOD_ID,courses.grade_level from course_period_var cpv LEFT JOIN course_periods ON cpv.COURSE_PERIOD_ID = course_periods.COURSE_PERIOD_ID LEFT JOIN rooms ON rooms.room_id = cpv.room_id  LEFT JOIN courses ON courses.course_id = course_periods.course_id where course_periods.SYEAR= '".UserSyear()."'and grade_level in (8,9,10,11,12)"));
     $data = array();
 
     foreach($course_periods as $key => $cp){
