@@ -62,7 +62,7 @@ function getColorForIndex($colors, $index)
     if (isset($colors[$index]) && $colors[$index] !== '')
         return $colors[$index];
     $hue = fmod(intval($index) * 137.508, 360);
-    return hslToRgbString($hue, 60, 80);
+    return hslToRgbString($hue, 70, 80);
 }
 
 function hslToRgbString($h, $s, $l)
