@@ -97,7 +97,7 @@ if (count($teacher_RET)) {
         if (count($courses_RET)) {
             unset($j);
             foreach ($courses_RET as $course ) {
-                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                if($staff_id['STAFF_ID'] == $course['STAFF_ID'] )
                 {
                     $i++;
                     $staff_RET[$i]  = '<strong style="font-size: 14px; color: black;">';
@@ -114,7 +114,7 @@ if (count($teacher_RET)) {
         if (count($courses_RET)) {
             unset($j);
             foreach ($courses_RET as $course ) {
-                if($staff_id['FULL_NAME'] == $course['FULL_NAME'] )
+                if($staff_id['STAFF_ID'] == $course['STAFF_ID'] )
                 {
                     $j++;
                     $list_RET[$j][$i] = '<div class="course-item text-center"><u>';
