@@ -1143,6 +1143,7 @@ define("_teacherNA", "Teacher - N/A");
 define("_addRequestToSelectedStudents", "Add Request to Selected Students");
 define("_theDateYouEnteredIsNotValid", "The date you entered is not valid.");
 define("_selectedStudentsHaveBeenDroppedFromTheCoursePeriod", "Selected students have been dropped from the course period.");
+define("_noStudentsWereDroppedBlockedStudents", "No students were dropped. The following students could not be dropped:");
 define("_hasLaterScheduleDate", "has later schedule date.");
 define("_droppedDateCanNotBeChangedFor", "Dropped date can not be changed for");
 define("_thisScheduleIsLocked", ".This schedule is locked.");

@@ -32,50 +32,51 @@ include('lang/language.php');
 if (!$_REQUEST['modfunc'] && $_REQUEST['search_modfunc'] != 'list')
     unset($_SESSION['MassDrops.php']);
 if (clean_param($_REQUEST['modfunc'], PARAM_ALPHA) == 'save') {
-    $END_DATE = $_REQUEST['day'] . '-' . $_REQUEST['month'] . '-' . $_REQUEST['year'];
-    $end_date_mod = date('Y-m-d', strtotime($END_DATE));
-    if (!VerifyDate($END_DATE)) {
-        echo '<div class="alert alert-warning alert-bordered">'._theDateYouEnteredIsNotValid.'</div>';
-        for_error_sch();
-    } else {
-        $mp_table = GetMPTable(GetMP($_REQUEST['marking_period_id'], 'TABLE'));
-        $current_RET = DBGet(DBQuery('SELECT STUDENT_ID FROM schedule WHERE COURSE_PERIOD_ID=\'' . $_SESSION['MassDrops.php']['course_period_id'] . '\''));
-        if (count($_REQUEST['student']) > 0) {
-            foreach ($_REQUEST['student'] as $student_id => $yes) {
-                $start_end_RET = DBGet(DBQuery('SELECT START_DATE,END_DATE,SCHEDULER_LOCK FROM schedule WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $_SESSION['MassDrops.php']['course_period_id'] . '\''));
-                if (count($start_end_RET)) {
-                    if ($start_end_RET[1]['SCHEDULER_LOCK'] == 'Y' || $start_end_RET[1]['START_DATE'] > $end_date_mod) {
-                        $select_stu = DBGet(DBQuery('SELECT FIRST_NAME,LAST_NAME FROM students WHERE STUDENT_ID=\'' . $student_id . '\''));
-                        $select_stu = $select_stu[1]['FIRST_NAME'] . "&nbsp;" . $select_stu[1]['LAST_NAME'];
-                        if ($start_end_RET[1]['SCHEDULER_LOCK'] == 'Y') {
-                            $inactive_schedule2 .= $select_stu . "<br>";
-                            $inactive_schedule_found = 2;
-                        }
-                        if ($start_end_RET[1]['START_DATE'] > $end_date_mod) {
-                            $inactive_schedule .= $select_stu . "<br>";
-                            $inactive_schedule_found = 1;
-                        }
-                    } else {
-                        DBQuery('UPDATE schedule SET END_DATE=\'' . $end_date_mod . '\',MODIFIED_DATE=\'' . Date('Y-m-d') . '\',MODIFIED_BY=\'' . User('STAFF_ID') . '\'  WHERE STUDENT_ID=\'' . clean_param($student_id, PARAM_INT) . '\' AND COURSE_PERIOD_ID=\'' . clean_param($_SESSION['MassDrops.php']['course_period_id'], PARAM_INT) . '\'');
-                        DBQuery('CALL SEAT_COUNT()');
-                        $note = _selectedStudentsHaveBeenDroppedFromTheCoursePeriod;
-                    }
-                }
+    $mass_drop_cp_id = clean_param($_SESSION['MassDrops.php']['course_period_id'], PARAM_INT);
+    if (count($_REQUEST['student']) > 0) {
+        $blocked = array();
+        $to_drop = array();
+        foreach ($_REQUEST['student'] as $student_id => $yes) {
+            $student_id = clean_param($student_id, PARAM_INT);
+            $schedule_RET = DBGet(DBQuery('SELECT ID,COURSE_ID,DROPPED FROM schedule WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\''));
+            if (!count($schedule_RET))
+                continue;
+            $a_grd = count(DBGet(DBQuery('SELECT 1 AS X FROM gradebook_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\'')));
+            $a_rpt = count(DBGet(DBQuery('SELECT 1 AS X FROM student_report_card_grades WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\'')));
+            $a_attn = count(DBGet(DBQuery('SELECT 1 AS X FROM attendance_period WHERE STUDENT_ID=\'' . $student_id . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\'')));
+            if ($a_grd > 0 || $a_rpt > 0 || $a_attn > 0) {
+                $select_stu = DBGet(DBQuery('SELECT FIRST_NAME,LAST_NAME FROM students WHERE STUDENT_ID=\'' . $student_id . '\''));
+                $reason = $a_grd > 0 ? _cannotdeleteBecauseAssignmentsGradingAreAlreadyGiven : ($a_rpt > 0 ? _cannotDeleteBecauseFinalGradeIsAlreadyGiven : _cannotDeleteBecauseStudentsAttendanceAreAlreadyTaken);
+                $blocked[] = $select_stu[1]['FIRST_NAME'] . '&nbsp;' . $select_stu[1]['LAST_NAME'] . ' - ' . $reason;
+            } else {
+                $to_drop[] = array(
+                    'student_id' => $student_id,
+                    'course_id' => $schedule_RET[1]['COURSE_ID'],
+                    'schedule_id' => $schedule_RET[1]['ID'],
+                    'dropped' => $schedule_RET[1]['DROPPED'],
+                );
             }
-            unset($_REQUEST['modfunc']);
-            unset($_SESSION['MassDrops.php']);
-            if ($note)
-                echo '<div class="alert alert-success alert-bordered"><i class="fa fa-check text-success"></i> ' . $note . '</div>';
-            if ($inactive_schedule_found == 1)
-                echo '<div class="alert alert-warning alert-bordered"><i class="fa fa-exclamation-triangle"></i> ' . $inactive_schedule . ' '._hasLaterScheduleDate.'</div>';
-            if ($inactive_schedule_found == 2)
-                echo '<div class="alert alert-warning alert-bordered"><i class="fa fa-exclamation-triangle"></i> '._droppedDateCanNotBeChangedFor.' ' . $inactive_schedule2 . '</div>';
         }
-        else {
-            unset($_REQUEST['modfunc']);
-            unset($_SESSION['MassDrops.php']);
+
+        if (count($blocked) > 0) {
+            echo '<div class="alert alert-warning alert-bordered"><i class="fa fa-exclamation-triangle"></i> '._noStudentsWereDroppedBlockedStudents.'<br>' . implode('<br>', $blocked) . '</div>';
+        } elseif (count($to_drop) == 0) {
             echo '<div class="alert alert-warning alert-bordered"><i class="fa fa-exclamation-triangle"></i> '._noStudentSelected.'</div>';
+        } else {
+            foreach ($to_drop as $row) {
+                $seat_fetch = DBGet(DBQuery('SELECT FILLED_SEATS FROM course_periods WHERE COURSE_ID=\'' . $row['course_id'] . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\''));
+                $seat_fill = $seat_fetch[1]['FILLED_SEATS'] - ($row['dropped'] == 'N' ? 1 : 0);
+                DBQuery('DELETE FROM schedule WHERE STUDENT_ID=\'' . $row['student_id'] . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\' AND COURSE_ID=\'' . $row['course_id'] . '\' AND ID=\'' . $row['schedule_id'] . '\'');
+                DBQuery('UPDATE course_periods SET FILLED_SEATS=\'' . $seat_fill . '\' WHERE COURSE_ID=\'' . $row['course_id'] . '\' AND COURSE_PERIOD_ID=\'' . $mass_drop_cp_id . '\'');
+            }
+            echo '<div class="alert alert-success alert-bordered"><i class="fa fa-check text-success"></i> '._selectedStudentsHaveBeenDroppedFromTheCoursePeriod.'</div>';
         }
+        unset($_REQUEST['modfunc']);
+        unset($_SESSION['MassDrops.php']);
+    } else {
+        unset($_REQUEST['modfunc']);
+        unset($_SESSION['MassDrops.php']);
+        echo '<div class="alert alert-warning alert-bordered"><i class="fa fa-exclamation-triangle"></i> '._noStudentSelected.'</div>';
     }
 }
 if (!$_REQUEST['modfunc']) {
@@ -161,10 +162,6 @@ if (!$_REQUEST['modfunc']) {
             $columns = $LO_columns + $extra['columns_after'];
         if (!$extra['columns_before'] && !$extra['columns_after'])
             $columns = $LO_columns;
-        if (count($students_RET) > 0) {
-            echo '<div class="panel-body form-horizontal"><label class="control-label col-md-1 text-right">'._dropDate.'</label><div class="col-md-3">' . PrepareDate(DBDate(), '') . '</div></div>';
-            echo '<hr class="no-margin"/>';
-        }
         if (count($students_RET) > 1 || $link['add'] || !$link['FULL_NAME'] || $extra['columns_before'] || $extra['columns_after'] || ($extra['BackPrompt'] == false && count($students_RET) == 0) || ($extra['Redirect'] === false && count($students_RET) == 1)) {
             $tmp_REQUEST = $_REQUEST;
             unset($tmp_REQUEST['expanded_view']);

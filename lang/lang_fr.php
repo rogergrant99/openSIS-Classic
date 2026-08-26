@@ -1148,6 +1148,7 @@ define("_teacherNA", "Enseignant - N / A");
 define("_addRequestToSelectedStudents", "AJOUTER LA DEMANDE AUX ÉLÈVES");
 define("_theDateYouEnteredIsNotValid", "La date n'est pas valide.");
 define("_selectedStudentsHaveBeenDroppedFromTheCoursePeriod", "Les étudiants sélectionnés ont été supprimés de la période de cours.");
+define("_noStudentsWereDroppedBlockedStudents", "Aucun étudiant n'a été supprimé. Les étudiants suivants n'ont pas pu être supprimés :");
 define("_hasLaterScheduleDate", "a une date de calendrier plus tard.");
 define("_droppedDateCanNotBeChangedFor", "La date de retrait ne peut être modifiée pour");
 define("_thisScheduleIsLocked", ".Ce programme est verrouillé.");

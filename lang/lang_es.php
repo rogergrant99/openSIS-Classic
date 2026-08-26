@@ -1146,6 +1146,7 @@ define("_teacherNA", "Profesor - N / A");
 define("_addRequestToSelectedStudents", "Agregar solicitud a los estudiantes seleccionados");
 define("_theDateYouEnteredIsNotValid", "La fecha que ingresó no es válida.");
 define("_selectedStudentsHaveBeenDroppedFromTheCoursePeriod", "Los estudiantes seleccionados han sido eliminados del período del curso.");
+define("_noStudentsWereDroppedBlockedStudents", "No se eliminó a ningún estudiante. Los siguientes estudiantes no pudieron ser eliminados:");
 define("_hasLaterScheduleDate", "tiene fecha de programación posterior.");
 define("_droppedDateCanNotBeChangedFor", "La fecha eliminada no se puede cambiar por");
 define("_thisScheduleIsLocked", ".Este horario está bloqueado.");

@@ -1146,6 +1146,7 @@ define("_teacherNA", "مدرس - N / A");
 define("_addRequestToSelectedStudents", "إضافة طلب إلى الطلاب المختارين");
 define("_theDateYouEnteredIsNotValid", "التاريخ الذي أدخلته غير صالح.");
 define("_selectedStudentsHaveBeenDroppedFromTheCoursePeriod", "تم إسقاط الطلاب المختارين من فترة الدورة.");
+define("_noStudentsWereDroppedBlockedStudents", "لم يتم إسقاط أي طالب. تعذر إسقاط الطلاب التالين:");
 define("_hasLaterScheduleDate", "لديه تاريخ جدول زمني لاحق.");
 define("_droppedDateCanNotBeChangedFor", "لا يمكن تغيير التاريخ الذي تم إسقاطه");
 define("_thisScheduleIsLocked", "هذا الجدول مغلق.");
