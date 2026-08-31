@@ -319,7 +319,8 @@ if ($_REQUEST['student_id'] && $_REQUEST['student_id'] != 'new' && $_REQUEST['va
     if ($end_date[1]['END_DATE']) {
         $end_date = $end_date[1]['END_DATE'];
         DBQuery('UPDATE schedule SET END_DATE=\'' . $end_date . '\' WHERE STUDENT_ID=\'' . $_REQUEST['student_id'] . '\' AND SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\' AND (END_DATE IS NULL OR \'' . $end_date . '\' < END_DATE )');
-        DBQuery('CALL SEAT_COUNT()');
+        DBQuery('UPDATE course_periods SET filled_seats=filled_seats-1 WHERE COURSE_PERIOD_ID IN (SELECT COURSE_PERIOD_ID FROM schedule WHERE end_date IS NOT NULL AND end_date < CURDATE() AND dropped=\'N\' AND STUDENT_ID=\'' . $_REQUEST['student_id'] . '\' AND SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\')');
+        DBQuery('UPDATE schedule SET dropped=\'Y\' WHERE end_date IS NOT NULL AND end_date < CURDATE() AND dropped=\'N\' AND STUDENT_ID=\'' . $_REQUEST['student_id'] . '\' AND SYEAR=\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\'');
     }
 }
 

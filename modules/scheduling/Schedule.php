@@ -616,7 +616,8 @@ if ($_REQUEST['del'] == 'true') {
                         $end_null_RET = DBGet(DBQuery('SELECT START_DATE,END_DATE FROM schedule WHERE STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND END_DATE IS NULL'));
                         if (!count($end_null_RET)) {
 
-                            DBQuery('CALL SEAT_COUNT()');
+                            DBQuery('UPDATE course_periods SET filled_seats=filled_seats-1 WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\' AND COURSE_PERIOD_ID IN (SELECT COURSE_PERIOD_ID FROM schedule WHERE end_date IS NOT NULL AND end_date < CURDATE() AND dropped=\'N\' AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID=\'' . $course_period_id . '\')');
+                            DBQuery('UPDATE schedule SET dropped=\'Y\' WHERE end_date IS NOT NULL AND end_date < CURDATE() AND dropped=\'N\' AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID=\'' . $course_period_id . '\'');
                         }
                     }
 
@@ -830,7 +831,8 @@ if ($_REQUEST['del'] == 'true') {
             }
             $stu_missing_atten = DBGet(DBQuery('SELECT * FROM missing_attendance WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\''));
         }
-        DBQuery("CALL SEAT_FILL()");
+        DBQuery('UPDATE course_periods SET filled_seats=filled_seats+1 WHERE COURSE_PERIOD_ID IN (' . $tot_cp . ') AND COURSE_PERIOD_ID IN (SELECT COURSE_PERIOD_ID FROM schedule WHERE dropped=\'Y\' AND (END_DATE IS NULL OR END_DATE>=CURDATE()) AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID IN (' . $tot_cp . '))');
+        DBQuery('UPDATE schedule SET dropped=\'N\' WHERE dropped=\'Y\' AND (END_DATE IS NULL OR END_DATE>=CURDATE()) AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID IN (' . $tot_cp . ')');
         unset($_SESSION['_REQUEST_vars']['schedule']);
         unset($_REQUEST['schedule']);
     }
