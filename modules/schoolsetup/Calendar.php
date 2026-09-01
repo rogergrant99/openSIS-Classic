@@ -679,7 +679,7 @@ if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'list_events') {
     echo '</div></FORM>';
 }
 
-if ($_REQUEST['modfunc'] == 'annual_view'){
+if (!$_REQUEST['modfunc'] || $_REQUEST['modfunc'] == 'annual_view'){
     $events_RET = DBGet(DBQuery('SELECT ID, SCHOOL_DATE, TITLE, DESCRIPTION, CALENDAR_ID 
         FROM calendar_events 
         WHERE SYEAR=\'' . UserSyear() . '\' 
@@ -2068,7 +2068,7 @@ if ($_REQUEST['modfunc'] == 'annual_view'){
 }
 
 // Vue mensuelle
-if (!$_REQUEST['modfunc'] || $_REQUEST['modfunc'] == 'monthly_view'){  
+if ($_REQUEST['modfunc'] == 'monthly_view'){
     if (User('PROFILE') != 'student')
         DrawBC("" . _schoolSetup . " > " . ProgramTitle());
     else
