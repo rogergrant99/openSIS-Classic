@@ -75,7 +75,10 @@ if (count($filelist) > 3) {
     for ($count = 1; $count < count($filelist); $count++) {
         $filename = $filelist[$count];
         if (($filename != ".") && ($filename != "..") && ($filename != ""))
-            echo "<script src='js/" . $filename . "'></script>";
+            // CACHE-BUST ON THE FILE'S OWN MODIFICATION TIME - WITHOUT THIS, BROWSERS CACHE js/*.js INDEFINITELY (NO Vary/ETag
+            // HANDLING HERE) AND KEEP RUNNING A STALE COPY EVEN AFTER THE SERVER FILE CHANGES, SINCE THIS TAB IS RELOADED VIA
+            // REPEATED AJAX-STYLE FETCHES TO Modules.php RATHER THAN A FRESH TOP-LEVEL NAVIGATION EACH TIME
+            echo "<script src='js/" . $filename . "?v=" . filemtime("js/" . $filename) . "'></script>";
     }
 }
 echo "<noscript><META http-equiv=REFRESH content='0;url=EnableJavascript.php' /></noscript>";

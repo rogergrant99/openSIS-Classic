@@ -526,6 +526,7 @@ define("_selectMultipleChoices", "Seleccionar múltiples opciones");
 define("_filter", "filtrar");
 define("_filters", "filtros");
 define("_edit", "Editar");
+define("_modify", "Modificar");
 define("_goal", "objetivo");
 define("_progress", "Progreso");
 define("_progresses", "Progresos");
@@ -890,6 +891,7 @@ define("_cannotUploadFileOnlyJpegJpgPngGifFilesAreAllowed", "No se puede cargar 
 define("_fileTooLargeMaximumUploadFileSizeLimit_10Mb", "Archivo demasiado grande. Límite máximo de tamaño de archivo de carga 10 MB.");
 define("_passwordAlreadyExists", "¡La contraseña ya existe!");
 define("_usernameAlreadyExists", "¡Nombre de usuario ya existe!");
+define("_emailAlreadyAssociatedWithAnotherAccount", "Este correo electrónico ya está asociado a una cuenta existente. Utilice un correo diferente, o use \"Buscar un usuario del portal existente\" para vincular esa cuenta a este estudiante.");
 define("_startDateCanNotBeBlank", "La fecha de inicio no puede estar en blanco");
 define("_cannotChangeTheProfileAsThisStaffHasOneOrMoreCoursePeriods", "No se puede cambiar el perfil porque este personal tiene uno o más períodos de curso.");
 define("_cannotChangeTheCategoryAsThisStaffHasOneOrMoreCoursePeriods", "No se puede cambiar la categoría porque este personal tiene uno o más períodos de curso.");

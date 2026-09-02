@@ -247,6 +247,99 @@ function portal_toggle(id) {
             document.getElementById('portal_hidden_div_' + id).innerHTML = '<input type=hidden name="values[student_contacts][SECONDARY][USER_NAME]" value=""/><input type=hidden name="values[student_contacts][SECONDARY][PASSWORD]" value=""/>';
     }
 }
+function unlock_portal_field(id, which, person_id) {
+    var field = (id == 1) ? 'PRIMARY' : 'SECONDARY';
+    var portal_name = (id == 1) ? 'primary_portal' : 'secondary_portal';
+    var confirm_name = (id == 1) ? 'confirm_reuse_primary_username' : 'confirm_reuse_secondary_username';
+
+    if (which == 'username') {
+        var uname = document.getElementById('uname' + id);
+        if (uname != null) {
+            var current_username = uname.textContent || uname.innerText || '';
+            uname.innerHTML = '<input class="form-control" type="text" name="values[people][' + field + '][USER_NAME]" id="values[people][' + field + '][USER_NAME]" value="' + current_username + '" onblur="contact_username_merge_check(this,' + id + ',' + person_id + ');"><div id="ajax_output_' + id + '"></div><input type="hidden" id="confirm_reuse_' + id + '" name="' + confirm_name + '" value="">';
+        }
+    } else if (which == 'password') {
+        var pwd = document.getElementById('pwd' + id);
+        if (pwd != null) {
+            pwd.innerHTML = '<input class="form-control" type="password" name="values[people][' + field + '][PASSWORD]" id="values[people][' + field + '][PASSWORD]" onkeyup="passwordStrengthMod(this.value,' + id + ');" onblur="validate_password_mod(this.value,' + id + ');"><span id="passwordStrength' + id + '"></span><p class="help-block">Leave blank to keep the current password.</p>';
+        }
+    }
+
+    // ONLY ONE OF USERNAME/PASSWORD CAN BE EDITED AT A TIME - HIDE BOTH "MODIFY" LINKS ONCE EITHER IS UNLOCKED
+    var unameLink = document.getElementById('change_username_' + id);
+    if (unameLink != null)
+        unameLink.style.display = 'none';
+    var pwdLink = document.getElementById('change_password_' + id);
+    if (pwdLink != null)
+        pwdLink.style.display = 'none';
+
+    // EITHER CHANGE REQUIRES A REAL, CHECKED CHECKBOX SO THE FORM ACTUALLY SUBMITS THE PORTAL FLAG
+    var chk = document.getElementById('checked_' + id);
+    if (chk != null) {
+        chk.innerHTML = '<input type="checkbox" width="25" name="' + portal_name + '" value="Y" id="portal_' + id + '" checked onClick="portal_toggle(' + id + ');">';
+    }
+}
+function contact_username_merge_check(el, id, person_id) {
+    var obj = document.getElementById('ajax_output_' + id);
+    if (obj != null)
+        obj.innerHTML = '';
+
+    if (el.value.length < 1)
+        return;
+
+    ajax_call('CheckContactUsername.php?username=' + encodeURIComponent(el.value) + '&person_id=' + person_id, function (data) {
+        contact_username_merge_callback(data, id, el);
+    }, usercheck_error);
+}
+function contact_username_merge_callback(data, id, el) {
+    var obj = document.getElementById('ajax_output_' + id);
+    var confirmField = document.getElementById('confirm_reuse_' + id);
+
+    // PHP INCLUDES IN THIS APP LEAK LEADING/TRAILING WHITESPACE INTO AJAX OUTPUT (e.g. "\n\nconfirm:526"),
+    // SO THE RESPONSE MUST BE TRIMMED BEFORE STRING COMPARISON/SPLIT - UNLIKE THE 1/0 CHECKS ELSEWHERE
+    // IN THIS FILE, "==" DOES NOT COERCE THIS AWAY FOR NON-NUMERIC STRINGS.
+    data = $.trim(data);
+
+    if (data == 'available') {
+        if (obj != null) {
+            obj.style.color = '#008800';
+            obj.innerHTML = 'Username Available';
+        }
+        if (confirmField != null)
+            confirmField.value = '';
+        return;
+    }
+
+    var parts = data.split(':');
+    var status = parts[0];
+
+    if (status == 'safe') {
+        if (obj != null) {
+            obj.style.color = '#008800';
+            obj.innerHTML = 'This account already exists and will be used as this contact\'s portal login.';
+        }
+        if (confirmField != null)
+            confirmField.value = 'Y';
+    } else if (status == 'confirm') {
+        var ok = confirm('This username already belongs to a portal account linked to another student. Are you sure this is the correct account for this student?');
+        if (ok) {
+            if (obj != null) {
+                obj.style.color = '#008800';
+                obj.innerHTML = 'Confirmed - this existing account will be used as this contact\'s portal login.';
+            }
+            if (confirmField != null)
+                confirmField.value = 'Y';
+        } else {
+            el.value = '';
+            if (obj != null) {
+                obj.style.color = '#ff0000';
+                obj.innerHTML = 'Please choose a different username.';
+            }
+            if (confirmField != null)
+                confirmField.value = '';
+        }
+    }
+}
 function show_span(id, val) {
     if (val == 'Y')
         document.getElementById(id).style.display = "block";

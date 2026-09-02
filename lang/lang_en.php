@@ -524,6 +524,7 @@ define("_selectMultipleChoices", "Select Multiple Choices");
 define("_filter", "filter");
 define("_filters", "filters");
 define("_edit", "Edit");
+define("_modify", "Modify");
 define("_goal", "goal");
 define("_progress", "Progress");
 define("_progresses", "Progresses");
@@ -888,6 +889,7 @@ define("_cannotUploadFileOnlyJpegJpgPngGifFilesAreAllowed", "Cannot upload file.
 define("_fileTooLargeMaximumUploadFileSizeLimit_10Mb", "File too large. Maximum upload file size limit 10 MB.");
 define("_passwordAlreadyExists", "Password already exists!");
 define("_usernameAlreadyExists", "Username already exists!");
+define("_emailAlreadyAssociatedWithAnotherAccount", "This email is already associated with an existing account. Please use a different email, or use \"Search for an existing Portal User\" to link that account to this student.");
 define("_startDateCanNotBeBlank", "Start date can not be blank");
 define("_cannotChangeTheProfileAsThisStaffHasOneOrMoreCoursePeriods", "Cannot change the profile as this staff has one or more course periods.");
 define("_cannotChangeTheCategoryAsThisStaffHasOneOrMoreCoursePeriods", "Cannot change the category as this staff has one or more course periods.");

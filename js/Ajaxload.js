@@ -1482,9 +1482,21 @@ function pass_val_error(err)
     alert("Error: " + err);
 }
 
+function val_pass_field_id_mod(opt)
+{
+    // THE FIELD IS NAMED PER-CONTACT (pri_val_pass/sec_val_pass/oth_val_pass) - THERE HAS NEVER BEEN A PLAIN "val_pass" ELEMENT,
+    // SO THE OLD HARDCODED id WAS ALWAYS NULL HERE AND THREW ON EVERY PASSWORD FIELD KEYUP
+    if (opt == '1')
+        return 'pri_val_pass';
+    if (opt == '2')
+        return 'sec_val_pass';
+    return 'oth_val_pass';
+}
 function validate_password_mod(password, opt)
 {
-    document.getElementById('val_pass').value = 'Y';
+    var valPassField = document.getElementById(val_pass_field_id_mod(opt));
+    if (valPassField != null)
+        valPassField.value = 'Y';
     var url = "Validator.php?validate=pass_o&password=" + password + "&opt=" + opt;
     ajax_call(url, pass_val_callback_mod, pass_val_error);
 
@@ -1502,7 +1514,9 @@ function pass_val_callback_mod(data)
         obj.style.color = '#ff0000';
         obj.style.backgroundColor = "#cccccc";
         obj.innerHTML = 'Invalid password';
-        document.getElementById('val_pass').value = '';
+        var valPassField = document.getElementById(val_pass_field_id_mod(data_m[1]));
+        if (valPassField != null)
+            valPassField.value = '';
     }
 
 }
@@ -3048,8 +3062,20 @@ if(document.getElementById("hidden_secondary")){
     ajax_call('ParentLookup.php?USERINFO_FIRST_NAME=' + USERINFO_FIRST_NAME + '&USERINFO_LAST_NAME=' + USERINFO_LAST_NAME + '&USERINFO_EMAIL=' + USERINFO_EMAIL + '&USERINFO_MOBILE=' + USERINFO_MOBILE + '&USERINFO_SADD=' + USERINFO_SADD + '&USERINFO_CITY=' + USERINFO_CITY + '&USERINFO_STATE=' + USERINFO_STATE + '&USERINFO_ZIP=' + USERINFO_ZIP + '&address_id=' + address_id + '&p_type=' + p_type + '&other_p_erson_id=' + other_p_erson_id, parentLookupCallback, chooseCpModalError);
 }
 
+var _parentResPristineHtml = null;
 function modal_parenttype(type, other_p_erson_id = '')
 {
+    // parentLookupCallback() OVERWRITES #parent_res WITH THE SEARCH RESULTS (OR "Aucun(e) Utilisateurs ont été trouvés")
+    // AND NOTHING EVER PUTS THE ORIGINAL SEARCH FORM BACK - SO REOPENING THIS MODAL AFTER A SEARCH SHOWED THE STALE
+    // RESULTS/ERROR INSTEAD OF A FRESH FORM. SNAPSHOT THE PRISTINE FORM THE FIRST TIME THIS RUNS (BEFORE ANY SEARCH HAS
+    // HAD A CHANCE TO OVERWRITE IT) AND RESTORE IT ON EVERY SUBSEQUENT OPEN.
+    var parentRes = document.getElementById('parent_res');
+    if (parentRes) {
+        if (_parentResPristineHtml === null)
+            _parentResPristineHtml = parentRes.innerHTML;
+        else
+            parentRes.innerHTML = _parentResPristineHtml;
+    }
 
     $('#modal_default_lookup').modal('show');
     $("#other_p_erson_id").val(other_p_erson_id);
@@ -3083,10 +3109,27 @@ function SelectedParent(address_id, type, other_p_erson_id = '')
 
     $("#modal_default_lookup").modal('toggle');
     
+    var selectedParentUrl;
     if (type == 'other')
-        window.location.href = 'Modules.php?modname=students/Student.php&include=AddressInc&category_id=3&func=search_select&type=' + type + '&nfunc=status&ajax=true&button=Select&con_info=old&add_id=' + other_p_erson_id + '&address_id=' + address_id + '&staff=' + selected_staff + '&person_id=' + other_p_erson_id;
+        selectedParentUrl = 'Modules.php?modname=students/Student.php&include=AddressInc&category_id=3&func=search_select&type=' + type + '&nfunc=status&ajax=true&button=Select&con_info=old&add_id=' + other_p_erson_id + '&address_id=' + address_id + '&staff=' + selected_staff + '&person_id=' + other_p_erson_id;
     else
-        window.location.href = 'Modules.php?modname=students/Student.php&include=AddressInc&category_id=3&func=search_select&type=' + type + '&nfunc=status&ajax=true&button=Select&add_id=&address_id=' + address_id + '&staff=' + selected_staff;
+        selectedParentUrl = 'Modules.php?modname=students/Student.php&include=AddressInc&category_id=3&func=search_select&type=' + type + '&nfunc=status&ajax=true&button=Select&add_id=&address_id=' + address_id + '&staff=' + selected_staff;
+
+    // THE RESPONSE IS A <SCRIPT> FRAGMENT THAT POPULATES THE NAME/ADDRESS/PHONE/PORTAL FIELDS ON THE CURRENT PAGE -
+    // IT MUST BE FETCHED AND RUN IN PLACE, NOT NAVIGATED TO (window.location.href WOULD REPLACE THE WHOLE PAGE
+    // WITH THIS SCRIPT-ONLY FRAGMENT INSTEAD OF RUNNING IT AGAINST THE FORM THAT'S ALREADY ON SCREEN)
+    $.get(selectedParentUrl, function (data) {
+        var $target = $('#parent_select_response');
+        if ($target.length == 0)
+            $target = $('<div id="parent_select_response" style="display:none"></div>').appendTo('body');
+        // Modules.php UNCONDITIONALLY RE-EMITS A <script src="js/...js"> TAG FOR EVERY JS FILE IN THE APP BEFORE IT EVER
+        // GETS TO THE ADDRESSINC POPULATE SCRIPT WE ACTUALLY WANT - INJECTING THAT VIA .html() RELOADS/RE-INITIALIZES THE
+        // WHOLE APP'S JS A SECOND TIME (SEE THE "AcroForm-Classes...already exist" WARNING) AND LEAVES THINGS IN A BROKEN
+        // STATE FOR WHATEVER RUNS AFTER IT. STRIP THOSE EXTERNAL <script src=...> TAGS SO ONLY THE INLINE POPULATE SCRIPT RUNS.
+        var cleaned = data.replace(/<script[^>]*\ssrc=[^>]*>\s*<\/script>/gi, '');
+        // jQuery's .html() (unlike plain innerHTML) EXECUTES <script> TAGS FOUND IN THE INSERTED CONTENT
+        $target.html(cleaned);
+    }).fail(chooseCpModalError);
 
     // var detailsOfSelectedContact    =   selectedContact(selected_staff);
 

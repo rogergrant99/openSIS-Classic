@@ -526,6 +526,7 @@ define("_selectMultipleChoices", "حدد اختيارات متعددة");
 define("_filter", "منقي");
 define("_filters", "المرشحات");
 define("_edit", "يحرر");
+define("_modify", "تعديل");
 define("_goal", "المرمى");
 define("_progress", "تقدم");
 define("_progresses", "يتقدم");
@@ -890,6 +891,7 @@ define("_cannotUploadFileOnlyJpegJpgPngGifFilesAreAllowed", "لا يمكن تح�
 define("_fileTooLargeMaximumUploadFileSizeLimit_10Mb", "الملف كبير جدًا. الحد الأقصى لحجم ملف التحميل هو 10 ميغا بايت.");
 define("_passwordAlreadyExists", "كلمة المرور موجودة بالفعل!");
 define("_usernameAlreadyExists", "اسم المستخدم موجود بالفعل!");
+define("_emailAlreadyAssociatedWithAnotherAccount", "هذا البريد الإلكتروني مرتبط بالفعل بحساب موجود. يرجى استخدام بريد إلكتروني مختلف، أو استخدام \"البحث عن مستخدم بوابة موجود\" لربط ذلك الحساب بهذا الطالب.");
 define("_startDateCanNotBeBlank", "لا يمكن أن يكون تاريخ البدء فارغًا");
 define("_cannotChangeTheProfileAsThisStaffHasOneOrMoreCoursePeriods", "لا يمكن تغيير ملف التعريف لأن هذا الفريق لديه دورة دراسية واحدة أو أكثر.");
 define("_cannotChangeTheCategoryAsThisStaffHasOneOrMoreCoursePeriods", "لا يمكن تغيير الفئة لأن هذا الفريق لديه دورة دراسية واحدة أو أكثر.");

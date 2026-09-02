@@ -527,6 +527,7 @@ define("_selectMultipleChoices", "Sélectionnez choix multiples");
 define("_filter", "filtre");
 define("_filters", "filtres");
 define("_edit", "Éditer");
+define("_modify", "Modifier");
 define("_goal", "objectif");
 define("_progress", "Le progrès");
 define("_progresses", "progrès");
@@ -892,6 +893,7 @@ define("_cannotUploadFileOnlyJpegJpgPngGifFilesAreAllowed", "Impossible d'envoye
 define("_fileTooLargeMaximumUploadFileSizeLimit_10Mb", "Fichier trop large. limite de taille de fichier maximum de téléchargement de 10 Mo.");
 define("_passwordAlreadyExists", "Mot de passe existe déjà!");
 define("_usernameAlreadyExists", "Ce nom d'utilisateur existe déjà!");
+define("_emailAlreadyAssociatedWithAnotherAccount", "Cet e-mail est déjà associé à un compte existant. Veuillez utiliser une adresse différente, ou utilisez « Rechercher un utilisateur du portail existant » pour associer ce compte à cet élève.");
 define("_startDateCanNotBeBlank", "Date de début ne peut pas être vide");
 define("_cannotChangeTheProfileAsThisStaffHasOneOrMoreCoursePeriods", "Impossible de changer le profil de cet utilsateur car il y'a une ou plusieurs périodes de cours déja attribué.");
 define("_cannotChangeTheCategoryAsThisStaffHasOneOrMoreCoursePeriods", "Impossible de changer la catégorie que cet utilisateur car il y'a une ou plusieurs périodes de cours déja attribué.");
