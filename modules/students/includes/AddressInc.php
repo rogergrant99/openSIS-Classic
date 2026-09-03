@@ -307,8 +307,8 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                         if ($col == 'PASSWORD' && $col_v != '') {
                             $user_password = addslashes($col_v);
                             $password = GenerateNewHash(addslashes($col_v));
-                        } elseif ($col == 'USER_NAME' && $col_v != '') {
-                            $user_name_val = addslashes($col_v);
+                        } elseif ($col == 'USER_NAME' && trim($col_v) != '') {
+                            $user_name_val = addslashes(trim($col_v));
                         } elseif ($col == 'RELATIONSHIP' && $col_v != '') {
                             $rel_stu[] = $col . '=\'' . addslashes($col_v) . '\'';
                         } elseif ($col == 'IS_EMERGENCY_HIDDEN' && $col_v == 'Y') {
@@ -806,10 +806,12 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                 //    }
 
 
-                if ($table == 'people' && $ind == 'PRIMARY' && $type['PRIMARY']['USER_NAME'] != '' && $pri_person_id != '') {
+                if ($table == 'people' && $ind == 'PRIMARY' && trim($type['PRIMARY']['USER_NAME']) != '' && $pri_person_id != '') {
                     if (clean_param($_REQUEST['primary_portal'], PARAM_ALPHAMOD) == 'Y') {
+                        $pri_user_name_val = addslashes(trim($type['PRIMARY']['USER_NAME']));
+
                         // EXCLUDE THIS PERSON'S OWN ROW SO RE-SAVING AN EXISTING ACCOUNT'S UNCHANGED USERNAME DOESN'T FALSE-POSITIVE
-                        $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $type['PRIMARY']['USER_NAME'] . '\' AND USER_ID != ' . $pri_person_id);
+                        $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $pri_user_name_val . '\' AND USER_ID != ' . $pri_person_id);
                         $num_user = DBGet($res_user_chk);
 
                         if (count($num_user) == 0) {
@@ -822,22 +824,24 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                             $pri_exst_chk = DBGet(DBQuery('SELECT * FROM login_authentication WHERE USER_ID = "' . $pri_person_id . '" AND PROFILE_ID = "' . $pri_prof_id . '"'));
 
                             if (count($pri_exst_chk) > 0) {
-                                DBQuery('UPDATE login_authentication SET USERNAME = "' . $type['PRIMARY']['USER_NAME'] . '", PASSWORD = "' . GenerateNewHash($type['PRIMARY']['PASSWORD']) . '" WHERE USER_ID = "' . $pri_person_id . '" AND PROFILE_ID = "' . $pri_prof_id . '"');
+                                DBQuery('UPDATE login_authentication SET USERNAME = "' . $pri_user_name_val . '", PASSWORD = "' . GenerateNewHash($type['PRIMARY']['PASSWORD']) . '" WHERE USER_ID = "' . $pri_person_id . '" AND PROFILE_ID = "' . $pri_prof_id . '"');
                             } else {
-                                DBQuery('INSERT INTO login_authentication (USER_ID,USERNAME,PASSWORD,PROFILE_ID) VALUES (' . $pri_person_id . ',\'' . $type['PRIMARY']['USER_NAME'] . '\',\'' . GenerateNewHash($type['PRIMARY']['PASSWORD']) . '\',' . $pri_prof_id . ')');
+                                DBQuery('INSERT INTO login_authentication (USER_ID,USERNAME,PASSWORD,PROFILE_ID) VALUES (' . $pri_person_id . ',\'' . $pri_user_name_val . '\',\'' . GenerateNewHash($type['PRIMARY']['PASSWORD']) . '\',' . $pri_prof_id . ')');
                             }
                             // THE EMAIL FIELD IS HIDDEN ONCE A PORTAL ACCOUNT EXISTS - KEEP IT IN SYNC WITH THE PORTAL USERNAME INSTEAD
-                            DBQuery('UPDATE people SET EMAIL=\'' . addslashes($type['PRIMARY']['USER_NAME']) . '\' WHERE STAFF_ID=' . $pri_person_id);
+                            DBQuery('UPDATE people SET EMAIL=\'' . $pri_user_name_val . '\' WHERE STAFF_ID=' . $pri_person_id);
                         } else {
                             echo "<script>document.getElementById('divErr').innerHTML='<div class=alert alert-danger alert-bordered><font color=red><b>" . _usernameAlreadyExists . "</b></font></div>';</script>";
                         }
                     }
                 }
 
-                if ($table == 'people' && $ind == 'SECONDARY' && $type['SECONDARY']['USER_NAME'] != '' && $sec_person_id != '') {
+                if ($table == 'people' && $ind == 'SECONDARY' && trim($type['SECONDARY']['USER_NAME']) != '' && $sec_person_id != '') {
                     if (clean_param($_REQUEST['secondary_portal'], PARAM_ALPHAMOD) == 'Y') {
+                        $sec_user_name_val = addslashes(trim($type['SECONDARY']['USER_NAME']));
+
                         // EXCLUDE THIS PERSON'S OWN ROW SO RE-SAVING AN EXISTING ACCOUNT'S UNCHANGED USERNAME DOESN'T FALSE-POSITIVE
-                        $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $type['SECONDARY']['USER_NAME'] . '\' AND USER_ID != ' . $sec_person_id);
+                        $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $sec_user_name_val . '\' AND USER_ID != ' . $sec_person_id);
                         $num_user = DBGet($res_user_chk);
 
                         if (count($num_user) == 0) {
@@ -850,12 +854,12 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                             $sec_exst_chk = DBGet(DBQuery('SELECT * FROM login_authentication WHERE USER_ID = "' . $sec_person_id . '" AND PROFILE_ID = "' . $sec_prof_id . '"'));
 
                             if (count($sec_exst_chk) > 0) {
-                                DBQuery('UPDATE login_authentication SET USERNAME = "' . $type['SECONDARY']['USER_NAME'] . '", PASSWORD = "' . GenerateNewHash($type['SECONDARY']['PASSWORD']) . '" WHERE USER_ID = "' . $sec_person_id . '" AND PROFILE_ID = "' . $sec_prof_id . '"');
+                                DBQuery('UPDATE login_authentication SET USERNAME = "' . $sec_user_name_val . '", PASSWORD = "' . GenerateNewHash($type['SECONDARY']['PASSWORD']) . '" WHERE USER_ID = "' . $sec_person_id . '" AND PROFILE_ID = "' . $sec_prof_id . '"');
                             } else {
-                                DBQuery('INSERT INTO login_authentication (USER_ID,USERNAME,PASSWORD,PROFILE_ID) VALUES (' . $sec_person_id . ',\'' . $type['SECONDARY']['USER_NAME'] . '\',\'' . GenerateNewHash($type['SECONDARY']['PASSWORD']) . '\',' . $sec_prof_id . ')');
+                                DBQuery('INSERT INTO login_authentication (USER_ID,USERNAME,PASSWORD,PROFILE_ID) VALUES (' . $sec_person_id . ',\'' . $sec_user_name_val . '\',\'' . GenerateNewHash($type['SECONDARY']['PASSWORD']) . '\',' . $sec_prof_id . ')');
                             }
                             // THE EMAIL FIELD IS HIDDEN ONCE A PORTAL ACCOUNT EXISTS - KEEP IT IN SYNC WITH THE PORTAL USERNAME INSTEAD
-                            DBQuery('UPDATE people SET EMAIL=\'' . addslashes($type['SECONDARY']['USER_NAME']) . '\' WHERE STAFF_ID=' . $sec_person_id);
+                            DBQuery('UPDATE people SET EMAIL=\'' . $sec_user_name_val . '\' WHERE STAFF_ID=' . $sec_person_id);
                         } else {
                             echo "<script>document.getElementById('divErr').innerHTML='<div class=alert alert-danger alert-bordered><font color=red><b>" . _usernameAlreadyExists . "</b></font></div>';</script>";
                         }
@@ -863,10 +867,12 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                 }
 
 
-                if ($table == 'people' && $ind == 'OTHER' && $type['OTHER']['USER_NAME'] != '' && $oth_person_id != '') {
+                if ($table == 'people' && $ind == 'OTHER' && trim($type['OTHER']['USER_NAME']) != '' && $oth_person_id != '') {
                     if (clean_param($_REQUEST['other_portal'], PARAM_ALPHAMOD) == 'Y') {
+                        $oth_user_name_val = addslashes(trim($type['OTHER']['USER_NAME']));
+
                         // EXCLUDE THIS PERSON'S OWN ROW SO RE-SAVING AN EXISTING ACCOUNT'S UNCHANGED USERNAME DOESN'T FALSE-POSITIVE
-                        $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $type['OTHER']['USER_NAME'] . '\' AND USER_ID != ' . $oth_person_id);
+                        $res_user_chk = DBQuery('SELECT * FROM login_authentication WHERE USERNAME = \'' . $oth_user_name_val . '\' AND USER_ID != ' . $oth_person_id);
                         $num_user = DBGet($res_user_chk);
 
                         if (count($num_user) == 0) {
@@ -879,9 +885,9 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                             $oth_exst_chk = DBGet(DBQuery('SELECT * FROM login_authentication WHERE USER_ID = "' . $oth_person_id . '" AND PROFILE_ID = "' . $oth_prof_id . '"'));
 
                             if (count($oth_exst_chk) > 0) {
-                                DBQuery('UPDATE login_authentication SET USERNAME = "' . $type['OTHER']['USER_NAME'] . '", PASSWORD = "' . GenerateNewHash($type['OTHER']['PASSWORD']) . '" WHERE USER_ID = "' . $oth_person_id . '" AND PROFILE_ID = "' . $oth_prof_id . '"');
+                                DBQuery('UPDATE login_authentication SET USERNAME = "' . $oth_user_name_val . '", PASSWORD = "' . GenerateNewHash($type['OTHER']['PASSWORD']) . '" WHERE USER_ID = "' . $oth_person_id . '" AND PROFILE_ID = "' . $oth_prof_id . '"');
                             } else {
-                                DBQuery('INSERT INTO login_authentication (USER_ID,USERNAME,PASSWORD,PROFILE_ID) VALUES (' . $oth_person_id . ',\'' . $type['OTHER']['USER_NAME'] . '\',\'' . GenerateNewHash($type['OTHER']['PASSWORD']) . '\',' . $oth_prof_id . ')');
+                                DBQuery('INSERT INTO login_authentication (USER_ID,USERNAME,PASSWORD,PROFILE_ID) VALUES (' . $oth_person_id . ',\'' . $oth_user_name_val . '\',\'' . GenerateNewHash($type['OTHER']['PASSWORD']) . '\',' . $oth_prof_id . ')');
                             }
                         } else {
                             echo "<script>document.getElementById('divErr').innerHTML='<div class=alert alert-danger alert-bordered><font color=red><b>" . _usernameAlreadyExists . "</b></font></div>';</script>";
