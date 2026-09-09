@@ -100,7 +100,7 @@ if ($signedDir !== null) {
             
             // Get file modification time as signature date if not set
             if (!isset($_SESSION['signature_date'])) {
-                $_SESSION['signature_date'] = date('Y-m-d H:i:s', filemtime($signedPath));
+                $_SESSION['signature_date'] = (new DateTime('@' . filemtime($signedPath)))->setTimezone(new DateTimeZone('America/New_York'))->format('Y-m-d H:i:s');
             }
         }
     } else {

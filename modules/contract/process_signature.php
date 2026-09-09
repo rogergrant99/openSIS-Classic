@@ -121,7 +121,7 @@ try {
     // Update session
     $_SESSION['contract_signed'] = true;
     $_SESSION['signed_contract_path'] = $signedPath;
-    $_SESSION['signature_date'] = date('Y-m-d H:i:s');
+    $_SESSION['signature_date'] = (new DateTime('now', new DateTimeZone('America/New_York')))->format('Y-m-d H:i:s');
     
     // Clean up preview
     if (file_exists($previewPath)) {
