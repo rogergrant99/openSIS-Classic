@@ -382,9 +382,10 @@ function output_file($file, $name, $mime_type = '', $mod_file) {
         die('Error - can not open file.');
     die();
 }
+// mail_datetime is written via MySQL NOW(), which returns the DB server's local
+// (America/New_York, DST-aware) time here, not UTC — so no timezone shift is needed.
 function convertUTCtoEST($utc_datetime) {
-    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone('America/New_York'));
+    $date = new DateTime($utc_datetime);
     return $date->format('d M - H:i:s');
 }
 ?>
