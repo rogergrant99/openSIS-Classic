@@ -1070,11 +1070,10 @@ if ($_REQUEST['modfunc'] == 'choose_course') {
 echo "</form>";
 echo "</div>"; //.panel
 
-// mail_datetime is written via MySQL UTC_TIMESTAMP(), so it's always true UTC
-// regardless of the DB server's configured time_zone.
+// mail_datetime is written via MySQL NOW(), which returns the DB server's local
+// (America/New_York, DST-aware) time here, not UTC — so no timezone shift is needed.
 function convertUTCtoEST($utc_datetime) {
-    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone('America/New_York'));
+    $date = new DateTime($utc_datetime);
     return $date->format('d M - H:i:s');
 }
 function wysisyg_editor(){

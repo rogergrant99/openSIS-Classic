@@ -1013,12 +1013,12 @@ function SendMail($to, $userName, $subject, $mailBody, $attachment, $toCC, $toBC
         return false;
     } 
     else if ($mailBody != "") {
-        $inbox_query = DBQuery('INSERT INTO msg_inbox(to_user,from_user,mail_Subject,mail_body,isdraft,mail_attachment,to_multiple_users,to_cc_multiple,to_cc,to_bcc,to_bcc_multiple,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $isdraft . '\',\'' . $attachment . '\',\'' . $to . '\',\'' . $toCC . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',\'' . $toBCCs . '\',UTC_TIMESTAMP())');
+        $inbox_query = DBQuery('INSERT INTO msg_inbox(to_user,from_user,mail_Subject,mail_body,isdraft,mail_attachment,to_multiple_users,to_cc_multiple,to_cc,to_bcc,to_bcc_multiple,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $isdraft . '\',\'' . $attachment . '\',\'' . $to . '\',\'' . $toCC . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',\'' . $toBCCs . '\',now())');
     }
     if ($grpName == 'false')
-        $outbox_query = DBQuery('INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',UTC_TIMESTAMP())');
+        $outbox_query = DBQuery('INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',NOW())');
     else {
-        $q = 'INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime,to_grpName) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',UTC_TIMESTAMP(),\'' . $grpName . '\')';
+        $q = 'INSERT INTO msg_outbox(to_user,from_user,mail_Subject,mail_body,mail_attachment,to_cc,to_bcc,mail_datetime,to_grpName) VALUES(\'' . $to . '\',\'' . $userName . '\',\'' . $subject . '\',"'. $mailBody .'",\'' . $attachment . '\',\'' . $toCC . '\',\'' . $toBCCs . '\',NOW(),\'' . $grpName . '\')';
 
         $outbox_query = DBQuery($q);
     }
@@ -1284,10 +1284,9 @@ function encodeURIComponent($str) {
     $revert = array('%21'=>'!', '%2A'=>'*', '%27'=>"'", '%28'=>'(', '%29'=>')');
     return strtr(rawurlencode($str), $revert);
 }
-// mail_datetime is written via MySQL UTC_TIMESTAMP(), so it's always true UTC
-// regardless of the DB server's configured time_zone.
+// mail_datetime is written via MySQL NOW(), which returns the DB server's local
+// (America/New_York, DST-aware) time here, not UTC — so no timezone shift is needed.
 function convertUTCtoEST($utc_datetime) {
-    $date = new DateTime($utc_datetime, new DateTimeZone('UTC'));
-    $date->setTimezone(new DateTimeZone('America/New_York'));
+    $date = new DateTime($utc_datetime);
     return $date->format('d M - H:i:s');
 }

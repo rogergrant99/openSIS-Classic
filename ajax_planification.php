@@ -108,9 +108,7 @@ try {
                     'success' => true,
                     'message' => 'Saved successfully',
                     'updated_by' => $updated_by,
-                    // Explicit timezone: PHP's default (date.timezone) is UTC on this
-                    // server, independent of the DB's time_zone setting.
-                    'timestamp' => (new DateTime('now', new DateTimeZone('America/New_York')))->format('H:i:s'),
+                    'timestamp' => date('H:i:s'),
                     'saved_to_date' => $week_start_safe
                 ]);
             } else {
