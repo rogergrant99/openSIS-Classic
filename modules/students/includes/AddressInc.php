@@ -579,6 +579,7 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
 
 
                 unset($set_arr);
+                unset($qry);
                 unset($where);
                 unset($col);
                 unset($col_v);
@@ -607,6 +608,13 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                     if ($_REQUEST['hidden_primary'] != '') {
                         $pri_person_id = $_REQUEST['hidden_primary'];
                         $pri_pep_exists = 'Y';
+                    } elseif ($_REQUEST['values']['people']['PRIMARY']['ID'] != '' && $_REQUEST['values']['people']['PRIMARY']['ID'] != 'new') {
+                        // THE people ROW FOR THIS CONTACT ALREADY EXISTS AND IS ONLY BACK IN THIS "new" BRANCH BECAUSE ITS
+                        // student_address ROW IS STILL MISSING (E.G. A PORTAL-ONLY CONTACT SAVED BEFORE THAT GAP WAS FIXED) -
+                        // THE EMAIL BELOW NATURALLY MATCHES THEIR OWN RECORD, WHICH ISN'T A CONFLICT. TREAT THEM AS THE SAME
+                        // KNOWN PERSON INSTEAD OF RUNNING THE NEW-PERSON DUPLICATE-EMAIL CHECK AGAINST THEIR OWN ROW.
+                        $pri_person_id = $_REQUEST['values']['people']['PRIMARY']['ID'];
+                        $pri_pep_exists = 'Y';
                     } elseif (trim($_REQUEST['values']['people']['PRIMARY']['EMAIL']) != '' && count($pri_people_exists) > 0) {
                         // EMAIL TYPED DIRECTLY (NOT VIA THE "SEARCH EXISTING" POPUP) MATCHES AN EXISTING PERSON - STOP AND MAKE THE ADMIN RESOLVE IT RATHER THAN SILENTLY DUPLICATING OR GUESSING
                         $pri_pep_exists = 'CONFLICT';
@@ -626,6 +634,10 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                     if ($_REQUEST['hidden_secondary'] != '') {
                         $sec_person_id = $_REQUEST['hidden_secondary'];
                         $sec_pep_exists = 'Y';
+                    } elseif ($_REQUEST['values']['people']['SECONDARY']['ID'] != '' && $_REQUEST['values']['people']['SECONDARY']['ID'] != 'new') {
+                        // SAME REASONING AS THE PRIMARY BRANCH ABOVE - AN ALREADY-KNOWN PERSON'S OWN EMAIL ISN'T A CONFLICT.
+                        $sec_person_id = $_REQUEST['values']['people']['SECONDARY']['ID'];
+                        $sec_pep_exists = 'Y';
                     } elseif ($sec_pep_exists != 'X' && trim($_REQUEST['values']['people']['SECONDARY']['EMAIL']) != '' && count($sec_people_exists) > 0) {
                         // EMAIL TYPED DIRECTLY (NOT VIA THE "SEARCH EXISTING" POPUP) MATCHES AN EXISTING PERSON - STOP AND MAKE THE ADMIN RESOLVE IT RATHER THAN SILENTLY DUPLICATING OR GUESSING
                         $sec_pep_exists = 'CONFLICT';
@@ -642,6 +654,10 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
 
                     if ($_REQUEST['hidden_other'] != '') {
                         $oth_person_id = $_REQUEST['hidden_other'];
+                        $oth_pep_exists = 'Y';
+                    } elseif ($_REQUEST['values']['people']['OTHER']['ID'] != '' && $_REQUEST['values']['people']['OTHER']['ID'] != 'new') {
+                        // SAME REASONING AS THE PRIMARY BRANCH ABOVE - AN ALREADY-KNOWN PERSON'S OWN EMAIL ISN'T A CONFLICT.
+                        $oth_person_id = $_REQUEST['values']['people']['OTHER']['ID'];
                         $oth_pep_exists = 'Y';
                     } elseif (trim($_REQUEST['values']['people']['OTHER']['EMAIL']) != '' && count($oth_people_exists) > 0) {
                         // EMAIL TYPED DIRECTLY (NOT VIA THE "SEARCH EXISTING" POPUP) MATCHES AN EXISTING PERSON - STOP AND MAKE THE ADMIN RESOLVE IT RATHER THAN SILENTLY DUPLICATING OR GUESSING
@@ -723,8 +739,16 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
                             $qry = 'INSERT INTO ' . $table . ' (student_id,syear,school_id' . $fields . ',' . $type_n . ') VALUES (' . UserStudentID() . ',' . UserSyear() . ',' . UserSchool()  . $field_vals . ',' . $ind_n . ') ';
                         }
 
-                        if ($ind != 'SECONDARY')
+                        if ($ind != 'SECONDARY') {
+                            // A CONTACT WITH A NAME BUT NO ADDRESS FIELDS FILLED IN (E.G. A PORTAL-ONLY PRIMARY/OTHER CONTACT) LEFT $go
+                            // 'false' HERE, SO THE student_address INSERT BELOW NEVER RAN - LEAVING THE NEW PEOPLE/PORTAL RECORD WITHOUT
+                            // A MATCHING student_address ROW. THE EDIT-FORM LOOKUP FURTHER DOWN INNER-JOINS people TO student_address, SO
+                            // ON THE NEXT PAGE LOAD THAT CONTACT SILENTLY DISAPPEARED FROM THE FORM (NAME BLANK, ID BACK TO "new"), AND
+                            // RE-SAVING THE NAME CREATED A DUPLICATE CONTACT INSTEAD OF UPDATING THE ORIGINAL - MIRRORS SECONDARY ABOVE.
+                            if ($_REQUEST['values']['people'][$ind]['FIRST_NAME'] != '' && $_REQUEST['values']['people'][$ind]['LAST_NAME'] != '')
+                                $go = 'true';
                             $qry = 'INSERT INTO ' . $table . ' (student_id,syear,school_id' . $fields . ',' . $type_n . ') VALUES (' . UserStudentID() . ',' . UserSyear() . ',' . UserSchool()  . $field_vals . ',' . $ind_n . ') ';
+                        }
                     }
                 }
 
@@ -1066,7 +1090,7 @@ if (!isset($_REQUEST['modfunc'])) {
 
         if (count($pri_par_id) > 0) {
             $p_addr = DBGet(DBQuery('SELECT p.STAFF_ID as CONTACT_ID,p.FIRST_NAME,p.MIDDLE_NAME,p.LAST_NAME,p.HOME_PHONE,p.WORK_PHONE,p.CELL_PHONE,p.EMAIL,p.CUSTODY,p.PROFILE_ID,
-                                  sa.ID AS ADDRESS_ID,sa.STREET_ADDRESS_1 as ADDRESS,sa.STREET_ADDRESS_2 as STREET,sa.CITY,sa.STATE,sa.ZIPCODE,sa.BUS_PICKUP,sa.BUS_DROPOFF,sa.BUS_NO from people p,student_address sa WHERE p.STAFF_ID=sa.PEOPLE_ID  AND p.STAFF_ID=\'' . $pri_par_id[1]['PERSON_ID'] . '\'  AND sa.PEOPLE_ID IS NOT NULL '));
+                                  sa.ID AS ADDRESS_ID,sa.STREET_ADDRESS_1 as ADDRESS,sa.STREET_ADDRESS_2 as STREET,sa.CITY,sa.STATE,sa.ZIPCODE,sa.BUS_PICKUP,sa.BUS_DROPOFF,sa.BUS_NO from people p LEFT JOIN student_address sa ON p.STAFF_ID=sa.PEOPLE_ID WHERE p.STAFF_ID=\'' . $pri_par_id[1]['PERSON_ID'] . '\' '));
             $p_addr[1]['RELATIONSHIP'] = $pri_par_id[1]['RELATIONSHIP'];
 
             $primary_user_profs_ids_arr = array();
@@ -1099,7 +1123,7 @@ $p_addr[1]['STATE']=stripslashes($p_addr[1]['STATE']);
 
         if (count($sec_par_id) > 0) {
             $s_addr = DBGet(DBQuery('SELECT p.STAFF_ID as CONTACT_ID,p.FIRST_NAME,p.MIDDLE_NAME,p.LAST_NAME,p.HOME_PHONE,p.WORK_PHONE,p.CELL_PHONE,p.EMAIL,p.CUSTODY,p.PROFILE_ID,
-                                  sa.ID AS ADDRESS_ID,sa.STREET_ADDRESS_1 as ADDRESS,sa.STREET_ADDRESS_2 as STREET,sa.CITY,sa.STATE,sa.ZIPCODE,sa.BUS_PICKUP,sa.BUS_DROPOFF,sa.BUS_NO from people p,student_address sa WHERE p.STAFF_ID=sa.PEOPLE_ID  AND p.STAFF_ID=\'' . $sec_par_id[1]['PERSON_ID'] . '\'  AND sa.PEOPLE_ID IS NOT NULL '));
+                                  sa.ID AS ADDRESS_ID,sa.STREET_ADDRESS_1 as ADDRESS,sa.STREET_ADDRESS_2 as STREET,sa.CITY,sa.STATE,sa.ZIPCODE,sa.BUS_PICKUP,sa.BUS_DROPOFF,sa.BUS_NO from people p LEFT JOIN student_address sa ON p.STAFF_ID=sa.PEOPLE_ID WHERE p.STAFF_ID=\'' . $sec_par_id[1]['PERSON_ID'] . '\' '));
 
 
             $s_addr[1]['RELATIONSHIP'] = $sec_par_id[1]['RELATIONSHIP'];
@@ -1655,7 +1679,7 @@ if ($_REQUEST['person_id'] && $_REQUEST['con_info'] == 'old') {
             $other_par_id = DBGet(DBQuery('SELECT * FROM students_join_people WHERE STUDENT_ID=' . UserStudentID() . ' AND PERSON_ID=' . $_REQUEST['person_id'] . ' AND EMERGENCY_TYPE=\'Other\''));
 
             $o_addr = DBGet(DBQuery('SELECT p.STAFF_ID as PERSON_ID,p.FIRST_NAME,p.MIDDLE_NAME,p.LAST_NAME,p.HOME_PHONE,p.WORK_PHONE,p.CELL_PHONE,p.EMAIL,p.CUSTODY,p.PROFILE_ID,
-                                                  sa.ID AS ADDRESS_ID,sa.STREET_ADDRESS_1 as ADDRESS,sa.STREET_ADDRESS_2 as STREET,sa.CITY,sa.STATE,sa.ZIPCODE,sa.BUS_PICKUP,sa.BUS_DROPOFF,sa.BUS_NO from people p,student_address sa WHERE p.STAFF_ID=sa.PEOPLE_ID  AND p.STAFF_ID=\'' . $_REQUEST['person_id'] . '\'  AND sa.PEOPLE_ID IS NOT NULL '));
+                                                  sa.ID AS ADDRESS_ID,sa.STREET_ADDRESS_1 as ADDRESS,sa.STREET_ADDRESS_2 as STREET,sa.CITY,sa.STATE,sa.ZIPCODE,sa.BUS_PICKUP,sa.BUS_DROPOFF,sa.BUS_NO from people p LEFT JOIN student_address sa ON p.STAFF_ID=sa.PEOPLE_ID WHERE p.STAFF_ID=\'' . $_REQUEST['person_id'] . '\' '));
             $o_addr[1]['RELATIONSHIP'] = $other_par_id[1]['RELATIONSHIP'];
             $o_addr[1]['IS_EMERGENCY'] = $other_par_id[1]['IS_EMERGENCY'];
 
