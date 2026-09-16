@@ -111,7 +111,6 @@ if((!$_REQUEST['modfunc'] || $_REQUEST['modfunc']=='choose_course') && !$_REQUES
             if($res_sch[1]['RES']>0)
             {
            DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id =$val");
-            DBQuery("DROP TABLE IF EXISTS temp_schedule");
             unset($_SESSION['course_periods']);
             unset($_SESSION['marking_period_id']);
             unset($_REQUEST['selected_course_periods']);                 
@@ -153,6 +152,7 @@ if((!$_REQUEST['modfunc'] || $_REQUEST['modfunc']=='choose_course') && !$_REQUES
             }
             
             $_SESSION['conflict_cp']=$parent_c_name;
+           DBQuery("DROP TABLE IF EXISTS temp_schedule");
            echo "<script type=text/javascript>opener.document.location='Modules.php?modname=".strip_tags(trim($_REQUEST[modname]))."&student_id=".UserStudentID()."';window.close();</script>";
           }
 	$LO_options = array('save'=>false,'search'=>false);

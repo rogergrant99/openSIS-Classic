@@ -59,7 +59,6 @@ if ($_REQUEST['modfunc'] == 'cp_insert') {
 
                 if ($res_sch[1]['RES'] > 0) {
                     DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id =$val");
-                    DBQuery("DROP TABLE IF EXISTS temp_schedule");
                     unset($_SESSION['course_periods']);
                     unset($_SESSION['marking_period_id']);
                     unset($_REQUEST['selected_course_periods']);
