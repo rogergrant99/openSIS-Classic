@@ -62,19 +62,21 @@ function DeletePromptStaffCert($title, $certificate_id, $action = 'delete') {
     }
 }
 
-function DeletePrompt($title, $action = _delete, $close = 'n') {
+function DeletePrompt($title, $action = _delete, $close = 'n', $message = '') {
     $tmp_REQUEST = $_REQUEST;
     unset($tmp_REQUEST['delete_ok']);
 
     $PHP_tmp_SELF = PreparePHP_SELF($tmp_REQUEST);
     $PHP_tmp_SELF = str_replace(' ', '+', $PHP_tmp_SELF);
+    if (!$message)
+        $message = _areYouSureYouWantTo." $action "._that." $title?";
     if (!$_REQUEST['delete_ok'] && !$_REQUEST['delete_cancel']) {
         echo '<BR>';
         PopTable('header', _confirm ." ". (strpos($action, ' ') === false ? ' ' . ucwords($action) : ''));
         if ($close == 'n')
-            echo "<CENTER><h4>"._areYouSureYouWantTo." $action "._that." $title?</h4><br><FORM action=$PHP_tmp_SELF&delete_ok=1 METHOD=POST><INPUT type=submit class=\"btn btn-danger\" value="._ok.">&nbsp;<INPUT type=button class=\"btn btn-primary\" name=delete_cancel value="._cancel." onclick='javascript:history.go(-1);'></FORM></CENTER>";
+            echo "<CENTER><h4>$message</h4><br><FORM action=$PHP_tmp_SELF&delete_ok=1 METHOD=POST><INPUT type=submit class=\"btn btn-danger\" value="._ok.">&nbsp;<INPUT type=button class=\"btn btn-primary\" name=delete_cancel value="._cancel." onclick='javascript:history.go(-1);'></FORM></CENTER>";
         if ($close == 'y')
-            echo "<CENTER><h4>"._areYouSureYouWantTo." $action "._that." $title?</h4><br><FORM action=$PHP_tmp_SELF&delete_ok=1 METHOD=POST><INPUT type=submit class=\"btn btn-danger\" value="._ok.">&nbsp;<INPUT type=button class=\"btn btn-primary\" name=delete_cancel value="._cancel." onclick='window.close();'></FORM></CENTER>";
+            echo "<CENTER><h4>$message</h4><br><FORM action=$PHP_tmp_SELF&delete_ok=1 METHOD=POST><INPUT type=submit class=\"btn btn-danger\" value="._ok.">&nbsp;<INPUT type=button class=\"btn btn-primary\" name=delete_cancel value="._cancel." onclick='window.close();'></FORM></CENTER>";
         PopTable('footer');
         return false;
     } else

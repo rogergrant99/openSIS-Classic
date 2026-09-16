@@ -1907,6 +1907,7 @@ define("_staffCertificationExpiryDate", "تاريخ انتهاء شهادة ال
 define("_theSelectedDateIsNotToday", "التاريخ المحدد ليس اليوم");
 define("_areYouSureYouWantTo", "هل أنت متأكد أنك تريد ");
 define("_that", "الذي - التي");
+define("_areYouSureYouWantToDeleteThisParent", "هل أنت متأكد أنك تريد حذف ولي الأمر هذا؟");
 define("_newSchoolField", "مجال المدرسة الجديدة");
 define("_newSubject", "موضوع جديد");
 define("_classRoom", "قاعة الدراسة");

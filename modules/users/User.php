@@ -355,11 +355,16 @@ if ($_REQUEST['modfunc'] == 'remove_stu') {
         DrawHeader(_createAccount);
 
     if (clean_param($_REQUEST['modfunc'], PARAM_ALPHAMOD) == 'delete' && basename($_SERVER['PHP_SELF']) != 'index.php' && AllowEdit()) {
-        if (DeletePrompt('user')) {
-            DBQuery('DELETE FROM program_user_config WHERE USER_ID=\'' . UserStaffID() . '\'');
+        if (DeletePrompt('user', _delete, 'n', _areYouSureYouWantToDeleteThisParent)) {
+            $delete_profile_RET = DBGet(DBQuery('SELECT PROFILE_ID FROM people WHERE STAFF_ID=\'' . UserStaffID() . '\''));
+            $delete_profile_id = $delete_profile_RET[1]['PROFILE_ID'];
 
+            DBQuery('DELETE FROM program_user_config WHERE USER_ID=\'' . UserStaffID() . '\'');
             DBQuery('DELETE FROM students_join_people WHERE PERSON_ID=\'' . UserStaffID() . '\'');
+            DBQuery('DELETE FROM student_address WHERE PEOPLE_ID=\'' . UserStaffID() . '\'');
             DBQuery('DELETE FROM staff WHERE STAFF_ID=\'' . UserStaffID() . '\'');
+            DBQuery('DELETE FROM login_authentication WHERE USER_ID=\'' . UserStaffID() . '\' AND PROFILE_ID=\'' . $delete_profile_id . '\'');
+            DBQuery('DELETE FROM people WHERE STAFF_ID=\'' . UserStaffID() . '\'');
             unset($_SESSION['staff_id']);
             unset($_REQUEST['staff_id']);
             unset($_REQUEST['modfunc']);
@@ -391,8 +396,24 @@ if ($_REQUEST['modfunc'] == 'remove_stu') {
             echo "<FORM name=F2 id=F2 action=index.php?modfunc=create_account METHOD=POST>";
 
         if (basename($_SERVER['PHP_SELF']) != 'index.php') {
-            if (UserStaffID() && UserStaffID() != User('STAFF_ID') && UserStaffID() != $_SESSION['STAFF_ID'] && User('PROFILE') == 'admin')
-                $delete_button = '<INPUT type=button class="btn btn-danger" value=' . _delete . ' onclick="window.location=\'Modules.php?modname=' . $_REQUEST['modname'] . '&modfunc=delete\'">';
+            if (UserStaffID() && UserStaffID() != User('STAFF_ID') && UserStaffID() != $_SESSION['STAFF_ID'] && User('PROFILE') == 'admin') {
+                $viewed_profile_RET = DBGet(DBQuery('SELECT PROFILE_ID FROM people WHERE STAFF_ID=\'' . UserStaffID() . '\''));
+                $parent_profile_RET = DBGet(DBQuery('SELECT ID FROM user_profiles WHERE PROFILE=\'parent\''));
+                $parent_profile_ids = array();
+                foreach ($parent_profile_RET as $pp) {
+                    $parent_profile_ids[] = $pp['ID'];
+                }
+                if (in_array($viewed_profile_RET[1]['PROFILE_ID'], $parent_profile_ids)) {
+                    $active_students_sql = 'SELECT s.STUDENT_ID FROM students s,student_enrollment ssm,school_gradelevels gr,schools sc,students_join_people sjp
+                        WHERE s.STUDENT_ID=ssm.STUDENT_ID AND s.STUDENT_ID=sjp.STUDENT_ID AND sjp.PERSON_ID=' . UserStaffID() . '
+                        AND ssm.SYEAR=' . UserSyear() . ' AND ssm.SCHOOL_ID=' . UserSchool() . '
+                        AND ssm.GRADE_ID=gr.ID AND ssm.SCHOOL_ID=sc.ID
+                        AND (ssm.END_DATE IS NULL OR ssm.END_DATE = \'0000-00-00\' OR ssm.END_DATE >= \'' . date('Y-m-d') . '\')';
+                    $active_students_RET = DBGet(DBQuery($active_students_sql));
+                    if (count($active_students_RET) == 0)
+                        $delete_button = '<INPUT type=button class="btn btn-danger" value=' . _delete . ' onclick="window.location=\'Modules.php?modname=' . $_REQUEST['modname'] . '&staff_id=' . UserStaffID() . '&modfunc=delete\'">';
+                }
+            }
         }
 
         if (User('PROFILE_ID') != '')
@@ -464,7 +485,7 @@ if ($_REQUEST['modfunc'] == 'remove_stu') {
         $school_admin = DBGet(DBQuery($sql));
         $submit_btn = SubmitButton(_save, '', 'id="saveUserBtn" class="btn btn-primary pull-right" onclick="return formcheck_user_user_mod(' . $_SESSION['staff_school_chkbox_id'] . ', this);"');
 
-        PopTable('footer', $submit_btn);
+        PopTable('footer', $delete_button . ' ' . $submit_btn);
         echo '</FORM>';
     }
     unset($_SESSION['fn']);

@@ -1916,6 +1916,7 @@ define("_staffCertificationExpiryDate", "Date d'expiration de la certification d
 define("_theSelectedDateIsNotToday", "La date choisie n'est pas aujourd'hui");
 define("_areYouSureYouWantTo", "Êtes-vous sûr de vouloir");
 define("_that", "cette");
+define("_areYouSureYouWantToDeleteThisParent", "Êtes-vous sûr de vouloir supprimer ce parent?");
 define("_newSchoolField", "nouveau champ scolaire");
 define("_newSubject", "nouveau sujet");
 define("_classRoom", "Salle de cours");

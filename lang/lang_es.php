@@ -1918,6 +1918,7 @@ define("_staffCertificationExpiryDate", "Fecha de vencimiento de la certificaci�
 define("_theSelectedDateIsNotToday", "La fecha seleccionada no es hoy");
 define("_areYouSureYouWantTo", "Estás seguro que quieres ");
 define("_that", "Ese");
+define("_areYouSureYouWantToDeleteThisParent", "¿Estás seguro que quieres eliminar a este padre?");
 define("_newSchoolField", "nuevo campo escolar");
 define("_newSubject", "Asunto nuevo");
 define("_classRoom", "Salón de clases");

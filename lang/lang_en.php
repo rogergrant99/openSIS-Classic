@@ -1910,6 +1910,7 @@ define("_staffCertificationExpiryDate", "Staff Certification Expiry Date");
 define("_theSelectedDateIsNotToday", "The selected date is not today");
 define("_areYouSureYouWantTo", "Are you sure you want to ");
 define("_that", "that");
+define("_areYouSureYouWantToDeleteThisParent", "Are you sure you want to delete this parent?");
 define("_newSchoolField", "new school field");
 define("_newSubject", "New Subject");
 define("_classRoom", "Class Room");
