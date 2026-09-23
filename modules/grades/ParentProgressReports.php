@@ -32,7 +32,7 @@ $_REQUEST['due_date'] = 'Y';
 if ($_REQUEST['modfunc'] == 'save') {
     $st_id = UserStudentID();
     $extra['SELECT'] = ',ssm.START_DATE';
-    $extra['WHERE'] = ' AND s.STUDENT_ID =' . $st_id;
+    $extra['WHERE'] = " AND s.STUDENT_ID = '" . $st_id . "'";
     Widgets('mailing_labels');
     $extra['moreland_cust'] = 'assignment_grade';
     $RET = GetStuList($extra);
