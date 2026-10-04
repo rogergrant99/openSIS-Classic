@@ -118,12 +118,8 @@ function CadoTeacherFix($next_syear)
     DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \'COMMENT_A\' as title, NULL as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
     //DBQuery('INSERT INTO program_user_config (user_id,program,title,value,last_updated,updated_by) SELECT staff_id as user_id,\'Preferences\' as program,\'HIDE_ALERTS\' as title,\'N\' as value,last_updated as last_updated,staff_id as updated_by FROM staff WHERE  profile_id =\'2\'');
     // Scale
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-65") as title, CONCAT("90_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-66") as title, CONCAT("80_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-67") as title, CONCAT("70_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-68") as title, CONCAT("60_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-69") as title, CONCAT("50_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
-    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, CONCAT(course_period_id,"-70") as title, CONCAT("40_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
+    // Breakoff points, one per grade of the course period's own grade scale (grade IDs change every year)
+    DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT cp.teacher_id as user_id, cp.school_id, \'Gradebook\' as program, CONCAT(cp.course_period_id,"-",rcg.id) as title, CONCAT(FLOOR(rcg.break_off),"_",cp.course_period_id) as value, now() as last_updated, cp.teacher_id as updated_by FROM course_periods cp INNER JOIN report_card_grades rcg ON (rcg.grade_scale_id=cp.grade_scale_id AND rcg.syear=cp.syear AND rcg.school_id=cp.school_id) WHERE cp.syear = \''.$next_syear.'\' AND rcg.break_off IS NOT NULL');
     // Quarter weigth
     DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$E1.'\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
     DBQuery('INSERT INTO program_user_config (user_id,school_id,program,title,value,last_updated,updated_by) SELECT teacher_id as user_id, school_id, \'Gradebook\' as program, \''.$E2.'\' as title, CONCAT("100_",course_period_id) as value, now() as last_updated, teacher_id as updated_by FROM course_periods WHERE  syear = \''.$next_syear.'\'');
@@ -149,12 +145,14 @@ function CadoTeacherFix($next_syear)
     foreach($oldcourses as $individual) {
         $types=DBGet(DBQuery('SELECT TITLE,COURSE_ID,COURSE_PERIOD_ID,FINAL_GRADE_PERCENT from gradebook_assignment_types where COURSE_PERIOD_ID= ' .$individual['COURSE_PERIOD_ID'].' '));
         //   echo '<pre>'; print_r($individual); echo '</pre>';
+        $has_communication=false;
         foreach($types as $type){
             if (!$type['FINAL_GRADE_PERCENT'])  
                 $type['FINAL_GRADE_PERCENT']='null';
             DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$individual['TEACHER_ID'].','.$individual['NEW_COURSE_PERIOD_ID'].','.$individual['NEW_COURSE_ID'].',"'. html_entity_decode($type['TITLE']).'",'.$type['FINAL_GRADE_PERCENT'].')');
             $return=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types where STAFF_ID= '.$individual['TEACHER_ID'].' AND COURSE_PERIOD_ID= '.$individual['NEW_COURSE_PERIOD_ID'].' AND COURSE_ID= '.$individual['NEW_COURSE_ID'].' AND TITLE= "'.html_entity_decode($type['TITLE']).'" '));
             if($type['TITLE'] == '1ère communication'){
+             $has_communication=true;
              DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'En voie de réussite\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
              DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'Complète et remet ses travaux\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
              DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'Attitude et comportement\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'34\' , \'1\' ,  \''.$now.'\' )');
@@ -164,21 +162,27 @@ function CadoTeacherFix($next_syear)
             // DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) SELECT staff_id as staff_id,  \''.$YearMP[1]['MARKING_PERIOD_ID'].'\'  as marking_period_id, assignment_type_id as assignment_type_id, \'Attitude et comportement\' as title, \''.$end.'\' as due_date, \''.$start.'\' as assigned_date, 100 as points, 34 as ASSIGNMENT_WEIGHT, 1 as ungraded, \''.$now.'\' as last_update FROM gradebook_assignment_types WHERE  title = \'1ère communication\'');
             }
         }
+        // Last year's course had no 1ère communication type: create it like for a new course
+        if(!$has_communication)
+            CadoAddPremiereCommunication($individual['TEACHER_ID'],$individual['NEW_COURSE_PERIOD_ID'],$individual['NEW_COURSE_ID'],$get_dates[1]['MARKING_PERIOD_ID'],$start,$end,$now);
     }
     $orphanCourses=DBGet(DBQuery('select * from course_details where  rollover_id IS NULL AND syear =' .$this_year. ''));
     foreach($orphanCourses as $orphanCourse){
         // echo '<pre>'; print_r($orphanCourse); echo '</pre>';
         DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$orphanCourse['TEACHER_ID'].','.$orphanCourse['COURSE_PERIOD_ID'].','.$orphanCourse['COURSE_ID'].',"'.$orphanCourse['COURSE_NAME'].'",1)');
-        DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$orphanCourse['TEACHER_ID'].','.$orphanCourse['COURSE_PERIOD_ID'].','.$orphanCourse['COURSE_ID'].',\'1ère communication\',NULL)');
-        $newTypeID=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types where  COURSE_PERIOD_ID='.$orphanCourse['COURSE_PERIOD_ID'].' AND COURSE_ID='.$orphanCourse['COURSE_ID'].' '));
-        // echo '<pre>'; print_r($newTypeID); echo '</pre>';
-        // echo $newTypeID[1]['ASSIGNMENT_TYPE_ID']; echo '<br>';
-        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$orphanCourse['TEACHER_ID'] . ',' .$orphanCourse['MARKING_PERIOD_ID']. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $orphanCourse['COURSE_PERIOD_ID'] . ' , \'En voie de réussite\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
-        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$orphanCourse['TEACHER_ID'] . ',' .$orphanCourse['MARKING_PERIOD_ID']. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $orphanCourse['COURSE_PERIOD_ID'] . ' , \'Complète et remet ses travaux\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
-        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$orphanCourse['TEACHER_ID'] . ',' .$orphanCourse['MARKING_PERIOD_ID']. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $orphanCourse['COURSE_PERIOD_ID'] . ' , \'Attitude et comportement\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'34\' , \'1\' ,  \''.$now.'\' )');
+        CadoAddPremiereCommunication($orphanCourse['TEACHER_ID'],$orphanCourse['COURSE_PERIOD_ID'],$orphanCourse['COURSE_ID'],$get_dates[1]['MARKING_PERIOD_ID'],$start,$end,$now);
     }
 }
 
+
+
+function CadoAddPremiereCommunication($teacher_id,$course_period_id,$course_id,$marking_period_id,$start,$end,$now)
+{
+    DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$teacher_id.','.$course_period_id.','.$course_id.',\'1ère communication\',NULL)');
+    $newTypeID=DBGet(DBQuery('SELECT ASSIGNMENT_TYPE_ID FROM gradebook_assignment_types where COURSE_PERIOD_ID='.$course_period_id.' AND COURSE_ID='.$course_id.' AND TITLE=\'1ère communication\' ORDER BY ASSIGNMENT_TYPE_ID DESC LIMIT 1'));
+    foreach(array('En voie de réussite'=>33,'Complète et remet ses travaux'=>33,'Attitude et comportement'=>34) as $title=>$weight)
+        DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$teacher_id . ',' .$marking_period_id. ',' .$newTypeID[1]['ASSIGNMENT_TYPE_ID']. ',' . $course_period_id . ' , \''.$title.'\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \''.$weight.'\' , \'1\' ,  \''.$now.'\' )');
+}
 
 function CadoStudentFix()
 {
