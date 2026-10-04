@@ -143,7 +143,7 @@ function CadoTeacherFix($next_syear)
     $end=$get_dates[1]['POST_END_DATE'];
     $now=date('Y-m-d');
     //$oldcourses=DBGet(DBQuery('SELECT TEACHER_ID,COURSE_ID,COURSE_PERIOD_ID,COURSE_TITLE as TITLE,CP_TITLE as SHORT,(select COURSE_PERIOD_ID from course_details  where SYEAR=' .$this_year. ' and COURSE_TITLE=TITLE and CP_TITLE=SHORT)as NEW_COURSE_PERIOD_ID from course_details where SYEAR=' .$last_year. ''));
-    $oldcourses=DBGet(DBQuery('SELECT cdnew.course_period_id as NEW_COURSE_PERIOD_ID, cdnew.TEACHER_ID,cdold.COURSE_ID as course_id,cdold.COURSE_PERIOD_ID,cdnew.COURSE_TITLE as TITLE,cdnew.CP_TITLE as SHORT from course_details cdold inner join course_details cdnew on (cdnew.rollover_id=cdold.COURSE_ID) where cdnew.syear=' .$this_year. ''));
+    $oldcourses=DBGet(DBQuery('SELECT cdnew.course_period_id as NEW_COURSE_PERIOD_ID, cdnew.COURSE_ID as NEW_COURSE_ID, cdnew.TEACHER_ID,cdold.COURSE_ID as course_id,cdold.COURSE_PERIOD_ID,cdnew.COURSE_TITLE as TITLE,cdnew.CP_TITLE as SHORT from course_details cdold inner join course_details cdnew on (cdnew.rollover_id=cdold.COURSE_ID) where cdnew.syear=' .$this_year. ''));
     //  echo '<pre>'; print_r($oldcourses); echo '</pre>';
 
     foreach($oldcourses as $individual) {
@@ -152,8 +152,8 @@ function CadoTeacherFix($next_syear)
         foreach($types as $type){
             if (!$type['FINAL_GRADE_PERCENT'])  
                 $type['FINAL_GRADE_PERCENT']='null';
-            DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$individual['TEACHER_ID'].','.$individual['NEW_COURSE_PERIOD_ID'].','.$type['COURSE_ID'].',"'. html_entity_decode($type['TITLE']).'",'.$type['FINAL_GRADE_PERCENT'].')');
-            $return=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types where STAFF_ID= '.$individual['TEACHER_ID'].' AND COURSE_PERIOD_ID= '.$individual['NEW_COURSE_PERIOD_ID'].' AND COURSE_ID= '.$type['COURSE_ID'].' AND TITLE= "'.html_entity_decode($type['TITLE']).'" '));
+            DBQuery('INSERT INTO gradebook_assignment_types (STAFF_ID,COURSE_PERIOD_ID,COURSE_ID,TITLE,FINAL_GRADE_PERCENT) values('.$individual['TEACHER_ID'].','.$individual['NEW_COURSE_PERIOD_ID'].','.$individual['NEW_COURSE_ID'].',"'. html_entity_decode($type['TITLE']).'",'.$type['FINAL_GRADE_PERCENT'].')');
+            $return=DBGet(DBQuery('SELECT * FROM gradebook_assignment_types where STAFF_ID= '.$individual['TEACHER_ID'].' AND COURSE_PERIOD_ID= '.$individual['NEW_COURSE_PERIOD_ID'].' AND COURSE_ID= '.$individual['NEW_COURSE_ID'].' AND TITLE= "'.html_entity_decode($type['TITLE']).'" '));
             if($type['TITLE'] == '1ère communication'){
              DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'En voie de réussite\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
              DBQuery('INSERT INTO gradebook_assignments (staff_id,marking_period_id,assignment_type_id,course_period_id,title,due_date,assigned_date,points,ASSIGNMENT_WEIGHT,ungraded,last_updated) values(' .$individual['TEACHER_ID'] . ',' .$get_dates[1]['MARKING_PERIOD_ID']. ',' .$return[1]['ASSIGNMENT_TYPE_ID']. ',' . $individual['NEW_COURSE_PERIOD_ID'] . ' , \'Complète et remet ses travaux\' , \''.$end.'\' , \''.$start.'\' , \'100\' , \'33\' , \'1\' ,  \''.$now.'\' )');
