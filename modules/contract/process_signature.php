@@ -66,8 +66,10 @@ try {
     $manager = new ContractManager($templatePath);
     
     // Add first signature to PDF (client signature at top position)
+    // Cropped to the ink and fitted in a 70x20mm box, lined up with Sara's signature below
+    // (same x, and the same 12mm offset above its date line at y=114)
     ob_start();
-    $signedContent = $manager->addSignatureToPDF($previewContent, $signatureData, 8, 108);
+    $signedContent = $manager->addSignatureToPDF($previewContent, $signatureData, 36, 102, [70, 20]);
     
     // Load and add Sara's signature
     $saraSignaturePath = __DIR__ . "/../../assets/contracts/signature/sara.png";

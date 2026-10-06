@@ -131,8 +131,10 @@ class ContractManager {
      * @param string $signatureImageData - Base64 encoded signature image
      * @param int $xPosition - X coordinate for signature (default: 8)
      * @param int $yPosition - Y coordinate for signature (default: 108)
+     * @param array|null $fitBox - [width, height] in mm: crop the image to its ink and fit it
+     *                             in this box at (x, y), resting on the box's bottom edge
      */
-    public function addSignatureToPDF($pdfContent, $signatureImageData, $xPosition = 8, $yPosition = 108) {
+    public function addSignatureToPDF($pdfContent, $signatureImageData, $xPosition = 8, $yPosition = 108, $fitBox = null) {
         require_once(__DIR__ . '/vendor/autoload.php');
         
         // Decode signature
@@ -145,7 +147,12 @@ class ContractManager {
         // Save signature to temp file
         $tempSigPath = sys_get_temp_dir() . '/signature_' . uniqid() . '.png';
         file_put_contents($tempSigPath, $signatureImage);
-        
+
+        // The signature pad sends the whole canvas, mostly empty; keep only the ink
+        if ($fitBox !== null) {
+            $this->trimSignature($tempSigPath);
+        }
+
         // Verify it's a valid image and get dimensions
         $imageInfo = @getimagesize($tempSigPath);
         if ($imageInfo === false) {
@@ -160,17 +167,25 @@ class ContractManager {
         // Calculate aspect ratio
         $aspectRatio = $imageWidth / $imageHeight;
         
-        // Set desired height in PDF (mm) - keep this consistent
-        $pdfHeight = 20;
-        
-        // Calculate width to maintain aspect ratio
-        $pdfWidth = $pdfHeight * $aspectRatio;
-        
-        // Optional: Set maximum width to prevent oversized signatures
-        $maxWidth = 100; // Maximum width in mm
-        if ($pdfWidth > $maxWidth) {
-            $pdfWidth = $maxWidth;
-            $pdfHeight = $pdfWidth / $aspectRatio;
+        if ($fitBox !== null) {
+            // Largest size that fits the box, bottom-aligned on the signature line
+            list($boxWidth, $boxHeight) = $fitBox;
+            $pdfHeight = min($boxHeight, $boxWidth / $aspectRatio);
+            $pdfWidth = $pdfHeight * $aspectRatio;
+            $yPosition += $boxHeight - $pdfHeight;
+        } else {
+            // Set desired height in PDF (mm) - keep this consistent
+            $pdfHeight = 20;
+
+            // Calculate width to maintain aspect ratio
+            $pdfWidth = $pdfHeight * $aspectRatio;
+
+            // Optional: Set maximum width to prevent oversized signatures
+            $maxWidth = 100; // Maximum width in mm
+            if ($pdfWidth > $maxWidth) {
+                $pdfWidth = $maxWidth;
+                $pdfHeight = $pdfWidth / $aspectRatio;
+            }
         }
         
         // Create new PDF instance
@@ -218,6 +233,57 @@ class ContractManager {
         unlink($tempPdfPath);
         
         return $output;
+    }
+
+    /**
+     * Crop a PNG in place to the bounding box of its visible (non-transparent, non-white) pixels
+     */
+    private function trimSignature($path) {
+        $img = @imagecreatefrompng($path);
+        if (!$img) {
+            return;
+        }
+
+        $w = imagesx($img);
+        $h = imagesy($img);
+        $minX = $w; $minY = $h; $maxX = -1; $maxY = -1;
+
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $c = imagecolorsforindex($img, imagecolorat($img, $x, $y));
+                // Alpha 127 = fully transparent in GD; also skip near-white background
+                if ($c['alpha'] < 100 && ($c['red'] + $c['green'] + $c['blue']) < 690) {
+                    if ($x < $minX) $minX = $x;
+                    if ($x > $maxX) $maxX = $x;
+                    if ($y < $minY) $minY = $y;
+                    if ($y > $maxY) $maxY = $y;
+                }
+            }
+        }
+
+        if ($maxX < 0) {
+            imagedestroy($img);
+            return; // Nothing drawn - leave as is
+        }
+
+        // Small margin so stroke edges are not clipped
+        $pad = 4;
+        $minX = max(0, $minX - $pad);
+        $minY = max(0, $minY - $pad);
+        $maxX = min($w - 1, $maxX + $pad);
+        $maxY = min($h - 1, $maxY + $pad);
+
+        $cropW = $maxX - $minX + 1;
+        $cropH = $maxY - $minY + 1;
+        $cropped = imagecreatetruecolor($cropW, $cropH);
+        imagealphablending($cropped, false);
+        imagesavealpha($cropped, true);
+        imagefill($cropped, 0, 0, imagecolorallocatealpha($cropped, 0, 0, 0, 127));
+        imagecopy($cropped, $img, 0, 0, $minX, $minY, $cropW, $cropH);
+        imagepng($cropped, $path);
+
+        imagedestroy($img);
+        imagedestroy($cropped);
     }
 
     public function savePDF($pdfContent, $outputPath) {
