@@ -925,6 +925,19 @@ function CadoHTMLcommunication($title,$courses,$results,$grade_id,$student_id){
     $courseloop=1;
     echo '<pre class="section-title">'; echo $title; echo'</pre>';
     foreach ($courses as $course_key=> $course) {
+        // Skip courses with no grade entered for the 1re communication
+        $has_grade=false;
+        foreach ((array)$results['RESULTS']['COURSE'][$course_key]['QUART'][1]['ASSIGNMENT'] as $assignment){
+            $raw=$assignment['YEAR'][UserSyear()]['RAW'];
+            if($raw !== null && $raw !== '' && $raw != -1){
+                $has_grade=true;
+                break;
+            }
+        }
+        if(!$has_grade){
+            $courseloop++;
+            continue;
+        }
         foreach ($results['RESULTS']['COURSE'][$course_key]['QUART'][1]['ASSIGNMENT'] as $asignment_key=> $assignment){
             if($assignment['YEAR'][UserSyear()]['RAW'] > 90){ 
                 if($percent)
