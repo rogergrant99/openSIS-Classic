@@ -31,6 +31,8 @@ session_start();
 include('../../RedirectRootInc.php');
 include('../../Warehouse.php');
 DBQuery("CREATE TABLE IF NOT EXISTS temp_schedule AS SELECT * FROM schedule WHERE 0");
+// temp_schedule is shared by all users: only touch this user's rows for this student
+$temp_schedule_filter="student_id='".UserStudentID()."' AND modified_by='".User('STAFF_ID')."'";
 $course_period_id=$_REQUEST['cp_id'];
 $insert=$_REQUEST['insert'];
 $student_start_date=DBGet(DBQuery('SELECT START_DATE FROM student_enrollment WHERE student_id='.UserStudentID().' AND SCHOOL_ID='.  UserSchool().' AND SYEAR='.UserSyear()));
@@ -83,6 +85,7 @@ if($insert=='true')
             $mark_end_date=date('d-M-Y',strtotime($mark_end_qry[1]['END_DATE' ]));
         }
 
+         DBQuery("DELETE FROM temp_schedule WHERE course_period_id='".$course_period_id."' AND $temp_schedule_filter");
          DBQuery("INSERT INTO temp_schedule(SYEAR,SCHOOL_ID,STUDENT_ID,START_DATE,END_DATE,MODIFIED_BY,COURSE_ID,COURSE_PERIOD_ID,MP,MARKING_PERIOD_ID) values('".UserSyear()."','".UserSchool()."','".UserStudentID()."','".$date."','".$mark_end_date."','".User('STAFF_ID')."','".$course['COURSE_ID']."','".$course_period_id."','".$course['MP']."','".$course['MARKING_PERIOD_ID']."')");
 
         $html=$course_period_id."||".$course['CP_TITLE'].'||resp';
@@ -98,7 +101,7 @@ if($insert=='true')
 }
 elseif($insert=='false')
 {
-    DBQuery("DELETE FROM temp_schedule WHERE course_period_id=$course_period_id");
+    DBQuery("DELETE FROM temp_schedule WHERE course_period_id='".$course_period_id."' AND $temp_schedule_filter");
     unset($_SESSION['course_periods'][$course_period_id]);
 }
 echo $html;

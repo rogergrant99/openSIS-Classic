@@ -41,9 +41,12 @@ if (UserStudentID() != '') {
 }
 
 if ($_REQUEST['modfunc'] == 'cp_insert') {
+    // temp_schedule is shared by all users: never drop it, only touch this user's rows for this student
+    DBQuery("CREATE TABLE IF NOT EXISTS temp_schedule AS SELECT * FROM schedule WHERE 0");
+    $temp_schedule_filter = "student_id='" . UserStudentID() . "' AND modified_by='" . User('STAFF_ID') . "'";
 
     if ($_POST['exit']) {
-        DBQuery("DROP TABLE IF EXISTS temp_schedule");
+        DBQuery("DELETE FROM temp_schedule WHERE $temp_schedule_filter");
         unset($_SESSION['course_periods']);
         unset($_REQUEST['selected_course_periods']);
 //            echo '<script type=text/javascript>window.close();</script>';
@@ -58,7 +61,7 @@ if ($_REQUEST['modfunc'] == 'cp_insert') {
                 $res_sch = DBGet(DBQuery('SELECT count(*) as res from  schedule WHERE course_period_id=' . $res[1]['PARENT_ID'] . ' and student_id=' . UserStudentID()));
 
                 if ($res_sch[1]['RES'] > 0) {
-                    DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id =$val");
+                    DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id='$val' AND $temp_schedule_filter");
                     unset($_SESSION['course_periods']);
                     unset($_SESSION['marking_period_id']);
                     unset($_REQUEST['selected_course_periods']);
@@ -68,7 +71,7 @@ if ($_REQUEST['modfunc'] == 'cp_insert') {
                 }
             } else {
 
-                DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id=$val");
+                DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id='$val' AND $temp_schedule_filter");
 
                 unset($_SESSION['course_periods']);
                 unset($_SESSION['marking_period_id']);
@@ -96,7 +99,7 @@ if ($_REQUEST['modfunc'] == 'cp_insert') {
 
         $_SESSION['conflict_cp'] = $parent_c_name;
     }
-    DBQuery("DROP TABLE IF EXISTS temp_schedule");
+    DBQuery("DELETE FROM temp_schedule WHERE $temp_schedule_filter");
     $day = $_REQUEST['day_date'];
     $month   = $_REQUEST['month_date'];
     $year = $_REQUEST['year_date'];
@@ -829,9 +832,9 @@ if ($_REQUEST['del'] == 'true') {
                 }
             }
             $stu_missing_atten = DBGet(DBQuery('SELECT * FROM missing_attendance WHERE COURSE_PERIOD_ID=\'' . $course_period_id . '\''));
+            DBQuery('UPDATE course_periods SET filled_seats=filled_seats+1 WHERE COURSE_PERIOD_ID IN (' . $tot_cp . ') AND COURSE_PERIOD_ID IN (SELECT COURSE_PERIOD_ID FROM schedule WHERE dropped=\'Y\' AND (END_DATE IS NULL OR END_DATE>=CURDATE()) AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID IN (' . $tot_cp . '))');
+            DBQuery('UPDATE schedule SET dropped=\'N\' WHERE dropped=\'Y\' AND (END_DATE IS NULL OR END_DATE>=CURDATE()) AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID IN (' . $tot_cp . ')');
         }
-        DBQuery('UPDATE course_periods SET filled_seats=filled_seats+1 WHERE COURSE_PERIOD_ID IN (' . $tot_cp . ') AND COURSE_PERIOD_ID IN (SELECT COURSE_PERIOD_ID FROM schedule WHERE dropped=\'Y\' AND (END_DATE IS NULL OR END_DATE>=CURDATE()) AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID IN (' . $tot_cp . '))');
-        DBQuery('UPDATE schedule SET dropped=\'N\' WHERE dropped=\'Y\' AND (END_DATE IS NULL OR END_DATE>=CURDATE()) AND STUDENT_ID=\'' . UserStudentID() . '\' AND COURSE_PERIOD_ID IN (' . $tot_cp . ')');
         unset($_SESSION['_REQUEST_vars']['schedule']);
         unset($_REQUEST['schedule']);
     }

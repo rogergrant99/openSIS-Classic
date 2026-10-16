@@ -29,8 +29,8 @@ include('../../RedirectModulesInc.php');
 unset($_SESSION['_REQUEST_vars']['subject_id']);unset($_SESSION['_REQUEST_vars']['course_id']);unset($_SESSION['_REQUEST_vars']['course_period_id']);
 if($_REQUEST['ses'])
 {
-    DBQuery("DROP TABLE IF EXISTS temp_schedule");
-    DBQuery("CREATE TABLE temp_schedule AS SELECT * FROM schedule WHERE 0");
+    DBQuery("CREATE TABLE IF NOT EXISTS temp_schedule AS SELECT * FROM schedule WHERE 0");
+    DBQuery("DELETE FROM temp_schedule WHERE student_id='".UserStudentID()."' AND modified_by='".User('STAFF_ID')."'");
     unset($_SESSION['course_periods']);
 }
 // if only one subject, select it automatically -- works for Course Setup and Choose a Course
@@ -91,7 +91,7 @@ if((!$_REQUEST['modfunc'] || $_REQUEST['modfunc']=='choose_course') && !$_REQUES
         echo '</div></center>';
         if($_POST['exit'])
         {
-            DBQuery("DROP TABLE IF EXISTS temp_schedule");
+            DBQuery("DELETE FROM temp_schedule WHERE student_id='".UserStudentID()."' AND modified_by='".User('STAFF_ID')."'");
             unset($_SESSION['course_periods']);
             unset($_REQUEST['selected_course_periods']);
             echo '<script type=text/javascript>window.close();</script>';
@@ -110,7 +110,7 @@ if((!$_REQUEST['modfunc'] || $_REQUEST['modfunc']=='choose_course') && !$_REQUES
            
             if($res_sch[1]['RES']>0)
             {
-           DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id =$val");
+           DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id='$val' AND student_id='".UserStudentID()."' AND modified_by='".User('STAFF_ID')."'");
             unset($_SESSION['course_periods']);
             unset($_SESSION['marking_period_id']);
             unset($_REQUEST['selected_course_periods']);                 
@@ -124,7 +124,7 @@ if((!$_REQUEST['modfunc'] || $_REQUEST['modfunc']=='choose_course') && !$_REQUES
           else {
 
                
-              DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id=$val");
+              DBQuery("INSERT INTO schedule(syear, school_id, student_id, start_date, end_date,modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped) SELECT syear, school_id, student_id, start_date, end_date, modified_by, course_id, course_weight, course_period_id, mp, marking_period_id, scheduler_lock, dropped FROM temp_schedule WHERE course_period_id='$val' AND student_id='".UserStudentID()."' AND modified_by='".User('STAFF_ID')."'");
 
             unset($_SESSION['course_periods']);
             unset($_SESSION['marking_period_id']);
@@ -152,7 +152,7 @@ if((!$_REQUEST['modfunc'] || $_REQUEST['modfunc']=='choose_course') && !$_REQUES
             }
             
             $_SESSION['conflict_cp']=$parent_c_name;
-           DBQuery("DROP TABLE IF EXISTS temp_schedule");
+           DBQuery("DELETE FROM temp_schedule WHERE student_id='".UserStudentID()."' AND modified_by='".User('STAFF_ID')."'");
            echo "<script type=text/javascript>opener.document.location='Modules.php?modname=".strip_tags(trim($_REQUEST[modname]))."&student_id=".UserStudentID()."';window.close();</script>";
           }
 	$LO_options = array('save'=>false,'search'=>false);
