@@ -60,6 +60,8 @@ function GetUserSchools($staff_id,$str=false)
       }
       else if (User('PROFILE_ID')==4 || User('PROFILE')=='parent')
       {
+          if(!UserStudentID())
+              return $str==true ? '0' : array();
           $schools=DBGet(DBQuery('SELECT SCHOOL_ID FROM student_enrollment WHERE STUDENT_ID='.UserStudentID().' AND SYEAR='.UserSyear().' ORDER BY ID DESC LIMIT 0,1'));
           return $schools[1]['SCHOOL_ID'];
       }
