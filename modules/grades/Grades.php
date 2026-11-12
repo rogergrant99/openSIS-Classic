@@ -129,7 +129,7 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
     $extra['SELECT'] .= ',(SELECT POINTS FROM gradebook_grades WHERE STUDENT_ID=s.STUDENT_ID AND ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND COURSE_PERIOD_ID=cp.COURSE_PERIOD_ID) AS POINTS';
     $extra['SELECT'] .= ',(SELECT COMMENT FROM gradebook_grades WHERE STUDENT_ID=s.STUDENT_ID AND ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND COURSE_PERIOD_ID=cp.COURSE_PERIOD_ID) AS COMMENT';
     $extra['FROM'] = ',gradebook_assignments ga,gradebook_assignment_types gt';
-    $extra['WHERE'] = 'AND (ga.due_date>=ssm.start_date OR ga.due_date IS NULL) AND ((ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') OR ga.COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' AND gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID' . ($_REQUEST['assignment_id'] == 'all' ? '' : ' AND ga.ASSIGNMENT_ID=\'' . $_REQUEST[assignment_id] . '\' ');
+    $extra['WHERE'] = 'AND ((ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') OR ga.COURSE_PERIOD_ID=\'' . $course_period_id . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\' AND gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID' . ($_REQUEST['assignment_id'] == 'all' ? '' : ' AND ga.ASSIGNMENT_ID=\'' . $_REQUEST[assignment_id] . '\' ');
     $extra['GROUP'] = Preferences('ASSIGNMENT_SORTING', 'Gradebook');
     $extra['ORDER_BY'] = Preferences('ASSIGNMENT_SORTING', 'Gradebook') . " DESC";
     $extra['functions'] = array('POINTS' => '_makeExtraStuCols', 'LETTER_GRADE' => '_makeExtraStuCols', 'COMMENT' => '_makeExtraStuCols');
@@ -175,7 +175,6 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
 
         $id = $_REQUEST['assignment_id'];
         $extra['SELECT'] .= ',\'' . $id . '\' AS POINTS,\'' . $id . '\' AS LETTER_GRADE,\'' . $id . '\' AS COMMENT,\'' . $assignments_RET[$id][1]['DUE'] . '\' AS DUE';
-        $extra['WHERE'] .= ' AND (((SELECT DUE_DATE FROM gradebook_assignments WHERE ASSIGNMENT_ID=\'' . $id . '\')>=ssm.START_DATE) OR ((SELECT DUE_DATE FROM gradebook_assignments WHERE ASSIGNMENT_ID=\'' . $id . '\') IS NULL))';
         $extra['functions'] = array('POINTS' => '_makeExtraAssnCols', 'LETTER_GRADE' => '_makeExtraAssnCols', 'COMMENT' => '_makeExtraAssnCols');
         $LO_columns += array('POINTS' => 'Points', 'LETTER_GRADE' => 'Grade', 'COMMENT' => 'Comment');
         $total_points = DBGet(DBQuery('SELECT POINTS FROM gradebook_assignments WHERE ASSIGNMENT_ID=\'' . $id . '\''));
@@ -206,13 +205,12 @@ if (clean_param($_REQUEST['student_id'], PARAM_INT)) {
 
                 $points_RET = DBGet(DBQuery('SELECT DISTINCT s.STUDENT_ID, gt.ASSIGNMENT_TYPE_ID, 
                                     sum(' . db_case(array('gg.POINTS', "'-1'", "'0'", 'gg.POINTS')) . ') AS PARTIAL_POINTS,
-                                        sum(' . db_case(array('gg.POINTS', '\'-1\' OR gg.POINTS IS NULL OR (ga.due_date <  (select DISTINCT ssm.start_date  from student_enrollment ssm where ssm.STUDENT_ID=s.STUDENT_ID AND ssm.SYEAR=\'' . UserSyear() . '\' AND ssm.SCHOOL_ID=' . UserSchool() . ' AND (ssm.START_DATE IS NOT NULL AND (CURRENT_DATE<=ssm.END_DATE OR CURRENT_DATE>=ssm.END_DATE OR  ssm.END_DATE IS NULL)) order by ssm.start_date desc limit 1
-                )  ) ', "'0'", 'ga.POINTS')) . ') AS PARTIAL_TOTAL, gt.FINAL_GRADE_PERCENT FROM students s JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\') LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
+                                        sum(' . db_case(array('gg.POINTS', '\'-1\' OR gg.POINTS IS NULL ', "'0'", 'ga.POINTS')) . ') AS PARTIAL_TOTAL, gt.FINAL_GRADE_PERCENT FROM students s JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\') LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
                                      
                                         ,gradebook_assignment_types gt WHERE gt.ASSIGNMENT_TYPE_ID=ga.ASSIGNMENT_TYPE_ID AND gt.COURSE_ID=\'' . $course_id . '\' AND ((ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) OR gg.POINTS IS NOT NULL) GROUP BY s.STUDENT_ID,ss.START_DATE,gt.ASSIGNMENT_TYPE_ID,gt.FINAL_GRADE_PERCENT'), array(), array('STUDENT_ID'));
             } else {
                 $points_RET = DBGet(DBQuery('SELECT DISTINCT s.STUDENT_ID,\'-1\' AS ASSIGNMENT_TYPE_ID, sum(' . db_case(array('gg.POINTS', "'-1'", "'0'", 'gg.POINTS')) . ') AS PARTIAL_POINTS,
-                                sum(' . db_case(array('gg.POINTS', '\'-1\' OR gg.POINTS IS NULL OR (ga.due_date < (select DISTINCT ssm.start_date  from student_enrollment ssm where ssm.STUDENT_ID=s.STUDENT_ID AND ssm.SYEAR=\'' . UserSyear() . '\' AND ssm.SCHOOL_ID=' . UserSchool() . ' AND (ssm.START_DATE IS NOT NULL AND (CURRENT_DATE<=ssm.END_DATE OR CURRENT_DATE>=ssm.END_DATE OR  ssm.END_DATE IS NULL)) order by ssm.start_date desc limit 1) ) ', "'0'", 'ga.POINTS')) . ') AS PARTIAL_TOTAL,\'1\' AS FINAL_GRADE_PERCENT 
+                                sum(' . db_case(array('gg.POINTS', '\'-1\' OR gg.POINTS IS NULL ', "'0'", 'ga.POINTS')) . ') AS PARTIAL_TOTAL,\'1\' AS FINAL_GRADE_PERCENT 
                                     FROM students s JOIN schedule ss ON (ss.STUDENT_ID=s.STUDENT_ID AND ss.COURSE_PERIOD_ID=\'' . $course_period_id . '\') JOIN gradebook_assignments ga ON ((ga.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID OR ga.COURSE_ID=\'' . $course_id . '\' AND ga.STAFF_ID=\'' . User('STAFF_ID') . '\') AND ga.MARKING_PERIOD_ID=\'' . (GetCpDet($course_period_id, 'MARKING_PERIOD_ID') != '' ? UserMP() : GetMPId('FY')) . '\') LEFT OUTER JOIN gradebook_grades gg ON (gg.STUDENT_ID=s.STUDENT_ID AND gg.ASSIGNMENT_ID=ga.ASSIGNMENT_ID AND gg.COURSE_PERIOD_ID=ss.COURSE_PERIOD_ID)
                                     WHERE ((ga.ASSIGNED_DATE IS NULL OR CURRENT_DATE>=ga.ASSIGNED_DATE) AND (ga.DUE_DATE IS NULL OR CURRENT_DATE>=ga.DUE_DATE) OR gg.POINTS IS NOT NULL) GROUP BY s.STUDENT_ID,ss.START_DATE'), array(), array('STUDENT_ID'));
             }
@@ -534,11 +532,9 @@ function _makeExtraCols($assignment_id, $column)
 
     if (is_countable($rounding) && count($rounding))
         $_SESSION['ROUNDING'] = $rounding[1]['VALUE'];
-    if (strtotime($THIS_RET['START_DATE'], 0) == strtotime($THIS_RET['DUE_' . $assignment_id], 0))
-        $days_left = 1;
-    else
-        $days_left = floor((strtotime($THIS_RET['DUE_' . $assignment_id], 0) - strtotime($THIS_RET['START_DATE'], 0)) / 86400);
-    if ($days_left >= 1) {
+    // Assignments due before a late student's enrollment date stay gradable;
+    // a blank grade is simply not counted in the average.
+    if (true) {
         if ($THIS_RET['STUDENT_ID'] != $old_student_id) {
             $student_count++;
             $tabindex = $student_count;
