@@ -1136,6 +1136,11 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
     include 'MakePercentGradeFnc';
     $completed = true;
 
+    // Students actually scheduled in this course period (including dropped ones). Grades and
+    // class comments are only saved for them: if the session's course period changed (e.g. another
+    // tab), a posted student from a different class must not get a report card row in this one.
+    $cp_roster = DBGet(DBQuery('SELECT DISTINCT STUDENT_ID FROM schedule WHERE COURSE_PERIOD_ID=\'' . (int) $course_period_id . '\''), array(), array('STUDENT_ID'));
+
     foreach ($_REQUEST['values'] as $student_id => $columns) {
         $sql = $sep = '';
         //echo 'isset=';
@@ -1177,6 +1182,10 @@ if (clean_param($_REQUEST['values'], PARAM_NOTAGS) && ($_POST['values'] || $_REQ
             $columns['comment1'] = clean_param($columns['comment1'], PARAM_NOTAGS);
             $columns['comment2'] = clean_param($columns['comment2'], PARAM_NOTAGS);
          } 
+
+         // General comments above are per student, not per class; everything below is per class.
+         if (!isset($cp_roster[$student_id]))
+            continue;
 
          if ($current_RET[$student_id]) {
             if (isset($columns['grade']) && $columns['grade'] != $current_RET[$student_id][1]['REPORT_CARD_GRADE_ID']) {
