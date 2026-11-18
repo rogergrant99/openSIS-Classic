@@ -33,6 +33,31 @@ error_reporting(E_ERROR | E_PARSE);
 include('../../RedirectModulesInc.php');
 include("UploadClassFnc.php");
 include_once("../../functions/PasswordHashFnc.php");
+
+// Security (2026-11-18): $_REQUEST['include'] decides which PHP file this page loads
+// (modules/students/includes/<include>.php, or modules/<module>/<file>.php for tabs that a
+// module defines in student_field_categories.INCLUDE) and is also used in SQL below.
+// Accept only real student-tab includes; anything else (../ paths, other modules' pages,
+// SQL fragments) falls back to the General Info tab.
+if (isset($_REQUEST['include']) && $_REQUEST['include'] !== '') {
+    $inc = trim((string) $_REQUEST['include']);
+    $inc_ok = false;
+    if (preg_match('/^[A-Za-z0-9_]+$/', $inc)) {
+        $inc_ok = is_file(__DIR__ . '/includes/' . $inc . '.php');
+    } elseif (preg_match('/^[A-Za-z0-9_]+\/[A-Za-z0-9_]+$/', $inc)) {
+        // Safe to put in SQL: the regex above only allows letters, digits, _ and one /
+        $inc_cat = DBGet(DBQuery("SELECT ID FROM student_field_categories WHERE INCLUDE='" . $inc . "'"));
+        $inc_ok = !empty($inc_cat) && is_file(__DIR__ . '/../' . $inc . '.php');
+    }
+    if ($inc_ok) {
+        $_REQUEST['include'] = $inc;
+    } else {
+        $_REQUEST['include'] = 'GeneralInfoInc';
+        $_REQUEST['category_id'] = '1';
+    }
+    unset($inc, $inc_ok, $inc_cat);
+}
+
 ini_set('memory_limit', '1200000000M');
 ini_set('max_execution_time', '500000');
 unset($flag);

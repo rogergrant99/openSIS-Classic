@@ -31,6 +31,16 @@
 include('../../RedirectModulesInc.php');
 include_once("../../functions/PasswordHashFnc.php");
 
+// Security (2026-11-18): $_REQUEST['include'] decides which tab file is include()d below.
+// Accept only real staff tabs (functions/SecureIncludeFnc.php); otherwise show Demographic Info.
+if (isset($_REQUEST['include']) && $_REQUEST['include'] !== '') {
+    $safe_include = SecureTabInclude($_REQUEST['include'], __DIR__ . '/includes', 'staff_field_categories', 'DemographicInfoInc');
+    if ($safe_include !== trim((string) $_REQUEST['include']))
+        $_REQUEST['category_id'] = '1';
+    $_REQUEST['include'] = $safe_include;
+    unset($safe_include);
+}
+
 if ($_SESSION['staff_id'] == '' && $_REQUEST['staff_id'] != 'new')
     $_SESSION['staff_id'] = $_REQUEST['staff_id'];
 if (isset($_REQUEST['custom_date_id']) && count($_REQUEST['custom_date_id']) > 0) {

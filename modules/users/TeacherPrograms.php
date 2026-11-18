@@ -26,6 +26,23 @@
 #
 #***************************************************************************************
 include('../../RedirectModulesInc.php');
+
+// Security (2026-11-18): $_REQUEST['include'] is include()d below as modules/<include>.
+// Only the teacher programs offered in the menus may be loaded; anything else
+// (../ paths, uploaded files, other modules' pages) is refused.
+$teacher_program_pages = array(
+    'attendance/MissingAttendance.php',
+    'attendance/TakeAttendance.php',
+    'eligibility/EnterEligibility.php',
+    'grades/Grades.php',
+    'grades/InputFinalGrades.php',
+    'grades/ProgressReports.php',
+);
+if (isset($_REQUEST['include']) && !in_array($_REQUEST['include'], $teacher_program_pages, true)) {
+    http_response_code(403);
+    die('Page non autorisée');
+}
+
 $cp_id = $_REQUEST['cp_id'];
 if (UserStaffID() || $_REQUEST['staff_id'])
     echo "<FORM class=\"form-horizontal\" name=\"search\" action=Modules.php?modname=$_REQUEST[modname]&dt=1&pr=1 method=POST>";
