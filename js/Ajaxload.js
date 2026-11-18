@@ -757,10 +757,7 @@ function ajax_call_modified(url, callback_function, error_function)
         if (xmlHttp.readyState == 1) {
             try {
 
-                if (url == 'BackupForRollover.php?action=Backup')
-                    document.getElementById('back_db').style.display = "block";
-                else
-                    document.getElementById('calculating').style.display = "block";
+                document.getElementById('calculating').style.display = "block";
             } catch (e) {
                 error_function(e.description);
             }
@@ -1043,28 +1040,6 @@ function rollover_callback(roll_data)
 }
 
 function rollover_error(err)
-{
-    alert("Error: " + err);
-}
-function back_before_roll()
-{
-
-    var url = 'BackupForRollover.php?action=Backup';
-    ajax_call_modified(url, back_before_roll_callback, back_before_roll_error);
-
-}
-function back_before_roll_callback(data)
-{
-    if (data.trim() == 'File Saved')
-    {
-        document.getElementById('back_db').style.display = "none";
-        ajax_rollover('staff');
-    } else
-    {
-        alert('Error: ' + data);
-    }
-}
-function back_before_roll_error(err)
 {
     alert("Error: " + err);
 }

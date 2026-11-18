@@ -38,7 +38,7 @@ $_SESSION['NY'] = $next_syear;
 
 echo '<div id="start_date" class="text-danger"></div>';
 
-echo '<table width="80%" cellpadding="6" cellspacing="6"><tr><td width="50%" valign="top"><div id="back_db" style="display: none; padding-top:60px;" align="center"><img src="assets/missing_attn_loader.gif" /><br/><br/><strong>'._savingDatabaseForBackupBeforeRolloverPleaseDonotClickAnywhere.'.....</strong></div><div id="calculating" style="display: none; padding-top:60px;" align="center"><img src="assets/rollover_anim.gif" /><br/><br/><strong>'._schoolYearRollingOverPleaseWait.'...</strong></div><div id="response" style="font-size:14px"></div></td></tr></table>';
+echo '<table width="80%" cellpadding="6" cellspacing="6"><tr><td width="50%" valign="top"><div id="calculating" style="display: none; padding-top:60px;" align="center"><img src="assets/rollover_anim.gif" /><br/><br/><strong>'._schoolYearRollingOverPleaseWait.'...</strong></div><div id="response" style="font-size:14px"></div></td></tr></table>';
 $notice_roll_date = DBGet(DBQuery('SELECT SYEAR FROM school_years WHERE SYEAR>\'' . UserSyear() . '\' AND SCHOOL_ID=\'' . UserSchool() . '\''));
 $cur_session_RET = DBGet(DBQuery('SELECT YEAR(start_date) AS PRE,YEAR(end_date) AS POST FROM school_years WHERE SCHOOL_ID=\'' . UserSchool() . '\' AND SYEAR=\'' . UserSyear() . '\''));
 if ($cur_session_RET[1]['PRE'] == $cur_session_RET[1]['POST']) {
@@ -115,7 +115,7 @@ if ($rolled == 0) {
     //===============================
     $rolledover_table=11;
     if (Prompt_rollover(_confirmRollover, ''._areYouSureYouWantToRollTheDataFor.' ' . $cur_session . ' '._toTheNextSchoolYear.' ?', $table_list)) {
-        echo "<script type='text/javascript'>back_before_roll();</script>";
+        echo "<script type='text/javascript'>ajax_rollover('staff');</script>";
     }
 } else {
     Prompt_rollover_back(_rolloverCompleted, ''._dataHasBeenRolledoverFor.' ' . $cur_session . ' '._for.' ' . GetSchool(UserSchool()) . '');
