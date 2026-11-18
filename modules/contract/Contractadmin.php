@@ -7,11 +7,12 @@ include("../../Data.php");
 include("../../Warehouse.php");
 session_start();
 
-// Check if user has admin privileges
-// Uncomment and modify based on your permission system
-// if (!User('PROFILE') == 'admin') {
-//     die('Access denied');
-// }
+// Only openSIS administrators may manage contracts. Warehouse.php above already
+// requires a login; this additionally blocks teachers, parents and students.
+if (empty($_SESSION['STAFF_ID']) || ($_SESSION['PROFILE'] ?? '') !== 'admin') {
+    http_response_code(403);
+    die('Access denied');
+}
 
 // Get templates from subdirectories
 $templatesDir = __DIR__ . '/../../assets/contracts/template/';

@@ -6,11 +6,13 @@
  */
 session_start();
 
-// Check if user has admin privileges
-// Uncomment and modify based on your permission system
-// if (!User('PROFILE') == 'admin') {
-//     die('Access denied');
-// }
+// Only logged-in openSIS administrators may view, download or delete contracts.
+// This endpoint does not load Warehouse.php (where User() lives), so check the
+// server-side session values that index.php sets at login.
+if (empty($_SESSION['STAFF_ID']) || ($_SESSION['PROFILE'] ?? '') !== 'admin') {
+    http_response_code(403);
+    die('Access denied');
+}
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 

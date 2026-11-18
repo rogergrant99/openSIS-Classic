@@ -6,11 +6,17 @@
 // Must be first line
 ob_start();
 // Start session
-print_r($_POST);
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 try {
+    // Only logged-in parents and administrators may sign contracts.
+    // This endpoint does not load Warehouse.php (where User() lives), so check the
+    // server-side session values that index.php sets at login.
+    if (empty($_SESSION['STAFF_ID']) || !in_array($_SESSION['PROFILE'] ?? '', ['admin', 'parent'], true)) {
+        http_response_code(403);
+        throw new Exception('Accès refusé');
+    }
     // Include ContractManager
     require_once(__DIR__ . '/ContractManager.php');
     
@@ -22,7 +28,14 @@ try {
         throw new Exception('Contract ID is required');
     }
     
-    $contractId = $_POST['contract_id'];
+    // The contract must be the one Contract.php prepared for the student currently
+    // selected in openSIS (openSIS only lets parents select their own children).
+    // Never trust the posted ID on its own: it is used to build file paths.
+    if (empty($_SESSION['contract_id']) || !hash_equals((string)$_SESSION['contract_id'], (string)$_POST['contract_id'])) {
+        http_response_code(403);
+        throw new Exception('Contrat invalide. Veuillez recharger la page.');
+    }
+    $contractId = $_SESSION['contract_id'];
     $signatureData = $_POST['signature'];
     
     // Validate signature format
@@ -151,7 +164,9 @@ try {
         ob_end_clean();
     }
     header('Content-Type: application/json');
-    http_response_code(400);
+    if (http_response_code() !== 403) {
+        http_response_code(400);
+    }
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()

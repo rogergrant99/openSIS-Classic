@@ -3,7 +3,17 @@
  * admin_delete.php
  * Handle deletion of templates and signed contracts
  */
+session_start();
 header('Content-Type: application/json');
+
+// Only logged-in openSIS administrators may delete templates or signed contracts.
+// This endpoint does not load Warehouse.php (where User() lives), so check the
+// server-side session values that index.php sets at login.
+if (empty($_SESSION['STAFF_ID']) || ($_SESSION['PROFILE'] ?? '') !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+    exit;
+}
 
 // Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
@@ -56,7 +66,6 @@ if (pathinfo($filePath, PATHINFO_EXTENSION) !== 'pdf') {
 if (unlink($filePath)) {
     // If deleting a signed contract, also clean up session data if it matches
     if ($type === 'signed') {
-        session_start();
         if (isset($_SESSION['signed_contract_path']) && $_SESSION['signed_contract_path'] === $filePath) {
             unset($_SESSION['contract_signed']);
             unset($_SESSION['signed_contract_path']);

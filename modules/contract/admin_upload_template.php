@@ -7,12 +7,14 @@ session_start();
 
 header('Content-Type: application/json');
 
-// Check if user has admin privileges
-// Uncomment and modify based on your permission system
-// if (!User('PROFILE') == 'admin') {
-//     echo json_encode(['success' => false, 'message' => 'Accès refusé']);
-//     exit;
-// }
+// Only logged-in openSIS administrators may upload templates.
+// This endpoint does not load Warehouse.php (where User() lives), so check the
+// server-side session values that index.php sets at login.
+if (empty($_SESSION['STAFF_ID']) || ($_SESSION['PROFILE'] ?? '') !== 'admin') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+    exit;
+}
 
 // Check if file was uploaded
 if (!isset($_FILES['template']) || $_FILES['template']['error'] !== UPLOAD_ERR_OK) {
