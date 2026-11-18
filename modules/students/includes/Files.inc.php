@@ -36,7 +36,8 @@ if($_REQUEST['modfunc']=='delete' && User('PROFILE')=='admin')
 		echo '</FORM>';
 	if(DeletePromptCommon($_REQUEST['title']))
 	{
-                        unlink($_REQUEST['file']);
+                        // Only ever delete inside $dir (functions/SecureFilesFnc.php)
+                        SecureFileUnlinkInDir($dir, $dir . '/' . basename($_REQUEST['file']));
                         unset($_REQUEST['modfunc']);
 	}
 }

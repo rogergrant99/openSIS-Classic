@@ -35,6 +35,11 @@ $down_id = sqlSecurityFilter($_REQUEST['down_id']);
 if(isset($_REQUEST['down_id']) && $_REQUEST['down_id']!='')
 {
     $downfile_info= DBGet(DBQuery('SELECT * FROM user_file_upload WHERE DOWNLOAD_ID=\''.$down_id.'\''));
+    // Only the people allowed to see this file may download it (see functions/SecureFilesFnc.php).
+    if (empty($downfile_info) || !SecureFileCanDownload($downfile_info[1])) {
+        http_response_code(403);
+        exit('Accès refusé');
+    }
     header("Cache-Control: public");
     header("Pragma: ");
     header("Expires: 0"); 
@@ -50,19 +55,20 @@ if(isset($_REQUEST['down_id']) && $_REQUEST['down_id']!='')
         $filename=strstr($filename, ']');
         $filename=trim($filename, "]");
     }
-    header("Content-Disposition: attachment; filename=$filename");
+    $filename = str_replace(array('"', "\r", "\n"), '', $filename);
+    header('Content-Disposition: attachment; filename="' . $filename . '"; filename*=UTF-8\'\'' . rawurlencode($filename));
     header("Content-Transfer-Encoding: binary");
     ob_clean();
     flush();
 
     if(isset($_REQUEST['studentfile']) && $_REQUEST['studentfile']=='Y')
     {
-        $filedata = @file_get_contents('assets/studentfiles/'.$downfile_info[1]['NAME']);
+        $filedata = @file_get_contents('assets/studentfiles/'.basename($downfile_info[1]['NAME']));
         echo $filedata;
     }
     else if(isset($_REQUEST['userfile']) && $_REQUEST['userfile']=='Y' || isset($_REQUEST['stafffile']) && $_REQUEST['stafffile']=='Y' )
     {
-        $filedata = @file_get_contents('assets/stafffiles/'.$downfile_info[1]['NAME']);
+        $filedata = @file_get_contents('assets/stafffiles/'.basename($downfile_info[1]['NAME']));
         echo $filedata;
     }
     else

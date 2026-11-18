@@ -34,15 +34,15 @@ if ($_REQUEST['modfunc'] == 'delete' && (User('PROFILE') == 'admin' || User('PRO
         echo '</FORM>';
     }
     if (DeletePromptFilesEncoded($_REQUEST['title'], '&include=FilesInc2&category_id=' . $_REQUEST['category_id'])) {
-        unlink($dir.'/'.base64_decode($_REQUEST['removefile']));
-        DBQuery('DELETE FROM user_file_upload WHERE ID=' . $_REQUEST['del']);
+        // Delete by DB id, only for the current student, only inside $dir (functions/SecureFilesFnc.php)
+        SecureFileDeleteUpload($dir, $_REQUEST['del'], UserStudentID(), true);
         unset($_REQUEST['modfunc']);
     }
 }
 
 if (isset($_REQUEST['delete_msg']) && $_REQUEST['delete_msg'] == 'yes') {
 
-    unlink($_REQUEST['target_path']);
+    SecureFileUnlinkInDir($dir, $_REQUEST['target_path']);
     unset($_SESSION['grid_msg']);
     unset($_SESSION['dup_file_name']);
 }

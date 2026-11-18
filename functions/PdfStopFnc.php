@@ -75,7 +75,12 @@ function PDFStop($handle)
 			echo 'Le bulletin pour l\'élève ';
 			echo $publish_parents;
 			echo ' à été publié aux parents ----> ';
-			echo'<a href="/assets/studentfiles/'. $concat_filename .'" download="'. $filename .'" style="text-decoration: underline;">'. $filename .'</a>';
+			// assets/studentfiles is no longer served directly: link through DownloadWindow.php (login + access check)
+			$published = DBGet(DBQuery('SELECT DOWNLOAD_ID FROM user_file_upload WHERE USER_ID=\'' . $publish_parents . '\' AND PROFILE_ID=3 AND NAME=\'' . $concat_filename . '\' ORDER BY ID DESC LIMIT 1'));
+			if (!empty($published[1]['DOWNLOAD_ID']))
+				echo '<a href="DownloadWindow.php?down_id=' . urlencode($published[1]['DOWNLOAD_ID']) . '&studentfile=Y" style="text-decoration: underline;">' . htmlspecialchars($filename) . '</a>';
+			else
+				echo htmlspecialchars($filename);
 			echo '<br>';
 
 		}

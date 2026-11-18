@@ -43,7 +43,7 @@ $dir = 'assets/stafffiles';
 
 if (isset($_REQUEST['delete_msg']) && $_REQUEST['delete_msg'] == 'yes') {
 
-    unlink($_REQUEST['target_path']);
+    SecureFileUnlinkInDir($dir, $_REQUEST['target_path']);
     unset($_SESSION['grid_msg']);
     unset($_SESSION['dup_file_name']);
 }

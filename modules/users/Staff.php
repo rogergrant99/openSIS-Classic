@@ -682,9 +682,8 @@ if ($_REQUEST['modfunc'] == 'delete' && $_REQUEST['include'] != 'FilesInc' && ba
 }
 if ($_REQUEST['modfunc'] == 'delete' && $_REQUEST['include'] == 'FilesInc' && (User('PROFILE') == 'admin' || User('PROFILE') == 'teacher')) {
     if (DeletePromptFilesEncoded($_REQUEST['title'], '&include=FilesInc&category_id=7')) {
-        unlink('assets/stafffiles/' . base64_decode($_REQUEST['removefile']));
-
-        DBQuery('DELETE FROM user_file_upload WHERE ID=' . $_REQUEST['del']);
+        // Delete by DB id, only for the current staff member, only inside assets/stafffiles (functions/SecureFilesFnc.php)
+        SecureFileDeleteUpload('assets/stafffiles', $_REQUEST['del'], UserStaffID(), false);
 
         unset($_REQUEST['modfunc']);
     }
