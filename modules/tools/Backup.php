@@ -45,7 +45,14 @@ if (('Backup' == $_REQUEST['action']) || ($_REQUEST['action'] == _backup)) {
 
     $print_form = 0;
     $date_time = date("m-d-Y");
-    $Export_FileName = $name . 'Backup' . $date_time . '.sql';
+    $download_name = $name . 'Backup' . $date_time . '.sql';
+    // Dump into a private directory outside the web root, stream it, then delete it,
+    // so the backup is never downloadable by URL.
+    $backup_dir = openSISBackupDir();
+    if ($backup_dir === false)
+        exit('Backup failed: no writable backup directory outside the web root. Set $BackupDirectory in Data.php.');
+    $Export_FileName = tempnam($backup_dir, 'dump_');
+    $out = escapeshellarg($Export_FileName);
     // $dbconn = new mysqli($host, $user, $pass, $name, $port);
     $dbconn = $connection;
     if ($dbconn->connect_errno != 0)
@@ -61,37 +68,26 @@ if (('Backup' == $_REQUEST['action']) || ($_REQUEST['action'] == _backup)) {
     }
     if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
         if ($pass == '')
-            exec("$mysql_dir\\mysqldump -n -c --skip-add-locks --skip-disable-keys --routines --triggers --user $user  $name > $Export_FileName");
+            exec("$mysql_dir\\mysqldump -n -c --skip-add-locks --skip-disable-keys --routines --triggers --user $user  $name > $out");
         else
-            exec("$mysql_dir\\mysqldump -n -c --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $Export_FileName");
+            exec("$mysql_dir\\mysqldump -n -c --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $out");
     }
     else {
-        exec("mysqldump -n -c --skip-ssl --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $Export_FileName");
-    }
-    // $content = file_get_contents($Export_FileName);
-
-    $fair_date = date("Y-m-d");
-
-    $same_dt_chck = DBGet(DBQuery("SELECT COUNT(*) AS TODAY_BACKUP FROM `program_config` WHERE `program` = 'DB_BACKUP' AND `value` = '".$fair_date."'"));
-
-    if($same_dt_chck[1]['TODAY_BACKUP'] == 0)
-    {
-        $program_entry = "INSERT INTO `program_config` (`syear`, `school_id`, `program`, `title`, `value`) VALUES('".UserSyear()."', '".UserSchool()."', 'DB_BACKUP', '".str_replace(".sql", "", $Export_FileName)."', '".$fair_date."')";
-
-        if($program_entry)
-        {
-            DBQuery($program_entry);
-        }
+        exec("mysqldump -n -c --skip-ssl --skip-add-locks --skip-disable-keys --routines --triggers --user $user --password='$pass' $name > $out");
     }
 
-    $fname = $Export_FileName;
-    header('Location: '.$Export_FileName);
-    // unlink($Export_FileName);
-    // header('Content-Type: application/octet-stream');
-    // header("Content-Transfer-Encoding: Binary");
-    // header("Content-disposition: attachment; filename=\"" . $fname . "\"");
-    // //$content= file_get_contents($Export_FileName);
-    // echo $content;
+    while (ob_get_level() > 0)
+        ob_end_clean();
+    if (!is_file($Export_FileName) || filesize($Export_FileName) == 0) {
+        @unlink($Export_FileName);
+        exit('Backup failed: mysqldump produced no output.');
+    }
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . $download_name . '"');
+    header('Content-Length: ' . filesize($Export_FileName));
+    header('Cache-Control: no-store');
+    readfile($Export_FileName);
+    unlink($Export_FileName);
     exit;
 }
 if ($print_form > 0 && !$_REQUEST['modfunc'] == 'cancel') {

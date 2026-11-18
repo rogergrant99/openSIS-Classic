@@ -30,6 +30,12 @@ include('../../RedirectModulesInc.php');
 include 'modules/grades/ConfigInc.php';
 DrawBC("" . _gradebook . " > " . ProgramTitle());
 
+// No course period selected (e.g. header course list was empty after a marking period change):
+// stop here rather than running queries with an empty COURSE_PERIOD_ID.
+if (!UserCoursePeriod()) {
+    ErrorMessage(array(_youDonTHaveACourseThisPeriod . '.'), 'fatal');
+}
+
 $_REQUEST['use_percents'] = 'true';
 
 echo '<div class="panel panel-default">';

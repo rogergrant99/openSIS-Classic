@@ -465,7 +465,7 @@ if (User('PROFILE') == 'teacher') {
     $ret_increment = 1;
     $RET = array();
     foreach ($RET_temp as $ret_courses) {
-        $get_cps = DBGet(DBQuery("SELECT cpv.ID,cp.COURSE_PERIOD_ID,cp.MARKING_PERIOD_ID,cp.COURSE_ID,cp.TITLE,cp.SCHOOL_ID,cpv.PERIOD_ID FROM course_periods cp,course_period_var cpv WHERE cp.SYEAR='" . UserSyear() . "' AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cp.SCHOOL_ID='" . UserSchool() . "' AND cp.COURSE_ID='" . $ret_courses['COURSE_ID'] . "' AND (TEACHER_ID='" . User('STAFF_ID') . "' OR SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "') AND (MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (MARKING_PERIOD_ID IS NULL)) group by (cp.COURSE_PERIOD_ID)"));
+        $get_cps = DBGet(DBQuery("SELECT cpv.ID,cp.COURSE_PERIOD_ID,cp.MARKING_PERIOD_ID,cp.COURSE_ID,cp.TITLE,cp.SCHOOL_ID,cpv.PERIOD_ID FROM course_periods cp,course_period_var cpv WHERE cp.SYEAR='" . UserSyear() . "' AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID AND cp.SCHOOL_ID='" . UserSchool() . "' AND cp.COURSE_ID='" . $ret_courses['COURSE_ID'] . "' AND (TEACHER_ID='" . User('STAFF_ID') . "' OR SECONDARY_TEACHER_ID='" . User('STAFF_ID') . "' OR TERTIARY_TEACHER_ID='" . User('STAFF_ID') . "') AND (MARKING_PERIOD_ID IN (" . GetAllMP($allMP, UserMP()) . ") OR (MARKING_PERIOD_ID IS NULL)) group by (cp.COURSE_PERIOD_ID)"));
         if (count($get_cps) > 0) {
             $RET[$ret_increment] = $ret_courses;
             $ret_increment++;

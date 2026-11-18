@@ -69,9 +69,13 @@ function Preferences($item, $program = 'Preferences')
 {
 	global $_openSIS;
 
-	if ($_SESSION['STAFF_ID'] && !$_openSIS['Preferences'][$program]) {
+	// Gradebook preferences are stored per course period as VALUE_<course_period_id>.
+	// Without a selected course period, LIKE '%_' would match every course period's
+	// settings, so fall back to the defaults instead.
+	$gradebook_cp = ($program == 'Gradebook') ? UserCoursePeriod() : '';
+	if ($_SESSION['STAFF_ID'] && !$_openSIS['Preferences'][$program] && ($program != 'Gradebook' || $gradebook_cp != '')) {
 		if ($program == 'Gradebook')
-			$QI = DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=' . $_SESSION['STAFF_ID'] . ' AND PROGRAM=\'' . $program . '\' AND VALUE LIKE \'%_' . UserCoursePeriod() . '\'');
+			$QI = DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=' . $_SESSION['STAFF_ID'] . ' AND PROGRAM=\'' . $program . '\' AND VALUE LIKE \'%\\_' . $gradebook_cp . '\'');
 		else
 			$QI = DBQuery('SELECT TITLE,VALUE FROM program_user_config WHERE USER_ID=' . $_SESSION['STAFF_ID'] . ' AND PROGRAM=\'' . $program . '\'');
 		$_openSIS['Preferences'][$program] = DBGet($QI, array(), array('TITLE'));
@@ -104,8 +108,13 @@ function Preferences($item, $program = 'Preferences')
 		if ($item == 'ANOMALOUS_MAX') {
 			$arr = explode('_', $_openSIS['Preferences'][$program][$item][1]['VALUE']);
 			return $arr[0];
-		} else
-			return rtrim($_openSIS['Preferences'][$program][$item][1]['VALUE'], '_' . UserCoursePeriod());
+		} else {
+			// Strip the exact "_<course_period_id>" suffix (rtrim would strip a character set)
+			$value = $_openSIS['Preferences'][$program][$item][1]['VALUE'];
+			if ($gradebook_cp != '')
+				$value = preg_replace('/_' . preg_quote($gradebook_cp, '/') . '$/', '', $value);
+			return $value;
+		}
 	} else
 		return $_openSIS['Preferences'][$program][$item][1]['VALUE'];
 }

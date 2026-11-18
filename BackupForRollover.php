@@ -47,13 +47,12 @@ if(User('PROFILE')=='admin'&& isset($_REQUEST['action']) && $_REQUEST['action']=
         $print_form = 0;
     $date_time = date("m-d-Y");
 
-    $backup_folder = 'opensis_databackup';
-    if(!is_dir($backup_folder))
-    {
-      mkdir("opensis_databackup");
-    }
+    // Keep rollover backups outside the web root (see functions/BackupDirFnc.php).
+    $backup_folder = openSISBackupDir();
+    if ($backup_folder === false)
+        exit('Backup failed: no writable backup directory outside the web root. Set $BackupDirectory in Data.php.');
 
-    $Export_FileName = 'opensis_databackup/'.$mysql_database . 'Backup' . $date_time . '.sql';
+    $Export_FileName = escapeshellarg($backup_folder . DIRECTORY_SEPARATOR . $mysql_database . 'Backup' . $date_time . '.sql');
     // $dbconn = new mysqli($mysql_host, $mysql_username, $mysql_password, $mysql_database, $mysql_port);
     $dbconn = $connection;
     if ($dbconn->connect_errno != 0)

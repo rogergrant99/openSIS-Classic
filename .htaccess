@@ -1,5 +1,18 @@
 <IfModule mod_rewrite.c>
 RewriteEngine on
 Options -Indexes
-#RewriteRule \.(sql)$ /messageforcurious [L]
+# Never serve the legacy in-webroot backup folder or the maintenance scripts folder.
+RewriteRule ^(opensis_databackup|maintenance)(/|$) - [F,L]
 </IfModule>
+
+# Block direct downloads of database dumps, data exports and backup files anywhere
+# in the site (install/*.sql are read by PHP from disk, not over HTTP).
+<FilesMatch "(?i)\.(sql|sql\.gz|gz|zip|tar|tgz|bak|csv|log|dump)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
