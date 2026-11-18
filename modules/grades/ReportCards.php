@@ -1123,7 +1123,7 @@ function CadoHTMLHeaderPrescolaire($title,$items,$data){
     </tr>
     <tr>
         <td  rowspan="2" colspan="4"></td> 
-        <td colspan="4">' . _signature . ': <b class="signature-ts">Danielle Grant</b></td> 
+        <td colspan="4">' . _signature . ': <b class="signature-ts">' . CadoPrincipalName() . '</b></td> 
     </tr>
     <tr>
         <td colspan="4">Enseignant(e) : <b>' . $teacher_name[1]['FIRST_NAME'] . ' ' . $teacher_name[1]['LAST_NAME'] . '</b></td> 
@@ -1168,7 +1168,7 @@ function CadoHTMLHeaderPrimaire($title,$items,$data){
         <div class="section-1-item">' . $items['SCHOOL_NAME'] . ' : <b>' . $data['SCHOOL_NAME'] . '</b></div>
         <div class="section-1-item">' . $items['SCHOOL_CODE'] . ' : <b>' . $data['SCHOOL_CODE'] . '</b></div>
         <div class="section-1-item">' . $items['SCHOOL_PRINCIPAL'] . ' : <b>' . $data['SCHOOL_PRINCIPAL'] . '</b></div>
-        <div class="section-1-item">' . _signature . ': <b class="signature-ts">Danielle Grant</b></div>
+        <div class="section-1-item">' . _signature . ': <b class="signature-ts">' . CadoPrincipalName() . '</b></div>
         </div></td> 
 
        <td class="section-1-block">
@@ -1270,7 +1270,7 @@ function CadoHTMLHeaderSecondaire($title,$items,$data){
         <div class="section-1-item">' . $items['SCHOOL_TEL'] . ' : &nbsp&nbsp<b>' . $data['SCHOOL_TEL'] . '</b></div>                
         <div class="section-1-item">' . $items['SCHOOL_FAX'] . ' : <b>' . $data['SCHOOL_FAX'] . '</b></div>                
         <div class="section-1-item">' . $items['SCHOOL_PRINCIPAL'] . ' : <b>' . $data['SCHOOL_PRINCIPAL'] . '</b></div>
-        <div class="section-1-item">' . _signature . ': <b class="signature-ts">Danielle Grant</b></div>
+        <div class="section-1-item">' . _signature . ': <b class="signature-ts">' . CadoPrincipalName() . '</b></div>
 
         </div></td>
 
@@ -1685,7 +1685,7 @@ function CadoHTMLcommentairesCheminement($title,$items,$data,$mp,$grade_id){
         <div><input type="checkbox" onclick="return false"' . $data["4"] . '>Autre : <u><b> ' . $data["5"] . ' </b></u></div>
         <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
         <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
-        <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbspDanielle Grant&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
+        <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbsp' . CadoPrincipalName() . '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
         <div class=class-results--align-center>Signature de la directrice &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Date</div>
         </td>     
         </table>';
@@ -1700,13 +1700,23 @@ function CadoHTMLcommentairesCheminement($title,$items,$data,$mp,$grade_id){
          <div><input type="checkbox" onclick="return false"' . $data["2"] . '>L’élève poursuivra ses apprentissages dans la même classe, selon les modalités prévues dans son plan d’intervention.</div>
          <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
          <div>&nbsp&nbsp&nbsp&nbsp&nbsp</div>
-         <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbspDanielle Grant&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
+         <div class="section-1-item class-results--align-center"><b class="signature-ts">&nbsp&nbsp&nbsp&nbsp&nbsp' . CadoPrincipalName() . '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>' . $date . '</div>
          <div class=class-results--align-center>Signature de la directrice &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Date</div>
          </td>     
          </table>';
          }
 }
  
+// Principal's name for report card signatures, from School Information ("Directrice générale").
+function CadoPrincipalName(){
+    static $name = null;
+    if ($name === null) {
+        $ret = DBGet(DBQuery("SELECT PRINCIPAL FROM schools WHERE ID = '" . (int) UserSchool() . "'"));
+        $name = htmlspecialchars((string) $ret[1]['PRINCIPAL'], ENT_QUOTES, 'UTF-8');
+    }
+    return $name;
+}
+
 function CadoHTMLpageSetup($title,$grade){
 
     if(strpos($grade,'Secondaire 1') || strpos($grade,'Secondaire 2'))
@@ -2425,7 +2435,7 @@ function CadoStudentComments($student_id, $grade_id,$marking_period) {
     echo '<br/>';
     echo '<br/>';
     echo '<table class="signature">';
-    echo '<tr class="signature-tr"><td  class="signature-td">Signature de la directrice:</td><td class="signature-ts">Danielle Grant</td><td class="signature-td"> Date : ' . $date . '</td></tr>';
+    echo '<tr class="signature-tr"><td  class="signature-td">Signature de la directrice:</td><td class="signature-ts">' . CadoPrincipalName() . '</td><td class="signature-td"> Date : ' . $date . '</td></tr>';
     echo '</table>';
     echo '<br/><br/>';
     
