@@ -35,7 +35,6 @@ ini_set('session.cookie_samesite', 'Strict');
 include_once "functions/DelDirectoryFnc.php";
 include_once "functions/ParamLibFnc.php";
 require_once "functions/PragRepFnc.php";
-include_once "RemoveBackup.php";
 include_once 'lang/language.php';
 include_once "functions/PasswordHashFnc.php";
 
