@@ -172,3 +172,27 @@ function SecureFileDeleteUpload($dir, $id, $ownerId, $isStudent)
     DBQuery('DELETE FROM user_file_upload WHERE ID=' . $id);
     return true;
 }
+
+/**
+ * May the logged-in user select (switch to) this student?
+ * Added 2026-11-18 security audit: closes an IDOR where a parent or student could
+ * set $_SESSION['student_id'] to ANY student via Side.php / the search branches.
+ *
+ *  parent  : only students linked to them in students_join_people
+ *  student : only their own STUDENT_ID
+ *  admin / teacher : unchanged (their student lists are access-controlled elsewhere)
+ */
+function SecureCanSelectStudent($studentId)
+{
+    $studentId = (int) $studentId;
+    if ($studentId <= 0) {
+        return false;
+    }
+    switch (User('PROFILE')) {
+        case 'parent':
+            return SecureFileParentHasStudent((int) ($_SESSION['STAFF_ID'] ?? 0), $studentId);
+        case 'student':
+            return $studentId === (int) ($_SESSION['STUDENT_ID'] ?? 0);
+    }
+    return true;
+}

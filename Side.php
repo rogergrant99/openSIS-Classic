@@ -252,8 +252,12 @@ if (optional_param('modfunc', '', PARAM_SPCL) == 'update' && $_POST) {
                 }
             }
         } elseif ($_POST['student_id']) {
-            unset($_SESSION['UserMP']);
-            $_SESSION['student_id'] = optional_param('student_id', '', PARAM_ALPHANUM);
+            // Security (2026-11-18): only switch to a student this parent/student may access.
+            $req_student_id = optional_param('student_id', '', PARAM_ALPHANUM);
+            if ($req_student_id !== '' && SecureCanSelectStudent($req_student_id)) {
+                unset($_SESSION['UserMP']);
+                $_SESSION['student_id'] = $req_student_id;
+            }
         } elseif ($_POST['mp']) {
             $_SESSION['UserMP'] = optional_param('mp', '', PARAM_SPCL);
         }

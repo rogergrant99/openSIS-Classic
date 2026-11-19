@@ -44,9 +44,12 @@ function Search($type, $extra = array(), $search_from_grade = '')
 
             if ($_REQUEST['student_id']) {
                 if ($_REQUEST['student_id'] != 'new') {
-                    $_SESSION['student_id'] = $_REQUEST['student_id'];
-                    if ($_REQUEST['school_id'])
-                        $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    // Security (2026-11-18): confine parents/students to their own student
+                    if (SecureCanSelectStudent($_REQUEST['student_id'])) {
+                        $_SESSION['student_id'] = $_REQUEST['student_id'];
+                        if ($_REQUEST['school_id'])
+                            $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    }
                 } else
                     unset($_SESSION['student_id']);
                 //                if (!$_REQUEST['_openSIS_PDF'])
@@ -71,9 +74,12 @@ function Search($type, $extra = array(), $search_from_grade = '')
 
             if ($_REQUEST['student_id']) {
                 if ($_REQUEST['student_id'] != 'new') {
-                    $_SESSION['student_id'] = $_REQUEST['student_id'];
-                    if ($_REQUEST['school_id'])
-                        $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    // Security (2026-11-18): confine parents/students to their own student
+                    if (SecureCanSelectStudent($_REQUEST['student_id'])) {
+                        $_SESSION['student_id'] = $_REQUEST['student_id'];
+                        if ($_REQUEST['school_id'])
+                            $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    }
                 } else
                     unset($_SESSION['student_id']);
                 //                if (!$_REQUEST['_openSIS_PDF'])
@@ -665,9 +671,12 @@ function Search_GroupSchedule($type, $extra = array())
 
             if ($_REQUEST['student_id']) {
                 if ($_REQUEST['student_id'] != 'new') {
-                    $_SESSION['student_id'] = $_REQUEST['student_id'];
-                    if ($_REQUEST['school_id'])
-                        $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    // Security (2026-11-18): confine parents/students to their own student
+                    if (SecureCanSelectStudent($_REQUEST['student_id'])) {
+                        $_SESSION['student_id'] = $_REQUEST['student_id'];
+                        if ($_REQUEST['school_id'])
+                            $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    }
                 } else
                     unset($_SESSION['student_id']);
             }
@@ -867,9 +876,12 @@ function Search_absence_summary($type, $extra = array(), $search_from_grade = ''
 
             if ($_REQUEST['student_id']) {
                 if ($_REQUEST['student_id'] != 'new') {
-                    $_SESSION['student_id'] = $_REQUEST['student_id'];
-                    if ($_REQUEST['school_id'])
-                        $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    // Security (2026-11-18): confine parents/students to their own student
+                    if (SecureCanSelectStudent($_REQUEST['student_id'])) {
+                        $_SESSION['student_id'] = $_REQUEST['student_id'];
+                        if ($_REQUEST['school_id'])
+                            $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    }
                 } else
                     unset($_SESSION['student_id']);
             }
@@ -1080,9 +1092,12 @@ function SearchStaff($type, $extra = array())
 
             if ($_REQUEST['student_id']) {
                 if ($_REQUEST['student_id'] != 'new') {
-                    $_SESSION['student_id'] = $_REQUEST['student_id'];
-                    if ($_REQUEST['school_id'])
-                        $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    // Security (2026-11-18): confine parents/students to their own student
+                    if (SecureCanSelectStudent($_REQUEST['student_id'])) {
+                        $_SESSION['student_id'] = $_REQUEST['student_id'];
+                        if ($_REQUEST['school_id'])
+                            $_SESSION['UserSchool'] = $_REQUEST['school_id'];
+                    }
                 } else {
                     unset($_SESSION['student_id']);
                 }
