@@ -1,3 +1,16 @@
 
 Data.php
 .htaccess
+
+# Uploaded / generated personal data: never commit (security audit 2026-11-19)
+assets/studentfiles/
+assets/stafffiles/
+assets/contracts/signed/
+assets/contracts/preview/
+assets/contracts/template/
+userfiles/
+
+# Database dumps and backups
+*.sql.gz
+opensis_databackup/
+*Backup*.sql
