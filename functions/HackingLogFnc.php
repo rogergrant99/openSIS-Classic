@@ -38,7 +38,7 @@ function decrypter($string)
 
 function HackingLog()
 {
-	$openSISNotifyAddress = 'info@os4ed.com';
+	global $openSISNotifyAddress; // from ConfigInc.php
 	$openSISVersion = '8.0';
 
 	echo "" . _youReNotAllowedToUseThisProgram . "! " . _thisAttemptedViolationHasBeenLoggedAndYourIpAddressWasCaptured . ".";
