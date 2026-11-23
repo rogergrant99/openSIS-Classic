@@ -664,6 +664,9 @@ function check_config($course_period_id,$staff_id,$mp,$course_id)
     return 0;
 }
 function do_cado_courses_files(){
+    // Guard (2026-11-23): nothing to show without a selected student.
+    if ((int) UserStudentID() <= 0)
+        return;
     $courses_RET = DBGet(DBQuery('SELECT DISTINCT c.TITLE ,cp.SHORT_NAME,cp.COURSE_PERIOD_ID,cp.COURSE_ID,cp.TEACHER_ID AS STAFF_ID FROM schedule s,course_periods cp,course_period_var cpv,courses c,attendance_calendar acc WHERE s.SYEAR=\'' . UserSyear() . '\' AND cp.COURSE_PERIOD_ID=s.COURSE_PERIOD_ID  AND cp.COURSE_PERIOD_ID=cpv.COURSE_PERIOD_ID  AND (s.MARKING_PERIOD_ID IN (SELECT MARKING_PERIOD_ID FROM school_years WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_semesters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE  UNION SELECT MARKING_PERIOD_ID FROM school_quarters WHERE SCHOOL_ID=acc.SCHOOL_ID AND acc.SCHOOL_DATE BETWEEN START_DATE AND END_DATE )or s.MARKING_PERIOD_ID  is NULL) AND (\'' . DBDate() . '\' BETWEEN s.START_DATE AND s.END_DATE OR \'' . DBDate() . '\'>=s.START_DATE AND s.END_DATE IS NULL) AND s.STUDENT_ID=\'' . UserStudentID() . '\' AND cp.GRADE_SCALE_ID IS NOT NULL' . (User('PROFILE') == 'teacher' ? ' AND cp.TEACHER_ID=\'' . User('STAFF_ID') . '\'' : '') . ' AND c.COURSE_ID=cp.COURSE_ID ORDER BY TITLE'));
     $num_course=1;
     foreach ($courses_RET as $course) {
@@ -711,7 +714,11 @@ function do_cado_courses_files(){
     }
 }
 function do_cado_bulletins(){
-    $file_info = DBGet(DBQuery('SELECT* FROM user_file_upload WHERE USER_ID=' . UserStudentID() . ' AND PROFILE_ID=3 AND SCHOOL_ID=' . UserSchool() . ' AND file_info=\'stufile\''));
+    // Guard (2026-11-23): with no student selected the query below became "USER_ID= AND ..." (SQL error).
+    $student_id = (int) UserStudentID();
+    if ($student_id <= 0)
+        return;
+    $file_info = DBGet(DBQuery('SELECT* FROM user_file_upload WHERE USER_ID=' . $student_id . ' AND PROFILE_ID=3 AND SCHOOL_ID=' . (int) UserSchool() . ' AND file_info=\'stufile\''));
     echo '<tbody>';
     $found = false;
     $gridClass = "";

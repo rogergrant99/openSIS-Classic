@@ -33,7 +33,8 @@ function Search($type, $extra = array(), $search_from_grade = '')
     global $_openSIS;
     switch ($type) {
         case 'student_id':
-            if ($_REQUEST['bottom_back']) {
+            // Parents/students have no student list to return to; keep their selected student (2026-11-23)
+            if ($_REQUEST['bottom_back'] && !in_array(User('PROFILE'), array('parent', 'student'))) {
                 unset($_SESSION['student_id']);
                 //echo '<script language=JavaScript>parent.side.location="' . $_SESSION['Side_PHP_SELF'] . '?modcat="+parent.side.document.forms[0].modcat.value;</script>';
             }
@@ -63,7 +64,8 @@ function Search($type, $extra = array(), $search_from_grade = '')
             break;
 
         case 'student_id_from_student':
-            if ($_REQUEST['bottom_back']) {
+            // Parents/students have no student list to return to; keep their selected student (2026-11-23)
+            if ($_REQUEST['bottom_back'] && !in_array(User('PROFILE'), array('parent', 'student'))) {
                 unset($_SESSION['student_id']);
                 //echo '<script language=JavaScript>parent.side.location="' . $_SESSION['Side_PHP_SELF'] . '?modcat="+parent.side.document.forms[0].modcat.value;</script>';
             }
@@ -661,7 +663,8 @@ function Search_GroupSchedule($type, $extra = array())
     unset($_SESSION['student_id']);
     switch ($type) {
         case 'student_id':
-            if ($_REQUEST['bottom_back']) {
+            // Parents/students have no student list to return to; keep their selected student (2026-11-23)
+            if ($_REQUEST['bottom_back'] && !in_array(User('PROFILE'), array('parent', 'student'))) {
                 unset($_SESSION['student_id']);
             }
             if ($_SESSION['unset_student']) {
@@ -866,7 +869,8 @@ function Search_absence_summary($type, $extra = array(), $search_from_grade = ''
 
     switch ($type) {
         case 'student_id':
-            if ($_REQUEST['bottom_back']) {
+            // Parents/students have no student list to return to; keep their selected student (2026-11-23)
+            if ($_REQUEST['bottom_back'] && !in_array(User('PROFILE'), array('parent', 'student'))) {
                 unset($_SESSION['student_id']);
             }
             if ($_SESSION['unset_student']) {
@@ -1082,7 +1086,8 @@ function SearchStaff($type, $extra = array())
 
     switch ($type) {
         case 'student_id':
-            if ($_REQUEST['bottom_back']) {
+            // Parents/students have no student list to return to; keep their selected student (2026-11-23)
+            if ($_REQUEST['bottom_back'] && !in_array(User('PROFILE'), array('parent', 'student'))) {
                 unset($_SESSION['student_id']);
             }
             if ($_SESSION['unset_student']) {
